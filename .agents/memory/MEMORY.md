@@ -1,0 +1,2 @@
+- [Cafés de Carla prelaunch testing](cafes-de-carla-prelaunch.md) — Keep the site in preview for about 15 days of checks and improvements before public launch.
+- [Cafés de Carla ordering](cafes-de-carla-orders.md) — The selected flow is a local cart only; do not transmit orders or take payments.

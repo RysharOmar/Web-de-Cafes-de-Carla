@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Cafés de Carla"
+description = "Web responsive de la cafetería Cafés de Carla: presenta su identidad, carta, ubicación y formas de contacto en una vista previa lista para pruebas antes del lanzamiento."
+version = "1.0.0"
+id = "artifacts/cafes-de-carla"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22264
+
+[services.development]
+run = "pnpm --filter @workspace/cafes-de-carla run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/cafes-de-carla", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/cafes-de-carla/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22264"
+BASE_PATH = "/"
