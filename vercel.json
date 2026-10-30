@@ -1,5 +1,5 @@
 {
-  "installCommand": "pnpm install",
+  "installCommand": "pnpm install --no-frozen-lockfile",
   "buildCommand": "pnpm -r build",
   "outputDirectory": "artifacts/cafes-de-carla/dist/public",
   "routes": [
