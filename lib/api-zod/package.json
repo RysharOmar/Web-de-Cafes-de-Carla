@@ -6,6 +6,9 @@
   "exports": {
     ".": "./src/index.ts"
   },
+  "devDependencies": {
+    "@types/node": "catalog:"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json --noEmit"
   },
