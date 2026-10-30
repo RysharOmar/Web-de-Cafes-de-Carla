@@ -43,8 +43,8 @@ export default async function handler(req: any, res: any) {
       const quantity = Math.max(1, Math.floor(Number(item.quantity || 1)));
 
       const catalogItem = getCatalogItem(productId);
-      if (!catalogItem) {
-        res.status(400).json({ error: `Producto no disponible: ${productId}` });
+      if (!catalogItem || catalogItem.priceCents <= 0) {
+        res.status(400).json({ error: `Precio no disponible para: ${productId}` });
         return;
       }
 

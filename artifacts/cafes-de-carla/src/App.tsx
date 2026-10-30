@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { ArrowDown, ArrowRight, ArrowUpRight, Clock3, Instagram, MapPin, Menu as MenuIcon, Minus, Phone, Plus, ShoppingBag, X } from 'lucide-react';
+import { ArrowDown, ArrowRight, ArrowUpRight, Clock3, CreditCard, Instagram, MapPin, Menu as MenuIcon, Minus, Phone, Plus, ShoppingBag, X } from 'lucide-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
@@ -360,13 +360,14 @@ function Home() {
                   <div className="cart-total" data-testid="text-cart-total"><span>{hasUnpricedItems ? 'Subtotal parcial' : 'Subtotal'}</span><strong>{formatPrice(cartSubtotal)}</strong></div>
                   <p className="cart-preview-note">Carrito de vista previa: no se envían pedidos ni se procesan pagos.</p>
                   <button
-                    className="cart-checkout focus-ring"
+                    className="cart-checkout focus-ring stripe-btn"
                     type="button"
                     onClick={checkout}
                     disabled={!allPriced}
                     data-testid="button-checkout"
                   >
-                    Pagar con Stripe
+                    <CreditCard size={18} aria-hidden="true" />
+                    <span>Pagar con Stripe</span>
                   </button>
                   <button className="cart-clear focus-ring" type="button" onClick={() => setCart({})} data-testid="button-clear-cart">Vaciar carrito</button>
                 </div>
