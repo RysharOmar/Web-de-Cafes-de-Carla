@@ -26,21 +26,21 @@ export default function Success() {
         </div>
         <div>
           <span className="text-[10px] tracking-[0.2em] text-[#8b684b] uppercase font-bold">Pago completado</span>
-          <h1 className="serif text-[42px] leading-[1.05] text-[#422d1d] mt-3">¡Marchando <br /><em className="text-[#738e4d]">un americanito!</em></h1>
+          <h1 className="serif text-[42px] leading-[1.05] text-[#422d1d] mt-3">¡Marchando <br /><em className="text-[#738e4d]">{items[0]?.name ? `un ${items[0].name}` : 'un americanito'}</em>!</h1>
           <p className="text-[#6d6755] text-sm leading-relaxed mt-3">Tu compra de prueba se ha confirmado. Gracias por pasarte por <strong>Cafés de Carla</strong>.</p>
         </div>
 
         <div className="w-full border-t border-[#ddd1be] pt-5 mt-2 space-y-2">
           {items.length === 0 && (
-            <div className="flex items-center justify-between text-sm text-[#4a3322]">
+            <div className="flex items-center justify-between gap-4 text-sm text-[#4a3322] whitespace-nowrap">
               <span><strong>Café Americano</strong> · 1 unidad</span>
-              <span className="font-serif text-lg">1,68 €</span>
+              <span className="font-serif text-lg shrink-0">1,68 €</span>
             </div>
           )}
           {items.map((it, idx) => (
-            <div key={idx} className="flex items-center justify-between text-sm text-[#4a3322]">
-              <span><strong>{it.name}</strong> · {it.qty} unidad{it.qty > 1 ? 'es' : ''}</span>
-              <span className="font-serif text-lg">{(it.price * it.qty / 100).toFixed(2).replace('.', ',')} €</span>
+            <div key={idx} className="flex items-center justify-between gap-4 text-sm text-[#4a3322] whitespace-nowrap">
+              <span className="truncate"><strong>{it.name}</strong> · {it.qty} unidad{it.qty > 1 ? 'es' : ''}</span>
+              <span className="font-serif text-lg shrink-0">{(it.price * it.qty / 100).toFixed(2).replace('.', ',')} €</span>
             </div>
           ))}
           <div className="flex items-center justify-between text-base font-bold text-[#422d1d] pt-2 border-t border-[#ddd1be] mt-2">
