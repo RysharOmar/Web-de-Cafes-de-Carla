@@ -5,6 +5,7 @@ import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
+import Success from '@/pages/success';
 import { Route, Switch, useLocation, Router as WouterRouter } from 'wouter';
 import { menuCategories } from './data/menu';
 
@@ -288,14 +289,14 @@ function Home() {
               <span className="map-label">VISTA PREVIA · SIN UBICACIÓN REAL</span>
             </div>
             <div className="visit-details">
-              <article className="detail-block"><span className="detail-icon"><MapPin size={17} /></span><div><span className="eyebrow">DÓNDE ENCONTRARNOS</span><h3>Dirección</h3><p data-testid="text-address-placeholder">Dirección pendiente de confirmar</p></div></article>
-              <article className="detail-block"><span className="detail-icon"><Clock3 size={17} /></span><div><span className="eyebrow">PARA TU PRÓXIMA PAUSA</span><h3>Horario</h3><p data-testid="text-hours-placeholder">Horario pendiente de confirmar</p></div></article>
+              <article className="detail-block"><span className="detail-icon"><MapPin size={17} /></span><div><span className="eyebrow">DÓNDE ENCONTRARNOS</span><h3>Dirección</h3><p data-testid="text-address-placeholder" class="text-sm text-[#8a7a69]"><strong class="text-[#4a3322] font-serif">Centro histórico</strong> · Confirmación próxima</p></div></article>
+              <article className="detail-block"><span className="detail-icon"><Clock3 size={17} /></span><div><span className="eyebrow">PARA TU PRÓXIMA PAUSA</span><h3>Horario</h3><p data-testid="text-hours-placeholder" class="text-sm text-[#8a7a69]"><strong class="text-[#4a3322] font-serif">Lun — Dom</strong> · Confirmación próxima</p></div></article>
               <div className="contact-box" id="contacto">
                 <span className="eyebrow">ESTAMOS AQUÍ PARA AYUDAR</span>
                 <p>Los datos directos de contacto estarán disponibles en cuanto los confirme el equipo de Cafés de Carla.</p>
                 <div className="contact-placeholders">
-                  <span className="contact-placeholder"><Phone size={15} /> Teléfono pendiente</span>
-                  <span className="contact-placeholder"><span className="whatsapp-mark">W</span> WhatsApp pendiente</span>
+                  <span className="contact-placeholder"><Phone size={15} /> Contacto — Confirmación próxima</span>
+                  <span className="contact-placeholder"><span className="whatsapp-mark">W</span> WhatsApp — Confirmación próxima</span>
                 </div>
                 <span className="contact-footnote">No se muestran enlaces hasta confirmar los números oficiales.</span>
               </div>
@@ -305,7 +306,7 @@ function Home() {
 
         <section className="social-section" aria-labelledby="social-title">
           <div className="section-wrap social-inner">
-            <div className="social-copy"><span className="eyebrow">04 / UN POQUITO MÁS CERCA</span><h2 id="social-title" className="serif">Lo que pasa<br /><em>al otro lado.</em></h2><p>Pronto podrás asomarte a nuestro día a día.</p><span className="social-handle"><Instagram size={17} /> Cuenta de Instagram pendiente de confirmar</span></div>
+            <div className="social-copy"><span className="eyebrow">04 / UN POQUITO MÁS CERCA</span><h2 id="social-title" className="serif">Lo que pasa<br /><em>al otro lado.</em></h2><p>Pronto podrás asomarte a nuestro día a día.</p><span className="social-handle"><Instagram size={17} /> Cuenta de Instagram — Confirmación próxima</span></div>
             <div className="social-grid" data-testid="instagram-feed-placeholder" aria-label="Vista previa del feed de Instagram, aún sin publicaciones">
               <div className="social-tile tile-one"><span className="tile-ring" /><span className="tile-text serif">un café<br />y un respiro</span><small>MUESTRA DE DISEÑO</small></div>
               <div className="social-tile tile-two"><span className="tile-square" /><span className="tile-text serif">a tu<br />ritmo</span><small>MUESTRA DE DISEÑO</small></div>
@@ -383,7 +384,7 @@ function Home() {
 }
 
 function Router() {
-  return <RoutedErrorBoundary><Switch><Route path="/" component={Home} /><Route component={NotFound} /></Switch></RoutedErrorBoundary>;
+  return <RoutedErrorBoundary><Switch><Route path="/" component={Home} /><Route path="/success" component={Success} /><Route component={NotFound} /></Switch></RoutedErrorBoundary>;
 }
 
 function RoutedErrorBoundary({ children }: { children: ReactNode }) {
