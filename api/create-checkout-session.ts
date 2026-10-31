@@ -66,7 +66,8 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    const origin = (req.headers.origin as string) || '';
+    const origin = (req.headers.origin as string) || 
+      (process.env.VERCEL_URL || 'http://localhost:3000');
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -78,7 +79,8 @@ export default async function handler(req: any, res: any) {
 
     res.status(200).json({ url: session.url });
   } catch (err: any) {
-    process.stderr.write('Stripe checkout error: ' + (err && err.message ? err.message : String(err)) + '\n');
-    res.status(500).json({ error: 'No se pudo preparar el pago' });
+    const msg = err && err.message ? err.message : String(err);
+    process.stderr.write('Stripe checkout error: ' + msg + '\n');
+    res.status(500).json({ error: msg || 'No se pudo preparar el pago' });
   }
 }

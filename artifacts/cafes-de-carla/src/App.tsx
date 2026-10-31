@@ -89,7 +89,8 @@ function Home() {
       window.location.href = data.url;
     } catch (err) {
       console.error("Checkout error:", err);
-      alert("No se pudo preparar el pago. Inténtalo de nuevo.");
+      const msg = err instanceof Error ? err.message : String(err);
+      alert("No se pudo preparar el pago. Inténtalo de nuevo.\n\nDetalle: " + msg);
     }
   };
 
