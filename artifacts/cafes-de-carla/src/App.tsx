@@ -87,6 +87,13 @@ function Home() {
         throw new Error(data.error || "Error al crear la sesión de pago");
       }
 
+      const cartSummary = cartLines.map(({ item, quantity }) => ({
+        name: item.name,
+        qty: quantity,
+        price: priceInCents(item.price) ?? 0,
+      }));
+      localStorage.setItem('cart_success', JSON.stringify(cartSummary));
+
       window.location.href = data.url;
     } catch (err) {
       console.error("Checkout error:", err);
