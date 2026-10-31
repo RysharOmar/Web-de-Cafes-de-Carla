@@ -136,6 +136,7 @@ function Home() {
     if (adjustment > 0) {
       const categoryId = menuItemCategoryById.get(itemId);
       if (categoryId) trackCartAdd(itemId, categoryId);
+      setCartOpen(true); // Auto-open cart on add for demo
     }
 
     setCart((current) => {
@@ -368,7 +369,7 @@ function Home() {
                     data-testid="button-checkout"
                   >
                     <CreditCard size={18} aria-hidden="true" />
-                    <span>Pagar con Stripe</span>
+                    <span>Terminar pedido — {formatPrice(cartSubtotal)}</span>
                   </button>
                   <button className="cart-clear focus-ring" type="button" onClick={() => setCart({})} data-testid="button-clear-cart">Vaciar carrito</button>
                 </div>
