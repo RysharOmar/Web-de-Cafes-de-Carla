@@ -13,9 +13,7 @@ if (!STRIPE_SECRET_KEY) {
   throw new Error('STRIPE_SECRET_KEY is not set');
 }
 
-const stripe = new Stripe(STRIPE_SECRET_KEY, {
-  apiVersion: '2025-02-24.acacia',
-});
+const stripe = new Stripe(STRIPE_SECRET_KEY);
 
 type CartItem = {
   id: string;
