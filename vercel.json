@@ -4,6 +4,7 @@
   "outputDirectory": "artifacts/cafes-de-carla/dist/public",
   "routes": [
     { "src": "/api/create-checkout-session", "dest": "/api/create-checkout-session", "methods": ["POST"] },
-    { "src": "/api/webhook", "dest": "/api/webhook", "methods": ["POST"] }
+    { "src": "/api/webhook", "dest": "/api/webhook", "methods": ["POST"] },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
