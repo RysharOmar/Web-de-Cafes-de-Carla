@@ -82,6 +82,8 @@ export const CATALOG: Record<string, CatalogItem> = {
     priceCents: 125 },
   'sandwich-berros-queso': { name: 'Berros y queso tierno', currency: 'eur',
     priceCents: 150 },
+  'calabacin-gouda-huevo': { name: 'Calabacín, queso gouda, huevo y salsa sueca', currency: 'eur',
+    priceCents: 150 },
   'sandwich-jamon-queso': { name: 'Jamón y queso', currency: 'eur',
     priceCents: 250 },
   'sandwich-vegetal': { name: 'Vegetal', currency: 'eur',
