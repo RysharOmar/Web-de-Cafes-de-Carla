@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { ArrowRight, ArrowUpRight, Clock3, CreditCard, Instagram, MapPin, Phone, Plus, ShoppingBag, X } from 'lucide-react';
+import { ArrowDown, ArrowRight, ArrowUpRight, Clock3, CreditCard, Instagram, MapPin, Menu as MenuIcon, Minus, Phone, Plus, ShoppingBag, X } from 'lucide-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
@@ -277,6 +277,8 @@ function Home() {
         <span className="ribbon-dot" aria-hidden="true" />
         Vista previa de pre-lanzamiento · datos por confirmar
       </div>
+
+      {/* Header */}
       <header className="site-header">
         <div className="header-inner section-wrap">
           <a href="#inicio" className="brand-link focus-ring" aria-label="Cafés de Carla, inicio" data-testid="link-brand-home">
@@ -298,14 +300,23 @@ function Home() {
       </header>
 
       <main>
+        {/* Sección 1: Héroe / Bienvenidos - Diseño original restaurado */}
         <section id="inicio" className="hero-section section-wrap" aria-labelledby="hero-title">
-          <div className="hero-copy">
-            <span className="eyebrow">01 / BIENVENIDOS</span>
-            <h1 id="hero-title" className="serif" data-testid="heading-hero">Huele.<br /><em>Saborea.</em><br />Disfruta.</h1>
-            <p data-testid="text-hero-intro">Cafés de Carla · Un rincón para hacer una pausa y disfrutar.</p>
+          <div className="hero-grid">
+            <div className="hero-copy">
+              <span className="eyebrow">01 / BIENVENIDOS</span>
+              <h1 id="hero-title" className="serif" data-testid="heading-hero">Huele.<br /><em>Saborea.</em><br />Disfruta.</h1>
+              <p data-testid="text-hero-intro">Cafés de Carla · Un rincón para hacer una pausa y disfrutar.</p>
+            </div>
+            <div className="hero-image">
+              <div className="hero-img-wrap">
+                <img src={logo} alt="Cafés de Carla" width="600" height="600" data-testid="img-hero" />
+              </div>
+            </div>
           </div>
         </section>
 
+        {/* Sección 2: Carta */}
         <section id="carta" className="menu-section section-wrap" aria-labelledby="menu-title">
           <div className="section-kicker"><span className="eyebrow">02 / PARA DISFRUTAR</span><span className="kicker-line" /></div>
           <div className="menu-heading">
@@ -340,10 +351,12 @@ function Home() {
           <p className="menu-disclaimer" data-testid="text-menu-preview-disclosure">Precios transcritos de la carta compartida; los que no figuraban se muestran por confirmar. Las fotos son ilustrativas y se sustituirán por imágenes reales de los productos.</p>
         </section>
 
+        {/* Pausa */}
         <section className="pause-band" aria-label="Eslogan de Cafés de Carla">
           <div className="pause-inner section-wrap"><span className="pause-small">EL PLACER DE HACER UNA COSA A LA VEZ</span><p className="serif">“Cafés de Carla: Huele, Saborea, Disfruta”</p><span className="pause-ornament" aria-hidden="true" /></div>
         </section>
 
+        {/* Sección 3: Visitanos */}
         <section className="visit-section section-wrap" id="visitanos" aria-labelledby="visit-title">
           <div className="section-kicker"><span className="eyebrow">03 / CUANDO QUIERAS</span><span className="kicker-line" /></div>
           <div className="visit-heading">
@@ -372,9 +385,15 @@ function Home() {
           </div>
         </section>
 
+        {/* Sección 4: Social / Instagram - Diseño original restaurado */}
         <section className="social-section" aria-labelledby="social-title">
           <div className="section-wrap social-inner">
-            <div className="social-copy"><span className="eyebrow">04 / UN POQUITO MÁS CERCA</span><h2 id="social-title" className="serif">Lo que pasa<br /><em>al otro lado.</em></h2><p>Pronto podrás asomarte a nuestro día a día.</p><span className="social-handle"><Instagram size={17} /> Cuenta de Instagram — Confirmación próxima</span></div>
+            <div className="social-copy">
+              <span className="eyebrow">04 / UN POQUITO MÁS CERCA</span>
+              <h2 id="social-title" className="serif" data-testid="heading-social">Lo que pasa<br /><em>al otro lado.</em></h2>
+              <p data-testid="text-social-intro">Pronto podrás asomarte a nuestro día a día.</p>
+              <span className="social-handle"><Instagram size={17} /> Cuenta de Instagram — Confirmación próxima</span>
+            </div>
             <div className="social-grid" data-testid="instagram-feed-placeholder" aria-label="Vista previa del feed de Instagram, aún sin publicaciones">
               <div className="social-tile tile-one"><span className="tile-ring" /><span className="tile-text serif">un café<br />y un respiro</span><small>MUESTRA DE DISEÑO</small></div>
               <div className="social-tile tile-two"><span className="tile-square" /><span className="tile-text serif">a tu<br />ritmo</span><small>MUESTRA DE DISEÑO</small></div>
