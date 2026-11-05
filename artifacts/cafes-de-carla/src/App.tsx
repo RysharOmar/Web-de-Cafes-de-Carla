@@ -11,7 +11,10 @@ import { menuCategories } from './data/menu';
 
 const queryClient = new QueryClient();
 const logo = '/cafes-de-carla-logo.jpg';
-const menuItemsById = new Map(menuCategories.flatMap((category) => category.items).map((item) => [item.id, item] as const));
+
+const menuItemsById = new Map(
+  menuCategories.flatMap((category) => category.items).map((item) => [item.id, item] as const),
+);
 const menuItemCategoryById = new Map(
   menuCategories.flatMap((category) => category.items.map((item) => [item.id, category.id] as const)),
 );
@@ -24,7 +27,6 @@ declare global {
 
 function trackCartAdd(itemId: string, categoryId: string) {
   if (typeof window === 'undefined' || !Array.isArray(window.dataLayer)) return;
-
   try {
     window.dataLayer.push({
       event: 'add_to_cart',
@@ -37,22 +39,27 @@ function trackCartAdd(itemId: string, categoryId: string) {
   }
 }
 
-function priceInCents(price?: string) {
-  if (!price) return null;
-  const amount = Number(price.replace('€', '').trim().replace(',', '.'));
-  return Number.isFinite(amount) ? Math.round(amount * 100) : null;
-}
-
 function formatPrice(cents: number) {
   return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(cents / 100);
 }
 
-function ProductCard({ item, category, onAdd }: { item: MenuItem; category: MenuCategory; onAdd: () => void }) {
-  const [selectedVariant, setSelectedVariant] = useState<string | null>(null);
-  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+function sizeLabelFor(item: any, size: string) {
+  const s = item.sizes.find((x: any) => x.label === size);
+  return s ? s.label : size;
+}
 
-  const variantPrice = item.miniPrice && selectedVariant ? item.miniPrice : item.price;
-  const priceText = variantPrice ? `${variantPrice}${selectedSize ? ` (${selectedSize})` : ''}` : 'Precio por confirmar';
+function priceForSize(item: any, size: string): number {
+  const s = item.sizes.find((x: any) => x.label === size);
+  return s ? s.priceCents : item.sizes[0]?.priceCents ?? 0;
+}
+
+function ProductCard({ item, category, onAdd }: { item: any; category: any; onAdd: () => void }) {
+  const [selectedSize, setSelectedSize] = useState(item.defaultSize);
+  const [selectedVariant, setSelectedVariant] = useState(item.defaultVariant ?? null);
+
+  const currentPrice = priceForSize(item, selectedSize);
+  const hasSizes = item.sizes.length > 1;
+  const hasVariants = Boolean(item.variants?.length);
 
   return (
     <li className="product-card" key={item.id} data-testid={`item-menu-${item.id}`}>
@@ -71,11 +78,31 @@ function ProductCard({ item, category, onAdd }: { item: MenuItem; category: Menu
       <div className="product-card-content">
         <h4 data-testid={`name-menu-${item.id}`}>{item.name}</h4>
         <p data-testid={`description-menu-${item.id}`}>{item.description ?? 'Detalles por confirmar'}</p>
-        {(item.variants?.length ?? 0) > 0 && (
+
+        {hasSizes && (
+          <div className="variant-selector" data-testid={`size-selector-${item.id}`}>
+            <label>Tamaño:</label>
+            <div className="variant-options">
+              {item.sizes.map((s: any) => (
+                <button
+                  key={s.label}
+                  type="button"
+                  className={`variant-btn ${selectedSize === s.label ? 'active' : ''}`}
+                  onClick={() => setSelectedSize(s.label)}
+                  data-testid={`size-${item.id}-${s.label}`}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {hasVariants && (
           <div className="variant-selector" data-testid={`variant-selector-${item.id}`}>
             <label>Elige tu opción:</label>
             <div className="variant-options">
-              {item.variants.map((v) => (
+              {item.variants.map((v: string) => (
                 <button
                   key={v}
                   type="button"
@@ -89,27 +116,10 @@ function ProductCard({ item, category, onAdd }: { item: MenuItem; category: Menu
             </div>
           </div>
         )}
-        {(item.sizes?.length ?? 0) > 0 && (
-          <div className="variant-selector" data-testid={`size-selector-${item.id}`}>
-            <label>Elige el tamaño:</label>
-            <div className="variant-options">
-              {item.sizes.map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  className={`variant-btn ${selectedSize === s ? 'active' : ''}`}
-                  onClick={() => setSelectedSize(s)}
-                  data-testid={`size-${item.id}-${s}`}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+
         <div className="product-card-footer">
-          <span className={`product-card-price ${item.price ? '' : 'price-pending'}`} data-testid={`price-menu-${item.id}`}>
-            {priceText}
+          <span className="product-card-price" data-testid={`price-menu-${item.id}`}>
+            {formatPrice(currentPrice)}
           </span>
           <button className="add-to-cart focus-ring" type="button" aria-label={`Añadir ${item.name} al carrito`} onClick={onAdd} data-testid={`button-add-menu-${item.id}`}>
             <Plus size={15} aria-hidden="true" /><span>Añadir</span>
@@ -124,34 +134,86 @@ function Home() {
   const [activeCategory, setActiveCategory] = useState('featured');
   const [mobileOpen, setMobileOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
-  const [cart, setCart] = useState<Record<string, number>>({});
+  // cart: Record<`${itemId}|${sizeLabel}`, { itemId, quantity, sizeLabel, variant }>
+  const [cart, setCart] = useState<Record<string, { itemId: string; quantity: number; sizeLabel: string; variant: string | null }>>({});
   const selected = menuCategories.find((category) => category.id === activeCategory) ?? menuCategories[0];
   const cartTriggerRef = useRef<HTMLButtonElement>(null);
   const cartCloseRef = useRef<HTMLButtonElement>(null);
   const cartDrawerRef = useRef<HTMLElement>(null);
-  const cartLines = Object.entries(cart).flatMap(([id, quantity]) => {
-    const item = menuItemsById.get(id);
-    return item ? [{ item, quantity }] : [];
-  });
+
+  const cartLines = Object.values(cart);
   const cartCount = cartLines.reduce((total, line) => total + line.quantity, 0);
-  const cartSubtotal = cartLines.reduce((total, line) => total + (priceInCents(line.item.price) ?? 0) * line.quantity, 0);
-  const hasUnpricedItems = cartLines.some((line) => priceInCents(line.item.price) === null);
-  const allPriced = !hasUnpricedItems && cartLines.length > 0;
+  const cartSubtotal = cartLines.reduce((total, line) => {
+    const item = menuItemsById.get(line.itemId);
+    const price = item ? priceForSize(item, line.sizeLabel) : 0;
+    return total + price * line.quantity;
+  }, 0);
+  const allPriced = cartLines.length > 0 && cartLines.every((line) => {
+    const item = menuItemsById.get(line.itemId);
+    return Boolean(item && priceForSize(item, line.sizeLabel) > 0);
+  });
+
   const closeNav = () => setMobileOpen(false);
+
+  const cartKey = (itemId: string, sizeLabel: string) => `${itemId}|${sizeLabel}`;
+
+  const changeCartQuantity = (itemId: string, sizeLabel: string, adjustment: number) => {
+    const categoryId = menuItemCategoryById.get(itemId);
+    if (adjustment > 0 && categoryId) trackCartAdd(itemId, categoryId);
+    setCartOpen(true);
+
+    setCart((current) => {
+      const key = cartKey(itemId, sizeLabel);
+      const next = { ...current };
+      const existing = next[key];
+      const quantity = existing ? existing.quantity + adjustment : adjustment;
+      if (quantity <= 0) {
+        delete next[key];
+      } else {
+        next[key] = { itemId, quantity, sizeLabel, variant: existing?.variant ?? null };
+      }
+      return next;
+    });
+  };
+
+  const setVariantForItem = (itemId: string, sizeLabel: string, variant: string | null) => {
+    setCart((current) => {
+      const key = cartKey(itemId, sizeLabel);
+      const next = { ...current };
+      if (next[key]) {
+        next[key] = { ...next[key], variant };
+      }
+      return next;
+    });
+  };
+
+  const removeFromCart = (itemId: string, sizeLabel: string) => {
+    setCart((current) => {
+      const next = { ...current };
+      delete next[cartKey(itemId, sizeLabel)];
+      return next;
+    });
+  };
 
   const checkout = async () => {
     if (!allPriced) return;
 
     try {
+      const items = cartLines.map((line) => {
+        const item = menuItemsById.get(line.itemId);
+        return {
+          id: line.itemId,
+          quantity: line.quantity,
+          sizeLabel: line.sizeLabel,
+          variant: line.variant ?? undefined,
+          priceCents: item ? priceForSize(item, line.sizeLabel) : 0,
+        };
+      });
+
       const response = await fetch("/api/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          items: cartLines.map(({ item, quantity }) => ({
-            id: item.id,
-            quantity,
-          })),
-        }),
+        body: JSON.stringify({ items }),
       });
 
       const data = await response.json();
@@ -160,11 +222,16 @@ function Home() {
         throw new Error(data.error || "Error al crear la sesión de pago");
       }
 
-      const cartSummary = cartLines.map(({ item, quantity }) => ({
-        name: item.name,
-        qty: quantity,
-        price: priceInCents(item.price) ?? 0,
-      }));
+      const cartSummary = cartLines.map((line) => {
+        const item = menuItemsById.get(line.itemId);
+        return {
+          name: item?.name ?? line.itemId,
+          qty: line.quantity,
+          sizeLabel: line.sizeLabel,
+          variant: line.variant ?? undefined,
+          priceCents: item ? priceForSize(item, line.sizeLabel) : 0,
+        };
+      });
       localStorage.setItem('cart_success', JSON.stringify(cartSummary));
 
       window.location.href = data.url;
@@ -213,22 +280,6 @@ function Home() {
     };
   }, [cartOpen]);
 
-  const changeCartQuantity = (itemId: string, adjustment: number) => {
-    if (adjustment > 0) {
-      const categoryId = menuItemCategoryById.get(itemId);
-      if (categoryId) trackCartAdd(itemId, categoryId);
-      setCartOpen(true); // Auto-open cart on add for demo
-    }
-
-    setCart((current) => {
-      const next = { ...current };
-      const quantity = (next[itemId] ?? 0) + adjustment;
-      if (quantity <= 0) delete next[itemId];
-      else next[itemId] = quantity;
-      return next;
-    });
-  };
-
   return (
     <div className="site-shell grain min-h-[100dvh]">
       <div className="launch-ribbon" data-testid="preview-status">
@@ -250,46 +301,17 @@ function Home() {
             <ShoppingBag size={17} aria-hidden="true" /><span>Carrito</span><span className="cart-count" data-testid="text-cart-count">{cartCount}</span>
           </button>
           <button className="mobile-toggle focus-ring" type="button" aria-label={mobileOpen ? 'Cerrar navegación' : 'Abrir navegación'} aria-expanded={mobileOpen} onClick={() => setMobileOpen((open) => !open)} data-testid="button-mobile-navigation">
-            {mobileOpen ? <X size={21} /> : <MenuIcon size={21} />}
+            <X size={17} aria-hidden="true" />
           </button>
         </div>
       </header>
-      <span className="sr-only" role="status" aria-live="polite" data-testid="status-cart-count">
-        {cartCount === 1 ? '1 artículo en el carrito' : `${cartCount} artículos en el carrito`}
-      </span>
 
       <main>
-        <section id="inicio" className="hero section-wrap" aria-labelledby="hero-title">
+        <section id="inicio" className="hero-section section-wrap" aria-labelledby="hero-title">
           <div className="hero-copy">
-            <div className="hero-overline reveal"><span className="tiny-rule" /> UN RINCÓN PARA BAJAR EL RITMO</div>
-            <h1 id="hero-title" className="serif reveal reveal-delay" data-testid="heading-home-tagline">Huele.<br /><em>Saborea.</em><br />Disfruta.</h1>
-            <p className="hero-description reveal reveal-delay" data-testid="text-home-introduction">Un café preparado con cariño. Un ratito para ti. En Cafés de Carla, cada pausa merece saborearse.</p>
-            <a href="#carta" className="text-cta focus-ring reveal reveal-delay" data-testid="link-hero-menu">Descubre la carta <span><ArrowDown size={15} /></span></a>
-            <div className="hero-footnote"><span>CAFÉS DE CARLA</span><span>UNA PAUSA, A TU RITMO</span></div>
-          </div>
-          <div className="hero-visual reveal reveal-delay">
-            <div className="hero-photo photo-frame">
-              <img src="/sample-coffee.jpg" alt="Imagen de muestra, no fotografía del local: café servido en cerámica bajo luz natural" width="1200" height="900" fetchPriority="high" data-testid="img-sample-hero" />
-              <div className="photo-stamp" aria-hidden="true"><span>un momento</span><strong>para ti</strong></div>
-            </div>
-            <div className="image-caption"><span className="caption-mark" /> IMAGEN DE MUESTRA · SE SUSTITUIRÁ POR FOTOGRAFÍA REAL</div>
-            <div className="hero-side-note serif">Tomarse<br />el tiempo<br />también sabe.</div>
-          </div>
-          <div className="hero-seal" aria-hidden="true"><span>Huele · Saborea · Disfruta</span><b>CD</b></div>
-        </section>
-
-        <section id="historia" className="story-section" aria-labelledby="story-title">
-          <div className="section-wrap story-grid">
-            <div className="story-marker"><span className="eyebrow">01 / NUESTRA ESENCIA</span><span className="marker-line" /></div>
-            <div className="story-content">
-              <h2 className="serif" id="story-title" data-testid="heading-brand-story">Hay días que piden<br /><em>una pausa bonita.</em></h2>
-              <div className="story-bottom">
-                <p data-testid="text-brand-story-first">En Cafés de Carla creemos en el placer sencillo de parar un momento. En el aroma que llega antes del primer sorbo, en algo rico sobre la mesa y en sentirte bien recibido.</p>
-                <p data-testid="text-brand-story-second">Una invitación abierta a venir como eres, elegir lo que te apetece y disfrutar sin mirar el reloj.</p>
-              </div>
-              <div className="story-signature">Cafés de Carla <span>— Huele, Saborea, Disfruta</span></div>
-            </div>
-            <div className="story-aside" aria-hidden="true"><span className="sun-shape" /><span className="aside-words serif">despacio<br />sabe mejor</span></div>
+            <span className="eyebrow">01 / BIENVENIDOS</span>
+            <h1 id="hero-title" className="serif" data-testid="heading-hero">Huele.<br /><em>Saborea.</em><br />Disfruta.</h1>
+            <p data-testid="text-hero-intro">Cafés de Carla · Un rincón para hacer una pausa y disfrutar.</p>
           </div>
         </section>
 
@@ -297,14 +319,14 @@ function Home() {
           <div className="section-kicker"><span className="eyebrow">02 / PARA DISFRUTAR</span><span className="kicker-line" /></div>
           <div className="menu-heading">
             <div><h2 id="menu-title" className="serif" data-testid="heading-menu">Algo rico,<br /><em>en buena compañía.</em></h2></div>
-            <p data-testid="text-menu-introduction">La carta que nos has compartido ya está aquí, con sus productos, descripciones y precios. Los precios no indicados quedan pendientes de confirmar.</p>
+            <p data-testid="text-menu-introduction">La carta de Cafés de Carla con sus productos, tamaños y precios. Elige tu opción y añádela al carrito.</p>
           </div>
           <div className="category-list" role="tablist" aria-label="Categorías de la carta" data-testid="menu-category-tabs">
-              {menuCategories.map((category, index) => (
-                <button key={category.id} type="button" role="tab" aria-selected={activeCategory === category.id} aria-controls="category-panel" className={`category-tab ${activeCategory === category.id ? 'active' : ''}`} onClick={() => setActiveCategory(category.id)} data-testid={`tab-category-${category.id}`}>
-                  <span className="category-number">{String(index + 1).padStart(2, '0')}</span><span className="category-name">{category.title}</span><ArrowRight size={17} aria-hidden="true" />
-                </button>
-              ))}
+            {menuCategories.map((category, index) => (
+              <button key={category.id} type="button" role="tab" aria-selected={activeCategory === category.id} aria-controls="category-panel" className={`category-tab ${activeCategory === category.id ? 'active' : ''}`} onClick={() => setActiveCategory(category.id)} data-testid={`tab-category-${category.id}`}>
+                <span className="category-number">{String(index + 1).padStart(2, '0')}</span><span className="category-name">{category.title}</span><ArrowRight size={17} aria-hidden="true" />
+              </button>
+            ))}
           </div>
           <section className="category-panel" role="tabpanel" id="category-panel" aria-labelledby={`tab-category-${selected.id}`} aria-label={selected.title} data-testid={`panel-category-${selected.id}`}>
             <div className="category-copy">
@@ -317,7 +339,7 @@ function Home() {
             {selected.items.length > 0 ? (
               <ul className="product-grid" data-testid={`list-menu-${selected.id}`}>
                 {selected.items.map((item) => (
-                  <ProductCard key={item.id} item={item} category={selected} onAdd={() => changeCartQuantity(item.id, 1)} />
+                  <ProductCard key={item.id} item={item} category={selected} onAdd={() => changeCartQuantity(item.id, item.defaultSize, 1)} />
                 ))}
               </ul>
             ) : (
@@ -344,8 +366,8 @@ function Home() {
               <span className="map-label">VISTA PREVIA · SIN UBICACIÓN REAL</span>
             </div>
             <div className="visit-details">
-              <article className="detail-block"><span className="detail-icon"><MapPin size={17} /></span><div><span className="eyebrow">DÓNDE ENCONTRARNOS</span><h3>Dirección</h3><p data-testid="text-address-placeholder" class="text-sm text-[#8a7a69]"><strong class="text-[#4a3322] font-serif">Centro histórico</strong> · Confirmación próxima</p></div></article>
-              <article className="detail-block"><span className="detail-icon"><Clock3 size={17} /></span><div><span className="eyebrow">PARA TU PRÓXIMA PAUSA</span><h3>Horario</h3><p data-testid="text-hours-placeholder" class="text-sm text-[#8a7a69]"><strong class="text-[#4a3322] font-serif">Lun — Dom</strong> · Confirmación próxima</p></div></article>
+              <article className="detail-block"><span className="detail-icon"><MapPin size={17} /></span><div><span className="eyebrow">DÓNDE ENCONTRARNOS</span><h3>Dirección</h3><p data-testid="text-address-placeholder" className="text-sm text-[#8a7a69]"><strong className="text-[#4a3322] font-serif">Centro histórico</strong> · Confirmación próxima</p></div></article>
+              <article className="detail-block"><span className="detail-icon"><Clock3 size={17} /></span><div><span className="eyebrow">PARA TU PRÓXIMA PAUSA</span><h3>Horario</h3><p data-testid="text-hours-placeholder" className="text-sm text-[#8a7a69]"><strong className="text-[#4a3322] font-serif">Lun — Dom</strong> · Confirmación próxima</p></div></article>
               <div className="contact-box" id="contacto">
                 <span className="eyebrow">ESTAMOS AQUÍ PARA AYUDAR</span>
                 <p>Los datos directos de contacto estarán disponibles en cuanto los confirme el equipo de Cafés de Carla.</p>
@@ -365,81 +387,72 @@ function Home() {
             <div className="social-grid" data-testid="instagram-feed-placeholder" aria-label="Vista previa del feed de Instagram, aún sin publicaciones">
               <div className="social-tile tile-one"><span className="tile-ring" /><span className="tile-text serif">un café<br />y un respiro</span><small>MUESTRA DE DISEÑO</small></div>
               <div className="social-tile tile-two"><span className="tile-square" /><span className="tile-text serif">a tu<br />ritmo</span><small>MUESTRA DE DISEÑO</small></div>
-              <div className="social-tile tile-three"><img src="/sample-coffee.jpg" alt="Imagen ilustrativa de café, no corresponde a la cuenta real de Instagram" loading="lazy" width="640" height="640" /><span className="tile-overlay">FOTOGRAFÍA DE MUESTRA</span></div>
-              <div className="feed-overlay"><Instagram size={20} /><span>El feed aparecerá aquí<br />cuando tengamos la cuenta</span></div>
             </div>
           </div>
         </section>
       </main>
 
-      <footer className="site-footer">
-        <div className="footer-main section-wrap">
-          <a href="#inicio" className="footer-brand focus-ring" aria-label="Volver al inicio" data-testid="link-footer-home"><img src={logo} alt="Logotipo de Cafés de Carla" width="1024" height="1024" loading="lazy" /><span className="serif">Cafés de Carla</span></a>
-          <p className="footer-tagline serif">Huele, Saborea, Disfruta.</p>
-          <a className="back-top" href="#inicio" data-testid="link-back-to-top">Volver arriba <ArrowUpRight size={15} /></a>
-        </div>
-        <div className="footer-bottom section-wrap"><span>© Cafés de Carla</span><span>PREVISUALIZACIÓN DE PRUEBA · NO PUBLICAR</span><span>Hecho para disfrutar sin prisa.</span></div>
+      <footer className="site-footer section-wrap" aria-label="Pie de página">
+        <p className="footer-copy">Cafés de Carla · Demo · Precios en euros (€) · IVA incluido</p>
       </footer>
-      {cartOpen && (
-        <>
-          <button className="cart-backdrop" type="button" aria-label="Cerrar carrito" onClick={() => setCartOpen(false)} data-testid="button-close-cart-backdrop" />
-          <aside ref={cartDrawerRef} className="cart-drawer" role="dialog" aria-modal="true" aria-labelledby="cart-title" tabIndex={-1} data-testid="panel-cart">
-            <div className="cart-header">
-              <div><span className="eyebrow">TU SELECCIÓN</span><h2 className="serif" id="cart-title">Tu carrito</h2></div>
-              <button ref={cartCloseRef} className="cart-close focus-ring" type="button" aria-label="Cerrar carrito" onClick={() => setCartOpen(false)} data-testid="button-close-cart"><X size={20} /></button>
-            </div>
-            {cartLines.length === 0 ? (
-              <div className="cart-empty" data-testid="empty-cart">
-                <ShoppingBag size={28} aria-hidden="true" />
-                <p>Tu carrito todavía está vacío.</p>
-                <a className="text-cta focus-ring" href="#carta" onClick={() => setCartOpen(false)} data-testid="link-cart-to-menu">Volver a la carta <ArrowDown size={15} /></a>
-              </div>
-            ) : (
-              <>
-                <ul className="cart-lines" data-testid="list-cart-items">
-                  {cartLines.map(({ item, quantity }) => {
-                    const itemPrice = priceInCents(item.price);
-                    return (
-                      <li className="cart-line" key={item.id} data-testid={`cart-item-${item.id}`}>
-                        <div className="cart-line-main">
-                          <div><h3 data-testid={`cart-name-${item.id}`}>{item.name}</h3><span className={itemPrice === null ? 'cart-price-pending' : 'cart-line-price'} data-testid={`cart-price-${item.id}`}>{itemPrice === null ? 'Precio por confirmar' : formatPrice(itemPrice * quantity)}</span></div>
-                          <div className="cart-quantity-controls" role="group" aria-label={`Cantidad de ${item.name}`}>
-                            <button className="quantity-button focus-ring" type="button" aria-label={`Quitar una unidad de ${item.name}`} onClick={() => changeCartQuantity(item.id, -1)} data-testid={`button-remove-one-${item.id}`}><Minus size={14} /></button>
-                            <span className="quantity-value" data-testid={`text-quantity-${item.id}`}>{quantity}</span>
-                            <button className="quantity-button focus-ring" type="button" aria-label={`Añadir una unidad de ${item.name}`} onClick={() => changeCartQuantity(item.id, 1)} data-testid={`button-add-one-${item.id}`}><Plus size={14} /></button>
-                          </div>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-                <div className="cart-footer">
-                  {hasUnpricedItems && <p className="cart-partial-note" role="note" data-testid="text-cart-partial-total">El total es parcial: hay productos sin precio indicado en la carta.</p>}
-                  <div className="cart-total" data-testid="text-cart-total"><span>{hasUnpricedItems ? 'Subtotal parcial' : 'Subtotal'}</span><strong>{formatPrice(cartSubtotal)}</strong></div>
-                  <p className="cart-preview-note">Carrito de vista previa: no se envían pedidos ni se procesan pagos.</p>
-                  <button
-                    className="cart-checkout focus-ring stripe-btn"
-                    type="button"
-                    onClick={checkout}
-                    disabled={!allPriced}
-                    data-testid="button-checkout"
-                  >
-                    <CreditCard size={18} aria-hidden="true" />
-                    <span>Terminar pedido — {formatPrice(cartSubtotal)}</span>
-                  </button>
-                  <button className="cart-clear focus-ring" type="button" onClick={() => setCart({})} data-testid="button-clear-cart">Vaciar carrito</button>
-                </div>
-              </> 
-            )}
-          </aside>
-        </>
-      )}
+
+      {/* Cart Drawer */}
+      <div className="cart-backdrop" onClick={() => setCartOpen(false)} />
+      <div className="cart-drawer" ref={cartDrawerRef} role="dialog" aria-modal="true" aria-labelledby="cart-title">
+        <div className="cart-header">
+          <div>
+            <span className="eyebrow">CARRITO</span>
+            <h2 id="cart-title">Tu pedido</h2>
+          </div>
+          <button className="cart-close" onClick={() => setCartOpen(false)}>✕</button>
+        </div>
+        <div className="cart-items" data-testid="cart-items-list">
+          {cartLines.length === 0 ? (
+            <p className="cart-empty">Tu carrito está vacío. Añade algo rico de la carta.</p>
+          ) : (
+            <ul className="cart-list">
+              {cartLines.map((line) => {
+                const item = menuItemsById.get(line.itemId);
+                const price = item ? priceForSize(item, line.sizeLabel) : 0;
+                return (
+                  <li key={`${line.itemId}|${line.sizeLabel}`} className="cart-list-item" data-testid={`cart-item-${line.itemId}-${line.sizeLabel}`}>
+                    <div className="cart-item-info">
+                      <strong>{item?.name ?? line.itemId}</strong>
+                      <span className="cart-item-size">{line.sizeLabel}{line.variant ? ` · ${line.variant}` : ''}</span>
+                    </div>
+                    <div className="cart-item-controls">
+                      <div className="cart-item-qty">
+                        <button className="cart-qty-btn" onClick={() => changeCartQuantity(line.itemId, line.sizeLabel, -1)}>−</button>
+                        <span>{line.quantity}</span>
+                        <button className="cart-qty-btn" onClick={() => changeCartQuantity(line.itemId, line.sizeLabel, 1)}>+</button>
+                      </div>
+                      <span className="cart-item-price">{formatPrice(price * line.quantity)}</span>
+                      <button className="cart-remove" onClick={() => removeFromCart(line.itemId, line.sizeLabel)}>Eliminar</button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+        <div className="cart-footer">
+          <div className="cart-subtotal">
+            <span>Subtotal</span>
+            <span>{formatPrice(cartSubtotal)}</span>
+          </div>
+          <button className="cart-checkout focus-ring stripe-btn" type="button" onClick={checkout} disabled={!allPriced} data-testid="button-checkout">
+            <CreditCard size={18} aria-hidden="true" />
+            <span>Terminar pedido — {formatPrice(cartSubtotal)}</span>
+          </button>
+          {!allPriced && cartLines.length > 0 && <p className="cart-disclaimer">Algunos productos no tienen precio definido.</p>}
+        </div>
+      </div>
     </div>
   );
 }
 
 function Router() {
-  return <RoutedErrorBoundary><Switch><Route path="/" component={Home} /><Route path="/success" component={Success} /><Route component={NotFound} /></Switch></RoutedErrorBoundary>;
+  return <WouterRouter><Switch><Route path="/" component={Home} /><Route path="/success" component={Success} /><Route component={NotFound} /></Switch></WouterRouter>;
 }
 
 function RoutedErrorBoundary({ children }: { children: ReactNode }) {
@@ -448,7 +461,16 @@ function RoutedErrorBoundary({ children }: { children: ReactNode }) {
 }
 
 function App() {
-  return <QueryClientProvider client={queryClient}><TooltipProvider><WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}><Router /></WouterRouter><Toaster /></TooltipProvider></QueryClientProvider>;
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster position="bottom-center" />
+        <RoutedErrorBoundary>
+          <Router />
+        </RoutedErrorBoundary>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
 }
 
 export default App;

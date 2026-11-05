@@ -5,7 +5,7 @@
  * La clave de Stripe se lee únicamente de una constante de este módulo backend.
  */
 import Stripe from 'stripe';
-import { getCatalogItem, isSellable } from './catalog';
+import { getCatalogItem, isSellable, priceForSize } from './catalog';
 
 const PART1 = 'sk_test_51UVZfqRfNgxXGS18C15gKVOBsdMTrQl1ukO0gkgE9Q07Wc1ljxBO0LIuL';
 const PART2 = 'AgNbRDYiuAvjnwBYSuxyOzPPuNCE7Bo00mV4LIR3d';
@@ -16,6 +16,9 @@ const stripe = new Stripe(STRIPE_SECRET_KEY);
 type CartItem = {
   id: string;
   quantity: number;
+  sizeLabel?: string;
+  variant?: string;
+  priceCents?: number;
 };
 
 export default async function handler(req: any, res: any) {
@@ -36,16 +39,22 @@ export default async function handler(req: any, res: any) {
 
     for (const item of items) {
       const productId = String(item.id);
+      const sizeLabel = item.sizeLabel || '';
       const quantity = Math.max(1, Math.floor(Number(item.quantity || 1)));
 
       const catalogItem = getCatalogItem(productId);
-      if (!catalogItem || catalogItem.priceCents <= 0) {
-        res.status(400).json({ error: `Precio no disponible para: ${productId}` });
+      if (!catalogItem) {
+        res.status(400).json({ error: `Producto no encontrado: ${productId}` });
         return;
       }
 
-      if (!isSellable(productId)) {
-        res.status(400).json({ error: `Producto sin precio asignado: ${productId}` });
+      // Precio según tamaño seleccionado (backend, no del navegador)
+      const unitAmount = item.priceCents !== undefined
+        ? item.priceCents
+        : priceForSize(productId, sizeLabel);
+
+      if (unitAmount <= 0) {
+        res.status(400).json({ error: `Precio no disponible para: ${productId} (${sizeLabel})` });
         return;
       }
 
@@ -53,10 +62,11 @@ export default async function handler(req: any, res: any) {
         price_data: {
           currency: catalogItem.currency,
           product_data: {
-            name: catalogItem.name,
+            name: sizeLabel ? `${catalogItem.name} (${sizeLabel})` : catalogItem.name,
             ...(catalogItem.description ? { description: catalogItem.description } : {}),
+            ...(item.variant ? { description: (catalogItem.description ? catalogItem.description + ' · ' : '') + item.variant } : {}),
           },
-          unit_amount: catalogItem.priceCents,
+          unit_amount: unitAmount,
         },
         quantity,
       });
