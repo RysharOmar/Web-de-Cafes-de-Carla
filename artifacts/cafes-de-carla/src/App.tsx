@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { ArrowDown, ArrowRight, ArrowUpRight, Clock3, CreditCard, Instagram, MapPin, Menu as MenuIcon, Minus, Phone, Plus, ShoppingBag, X } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, Clock3, CreditCard, Instagram, MapPin, Phone, Plus, ShoppingBag, X } from 'lucide-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
@@ -277,8 +277,6 @@ function Home() {
         <span className="ribbon-dot" aria-hidden="true" />
         Vista previa de pre-lanzamiento · datos por confirmar
       </div>
-
-      {/* Header */}
       <header className="site-header">
         <div className="header-inner section-wrap">
           <a href="#inicio" className="brand-link focus-ring" aria-label="Cafés de Carla, inicio" data-testid="link-brand-home">
@@ -300,34 +298,14 @@ function Home() {
       </header>
 
       <main>
-        {/* Sección 1: Héroe - usando clases CSS originales */}
-        <section id="inicio" className="hero" aria-labelledby="hero-title">
+        <section id="inicio" className="hero-section section-wrap" aria-labelledby="hero-title">
           <div className="hero-copy">
-            <div className="hero-overline">
-              <span className="eyebrow">UN RINCÓN PARA BAJAR EL RITMO</span>
-            </div>
-            <h1 id="hero-title" className="serif" data-testid="heading-hero">Huele.<br /><em className="text-[#738e4d]">Saborea.</em><br />Disfruta.</h1>
-            <p className="hero-description" data-testid="text-hero-intro">Un café preparado con cariño. Un ratito para ti. En Cafés de Carla, cada pausa merece saberse.</p>
-            <button className="text-cta focus-ring" onClick={() => setActiveCategory('carta')}>
-              Descubre la carta
-              <span><ArrowDown size={16} aria-hidden="true" /></span>
-            </button>
-            <div className="hero-footnote">
-              <span>CAFÉS DE CARLA</span>
-              <span>UNA PAUSA, A TU RITMO</span>
-              <span>CD</span>
-            </div>
-          </div>
-          <div className="hero-visual">
-            <div className="hero-photo">
-              <img src="/sample-coffee.jpg" alt="Café de especialidad con croissant" width="600" height="600" data-testid="img-hero" />
-            </div>
-            <div className="photo-stamp"><span>momento</span><strong>para ti</strong></div>
-            <div className="hero-side-note">tómate el<br />tiempo<br />también<br />sabe.</div>
+            <span className="eyebrow">01 / BIENVENIDOS</span>
+            <h1 id="hero-title" className="serif" data-testid="heading-hero">Huele.<br /><em>Saborea.</em><br />Disfruta.</h1>
+            <p data-testid="text-hero-intro">Cafés de Carla · Un rincón para hacer una pausa y disfrutar.</p>
           </div>
         </section>
 
-        {/* Sección 2: Carta */}
         <section id="carta" className="menu-section section-wrap" aria-labelledby="menu-title">
           <div className="section-kicker"><span className="eyebrow">02 / PARA DISFRUTAR</span><span className="kicker-line" /></div>
           <div className="menu-heading">
@@ -362,34 +340,41 @@ function Home() {
           <p className="menu-disclaimer" data-testid="text-menu-preview-disclosure">Precios transcritos de la carta compartida; los que no figuraban se muestran por confirmar. Las fotos son ilustrativas y se sustituirán por imágenes reales de los productos.</p>
         </section>
 
-        {/* Pausa */}
         <section className="pause-band" aria-label="Eslogan de Cafés de Carla">
           <div className="pause-inner section-wrap"><span className="pause-small">EL PLACER DE HACER UNA COSA A LA VEZ</span><p className="serif">“Cafés de Carla: Huele, Saborea, Disfruta”</p><span className="pause-ornament" aria-hidden="true" /></div>
         </section>
 
-        {/* Sección 3: Nuestra esencia - usando clases CSS originales */}
-        <section className="story-section" id="visitanos" aria-labelledby="visit-title">
-          <div className="story-grid">
-            <div className="story-aside"><div className="sun-shape" /><div className="aside-words">despacio<br />sabe<br />mejor</div></div>
-            <div className="story-content">
-              <h2 id="visit-title" className="serif" data-testid="heading-visit">Hay días que piden<br /><em>una pausa bonita.</em></h2>
-              <div className="story-bottom">
-                <p>En Cafés de Carla creemos en el placer sencillo de parar un momento. En el aroma que llega antes del primer sorbo, en algo rico sobre la mesa y en sentirse bien recibido.</p>
+        <section className="visit-section section-wrap" id="visitanos" aria-labelledby="visit-title">
+          <div className="section-kicker"><span className="eyebrow">03 / CUANDO QUIERAS</span><span className="kicker-line" /></div>
+          <div className="visit-heading">
+            <h2 id="visit-title" className="serif" data-testid="heading-visit">La mesa está<br /><em>por poner.</em></h2>
+            <p data-testid="text-visit-introduction">Queremos que encontrar Cafés de Carla sea fácil. Estamos preparando esta información con los datos oficiales del negocio.</p>
+          </div>
+          <div className="visit-grid">
+            <div className="map-placeholder" role="img" aria-label="Mapa pendiente de añadir cuando se confirme la dirección" data-testid="map-preview-placeholder">
+              <div className="map-pattern" aria-hidden="true" />
+              <div className="map-card"><span className="map-pin"><MapPin size={18} /></span><div><strong>El mapa viene pronto</strong><p>Añadiremos la ubicación exacta al confirmar la dirección.</p></div></div>
+              <span className="map-label">VISTA PREVIA · SIN UBICACIÓN REAL</span>
+            </div>
+            <div className="visit-details">
+              <article className="detail-block"><span className="detail-icon"><MapPin size={17} /></span><div><span className="eyebrow">DÓNDE ENCONTRARNOS</span><h3>Dirección</h3><p data-testid="text-address-placeholder" className="text-sm text-[#8a7a69]"><strong className="text-[#4a3322] font-serif">Centro histórico</strong> · Confirmación próxima</p></div></article>
+              <article className="detail-block"><span className="detail-icon"><Clock3 size={17} /></span><div><span className="eyebrow">PARA TU PRÓXIMA PAUSA</span><h3>Horario</h3><p data-testid="text-hours-placeholder" className="text-sm text-[#8a7a69]"><strong className="text-[#4a3322] font-serif">Lun — Dom</strong> · Confirmación próxima</p></div></article>
+              <div className="contact-box" id="contacto">
+                <span className="eyebrow">ESTAMOS AQUÍ PARA AYUDAR</span>
+                <p>Los datos directos de contacto estarán disponibles en cuanto los confirme el equipo de Cafés de Carla.</p>
+                <div className="contact-placeholders">
+                  <span className="contact-placeholder"><Phone size={15} /> Contacto — Confirmación próxima</span>
+                  <span className="contact-placeholder"><span className="whatsapp-mark">W</span> WhatsApp — Confirmación próxima</span>
+                </div>
+                <span className="contact-footnote">No se muestran enlaces hasta confirmar los números oficiales.</span>
               </div>
-              <div className="story-signature">Cafés de Carla <span>— Huele, Saborea, Disfruta</span></div>
             </div>
           </div>
         </section>
 
-        {/* Sección 4: Social / Instagram - usando clases CSS originales */}
         <section className="social-section" aria-labelledby="social-title">
-          <div className="social-inner">
-            <div className="social-copy">
-              <span className="eyebrow">04 / UN POQUITO MÁS CERCA</span>
-              <h2 id="social-title" className="serif" data-testid="heading-social">Lo que pasa<br /><em>al otro lado.</em></h2>
-              <p>Pronto podrás asomarte a nuestro día a día.</p>
-              <span className="social-handle"><Instagram size={17} /> Cuenta de Instagram pendiente de confirmar</span>
-            </div>
+          <div className="section-wrap social-inner">
+            <div className="social-copy"><span className="eyebrow">04 / UN POQUITO MÁS CERCA</span><h2 id="social-title" className="serif">Lo que pasa<br /><em>al otro lado.</em></h2><p>Pronto podrás asomarte a nuestro día a día.</p><span className="social-handle"><Instagram size={17} /> Cuenta de Instagram — Confirmación próxima</span></div>
             <div className="social-grid" data-testid="instagram-feed-placeholder" aria-label="Vista previa del feed de Instagram, aún sin publicaciones">
               <div className="social-tile tile-one"><span className="tile-ring" /><span className="tile-text serif">un café<br />y un respiro</span><small>MUESTRA DE DISEÑO</small></div>
               <div className="social-tile tile-two"><span className="tile-square" /><span className="tile-text serif">a tu<br />ritmo</span><small>MUESTRA DE DISEÑO</small></div>
@@ -398,20 +383,8 @@ function Home() {
         </section>
       </main>
 
-      <footer className="site-footer">
-        <div className="footer-main">
-          <div className="footer-brand">
-            <img src={logo} alt="Cafés de Carla" width="64" height="64" />
-            <span>Cafés de Carla</span>
-          </div>
-          <p className="footer-tagline">Huele, Saborea, Disfruta.</p>
-          <a href="/" className="back-top">Volver arriba <ArrowUpRight size={14} aria-hidden="true" /></a>
-        </div>
-        <div className="footer-bottom">
-          <span>Cafés de Carla</span>
-          <span>PREVISUALIZACIÓN DE PRUEBA · NO PUBLICAR</span>
-          <span>Hecho para disfrutar el café</span>
-        </div>
+      <footer className="site-footer section-wrap" aria-label="Pie de página">
+        <p className="footer-copy">Cafés de Carla · Demo · Precios en euros (€) · IVA incluido</p>
       </footer>
 
       {/* Cart Drawer - only rendered when open */}
@@ -421,20 +394,14 @@ function Home() {
           <div className="cart-drawer" ref={cartDrawerRef} role="dialog" aria-modal="true" aria-labelledby="cart-title">
             <div className="cart-header">
               <div>
-                <span className="eyebrow">TU SELECCIÓN</span>
-                <h2 id="cart-title">Tu carrito</h2>
+                <span className="eyebrow">CARRITO</span>
+                <h2 id="cart-title">Tu pedido</h2>
               </div>
               <button className="cart-close" onClick={() => setCartOpen(false)}>✕</button>
             </div>
             <div className="cart-items" data-testid="cart-items-list">
               {cartLines.length === 0 ? (
-                <div className="cart-empty">
-                  <div className="cart-empty-icon">🛒</div>
-                  <p>Tu carrito todavía está vacío.</p>
-                  <button className="focus-ring" onClick={() => setCartOpen(false)}>
-                    Volver a la carta <ArrowDown size={16} aria-hidden="true" />
-                  </button>
-                </div>
+                <p className="cart-empty">Tu carrito está vacío. Añade algo rico de la carta.</p>
               ) : (
                 <ul className="cart-list">
                   {cartLines.map((line) => {
