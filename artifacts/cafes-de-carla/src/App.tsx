@@ -136,6 +136,9 @@ function Home() {
   const [cartOpen, setCartOpen] = useState(false);
   // cart: Record<`${itemId}|${sizeLabel}`, { itemId, quantity, sizeLabel, variant }>
   const [cart, setCart] = useState<Record<string, { itemId: string; quantity: number; sizeLabel: string; variant: string | null }>>({});
+  const cartTriggerRef = useRef<HTMLButtonElement>(null);
+  const cartCloseRef = useRef<HTMLButtonElement>(null);
+  const cartDrawerRef = useRef<HTMLElement>(null);
 
   const cartLines = Object.values(cart);
   const cartCount = cartLines.reduce((total, line) => total + line.quantity, 0);
