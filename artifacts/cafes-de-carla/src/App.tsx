@@ -300,23 +300,30 @@ function Home() {
       </header>
 
       <main>
-        {/* Sección 1: BIENVENIDOS - Diseño original restaurado */}
-        <section id="inicio" className="hero-section section-wrap" aria-labelledby="hero-title">
-          <div className="hero-grid">
-            <div className="hero-copy">
+        {/* Sección 1: Héroe - usando clases CSS originales */}
+        <section id="inicio" className="hero" aria-labelledby="hero-title">
+          <div className="hero-copy">
+            <div className="hero-overline">
               <span className="eyebrow">UN RINCÓN PARA BAJAR EL RITMO</span>
-              <h1 id="hero-title" className="serif" data-testid="heading-hero">Huele.<br /><em className="text-[#738e4d]">Saborea.</em><br />Disfruta.</h1>
-              <p data-testid="text-hero-intro">Un café preparado con cariño. Un ratito para ti. En Cafés de Carla, cada pausa merece saberse.</p>
-              <button className="focus-ring" onClick={() => setActiveCategory('carta')}>
-                Descubre la carta <ArrowDown size={16} aria-hidden="true" />
-              </button>
             </div>
-            <div className="hero-image">
-              <div className="hero-img-circle">
-                <img src="/sample-coffee.jpg" alt="Café de especialidad con croissant" width="600" height="600" data-testid="img-hero" />
-              </div>
-              <span className="hero-circle-text">tómate<br />el tiempo<br />también sabe.</span>
+            <h1 id="hero-title" className="serif" data-testid="heading-hero">Huele.<br /><em className="text-[#738e4d]">Saborea.</em><br />Disfruta.</h1>
+            <p className="hero-description" data-testid="text-hero-intro">Un café preparado con cariño. Un ratito para ti. En Cafés de Carla, cada pausa merece saberse.</p>
+            <button className="text-cta focus-ring" onClick={() => setActiveCategory('carta')}>
+              Descubre la carta
+              <span><ArrowDown size={16} aria-hidden="true" /></span>
+            </button>
+            <div className="hero-footnote">
+              <span>CAFÉS DE CARLA</span>
+              <span>UNA PAUSA, A TU RITMO</span>
+              <span>CD</span>
             </div>
+          </div>
+          <div className="hero-visual">
+            <div className="hero-photo">
+              <img src="/sample-coffee.jpg" alt="Café de especialidad con croissant" width="600" height="600" data-testid="img-hero" />
+            </div>
+            <div className="photo-stamp"><span>momento</span><strong>para ti</strong></div>
+            <div className="hero-side-note">tómate el<br />tiempo<br />también<br />sabe.</div>
           </div>
         </section>
 
@@ -360,33 +367,27 @@ function Home() {
           <div className="pause-inner section-wrap"><span className="pause-small">EL PLACER DE HACER UNA COSA A LA VEZ</span><p className="serif">“Cafés de Carla: Huele, Saborea, Disfruta”</p><span className="pause-ornament" aria-hidden="true" /></div>
         </section>
 
-        {/* Sección 3: Nuestra esencia */}
-        <section className="visit-section section-wrap" id="visitanos" aria-labelledby="visit-title">
-          <div className="section-kicker"><span className="eyebrow">01 / NUESTRA ESENCIA</span><span className="kicker-line" /></div>
+        {/* Sección 3: Nuestra esencia - usando clases CSS originales */}
+        <section className="story-section" id="visitanos" aria-labelledby="visit-title">
           <div className="story-grid">
-            <div className="story-copy">
+            <div className="story-aside"><div className="sun-shape" /><div className="aside-words">despacio<br />sabe<br />mejor</div></div>
+            <div className="story-content">
               <h2 id="visit-title" className="serif" data-testid="heading-visit">Hay días que piden<br /><em>una pausa bonita.</em></h2>
-              <div className="story-text">
+              <div className="story-bottom">
                 <p>En Cafés de Carla creemos en el placer sencillo de parar un momento. En el aroma que llega antes del primer sorbo, en algo rico sobre la mesa y en sentirse bien recibido.</p>
               </div>
-              <div className="story-signature">Cafés de Carla — Huele, Saborea, Disfruta</div>
-            </div>
-            <div className="story-image">
-              <div className="story-img-wrap">
-                <img src="/sample-coffee.jpg" alt="Momento de pausa en Cafés de Carla" width="600" height="600" data-testid="img-story" />
-              </div>
-              <span className="story-circle-text">despacio<br />sabe mejor</span>
+              <div className="story-signature">Cafés de Carla <span>— Huele, Saborea, Disfruta</span></div>
             </div>
           </div>
         </section>
 
-        {/* Sección 4: Social / Instagram - Diseño original restaurado */}
+        {/* Sección 4: Social / Instagram - usando clases CSS originales */}
         <section className="social-section" aria-labelledby="social-title">
-          <div className="section-wrap social-inner">
+          <div className="social-inner">
             <div className="social-copy">
               <span className="eyebrow">04 / UN POQUITO MÁS CERCA</span>
               <h2 id="social-title" className="serif" data-testid="heading-social">Lo que pasa<br /><em>al otro lado.</em></h2>
-              <p data-testid="text-social-intro">Pronto podrás asomarte a nuestro día a día.</p>
+              <p>Pronto podrás asomarte a nuestro día a día.</p>
               <span className="social-handle"><Instagram size={17} /> Cuenta de Instagram pendiente de confirmar</span>
             </div>
             <div className="social-grid" data-testid="instagram-feed-placeholder" aria-label="Vista previa del feed de Instagram, aún sin publicaciones">
@@ -397,15 +398,20 @@ function Home() {
         </section>
       </main>
 
-      <footer className="site-footer section-wrap" aria-label="Pie de página">
-        <div className="footer-inner">
+      <footer className="site-footer">
+        <div className="footer-main">
           <div className="footer-brand">
             <img src={logo} alt="Cafés de Carla" width="64" height="64" />
             <span>Cafés de Carla</span>
           </div>
           <p className="footer-tagline">Huele, Saborea, Disfruta.</p>
+          <a href="/" className="back-top">Volver arriba <ArrowUpRight size={14} aria-hidden="true" /></a>
         </div>
-        <p className="footer-copy">Cafés de Carla · Demo · Precios en euros (€) · IVA incluido</p>
+        <div className="footer-bottom">
+          <span>Cafés de Carla</span>
+          <span>PREVISUALIZACIÓN DE PRUEBA · NO PUBLICAR</span>
+          <span>Hecho para disfrutar el café</span>
+        </div>
       </footer>
 
       {/* Cart Drawer - only rendered when open */}
