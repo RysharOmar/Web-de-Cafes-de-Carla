@@ -47,6 +47,79 @@ function formatPrice(cents: number) {
   return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(cents / 100);
 }
 
+function ProductCard({ item, category, onAdd }: { item: MenuItem; category: MenuCategory; onAdd: () => void }) {
+  const [selectedVariant, setSelectedVariant] = useState<string | null>(null);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+
+  const variantPrice = item.miniPrice && selectedVariant ? item.miniPrice : item.price;
+  const priceText = variantPrice ? `${variantPrice}${selectedSize ? ` (${selectedSize})` : ''}` : 'Precio por confirmar';
+
+  return (
+    <li className="product-card" key={item.id} data-testid={`item-menu-${item.id}`}>
+      <div className="product-photo">
+        <img
+          src={category.image ?? '/sample-brunch.jpg'}
+          alt={`Imagen de muestra; no es una fotografía real de ${item.name}`}
+          loading="lazy"
+          decoding="async"
+          width="960"
+          height="720"
+          data-testid={`img-product-${item.id}`}
+        />
+        <span className="product-photo-label">IMAGEN DE MUESTRA</span>
+      </div>
+      <div className="product-card-content">
+        <h4 data-testid={`name-menu-${item.id}`}>{item.name}</h4>
+        <p data-testid={`description-menu-${item.id}`}>{item.description ?? 'Detalles por confirmar'}</p>
+        {(item.variants?.length ?? 0) > 0 && (
+          <div className="variant-selector" data-testid={`variant-selector-${item.id}`}>
+            <label>Elige tu opción:</label>
+            <div className="variant-options">
+              {item.variants.map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  className={`variant-btn ${selectedVariant === v ? 'active' : ''}`}
+                  onClick={() => setSelectedVariant(v)}
+                  data-testid={`variant-${item.id}-${v}`}
+                >
+                  {v}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        {(item.sizes?.length ?? 0) > 0 && (
+          <div className="variant-selector" data-testid={`size-selector-${item.id}`}>
+            <label>Elige el tamaño:</label>
+            <div className="variant-options">
+              {item.sizes.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  className={`variant-btn ${selectedSize === s ? 'active' : ''}`}
+                  onClick={() => setSelectedSize(s)}
+                  data-testid={`size-${item.id}-${s}`}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        <div className="product-card-footer">
+          <span className={`product-card-price ${item.price ? '' : 'price-pending'}`} data-testid={`price-menu-${item.id}`}>
+            {priceText}
+          </span>
+          <button className="add-to-cart focus-ring" type="button" aria-label={`Añadir ${item.name} al carrito`} onClick={onAdd} data-testid={`button-add-menu-${item.id}`}>
+            <Plus size={15} aria-hidden="true" /><span>Añadir</span>
+          </button>
+        </div>
+      </div>
+    </li>
+  );
+}
+
 function Home() {
   const [activeCategory, setActiveCategory] = useState('featured');
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -243,57 +316,9 @@ function Home() {
             </div>
             {selected.items.length > 0 ? (
               <ul className="product-grid" data-testid={`list-menu-${selected.id}`}>
-                {selected.items.map((item) => {
-                  const variants = item.variants ?? [];
-                  const [variant, setVariant] = useState<string | null>(null);
-                  const priceText = item.miniPrice ? `${item.miniPrice} / ${item.price}` : item.price ?? 'Precio por confirmar';
-                  return (
-                    <li className="product-card" key={item.id} data-testid={`item-menu-${item.id}`}>
-                      <div className="product-photo">
-                        <img
-                          src={selected.image ?? '/sample-brunch.jpg'}
-                          alt={`Imagen de muestra; no es una fotografía real de ${item.name}`}
-                          loading="lazy"
-                          decoding="async"
-                          width="960"
-                          height="720"
-                          data-testid={`img-product-${item.id}`}
-                        />
-                        <span className="product-photo-label">IMAGEN DE MUESTRA</span>
-                      </div>
-                      <div className="product-card-content">
-                        <h4 data-testid={`name-menu-${item.id}`}>{item.name}</h4>
-                        <p data-testid={`description-menu-${item.id}`}>{item.description ?? 'Detalles por confirmar'}</p>
-                        {variants.length > 0 && (
-                          <div className="variant-selector" data-testid={`variant-selector-${item.id}`}>
-                            <label>Elige tu opción:</label>
-                            <div className="variant-options">
-                              {variants.map((v) => (
-                                <button
-                                  key={v}
-                                  type="button"
-                                  className={`variant-btn ${variant === v ? 'active' : ''}`}
-                                  onClick={() => setVariant(v)}
-                                  data-testid={`variant-${item.id}-${v}`}
-                                >
-                                  {v}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                        <div className="product-card-footer">
-                          <span className={`product-card-price ${item.price ? '' : 'price-pending'}`} data-testid={`price-menu-${item.id}`}>
-                            {priceText}
-                          </span>
-                          <button className="add-to-cart focus-ring" type="button" aria-label={`Añadir ${item.name} al carrito`} onClick={() => changeCartQuantity(item.id, 1)} data-testid={`button-add-menu-${item.id}`}>
-                            <Plus size={15} aria-hidden="true" /><span>Añadir</span>
-                          </button>
-                        </div>
-                      </div>
-                    </li>
-                  );
-                })}
+                {selected.items.map((item) => (
+                  <ProductCard key={item.id} item={item} category={selected} onAdd={() => changeCartQuantity(item.id, 1)} />
+                ))}
               </ul>
             ) : (
               <p className="menu-empty" data-testid={`empty-menu-${selected.id}`}>{selected.emptyMessage}</p>
