@@ -243,34 +243,57 @@ function Home() {
             </div>
             {selected.items.length > 0 ? (
               <ul className="product-grid" data-testid={`list-menu-${selected.id}`}>
-                {selected.items.map((item) => (
-                  <li className="product-card" key={item.id} data-testid={`item-menu-${item.id}`}>
-                    <div className="product-photo">
-                      <img
-                        src={selected.image ?? '/sample-brunch.jpg'}
-                        alt={`Imagen de muestra; no es una fotografía real de ${item.name}`}
-                        loading="lazy"
-                        decoding="async"
-                        width="960"
-                        height="720"
-                        data-testid={`img-product-${item.id}`}
-                      />
-                      <span className="product-photo-label">IMAGEN DE MUESTRA</span>
-                    </div>
-                    <div className="product-card-content">
-                      <h4 data-testid={`name-menu-${item.id}`}>{item.name}</h4>
-                      <p data-testid={`description-menu-${item.id}`}>{item.description ?? 'Detalles por confirmar'}</p>
-                      <div className="product-card-footer">
-                        <span className={`product-card-price ${item.price ? '' : 'price-pending'}`} data-testid={`price-menu-${item.id}`}>
-                          {item.price ?? 'Precio por confirmar'}
-                        </span>
-                        <button className="add-to-cart focus-ring" type="button" aria-label={`Añadir ${item.name} al carrito`} onClick={() => changeCartQuantity(item.id, 1)} data-testid={`button-add-menu-${item.id}`}>
-                          <Plus size={15} aria-hidden="true" /><span>Añadir</span>
-                        </button>
+                {selected.items.map((item) => {
+                  const variants = item.variants ?? [];
+                  const [variant, setVariant] = useState<string | null>(null);
+                  const priceText = item.miniPrice ? `${item.miniPrice} / ${item.price}` : item.price ?? 'Precio por confirmar';
+                  return (
+                    <li className="product-card" key={item.id} data-testid={`item-menu-${item.id}`}>
+                      <div className="product-photo">
+                        <img
+                          src={selected.image ?? '/sample-brunch.jpg'}
+                          alt={`Imagen de muestra; no es una fotografía real de ${item.name}`}
+                          loading="lazy"
+                          decoding="async"
+                          width="960"
+                          height="720"
+                          data-testid={`img-product-${item.id}`}
+                        />
+                        <span className="product-photo-label">IMAGEN DE MUESTRA</span>
                       </div>
-                    </div>
-                  </li>
-                ))}
+                      <div className="product-card-content">
+                        <h4 data-testid={`name-menu-${item.id}`}>{item.name}</h4>
+                        <p data-testid={`description-menu-${item.id}`}>{item.description ?? 'Detalles por confirmar'}</p>
+                        {variants.length > 0 && (
+                          <div className="variant-selector" data-testid={`variant-selector-${item.id}`}>
+                            <label>Elige tu opción:</label>
+                            <div className="variant-options">
+                              {variants.map((v) => (
+                                <button
+                                  key={v}
+                                  type="button"
+                                  className={`variant-btn ${variant === v ? 'active' : ''}`}
+                                  onClick={() => setVariant(v)}
+                                  data-testid={`variant-${item.id}-${v}`}
+                                >
+                                  {v}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        <div className="product-card-footer">
+                          <span className={`product-card-price ${item.price ? '' : 'price-pending'}`} data-testid={`price-menu-${item.id}`}>
+                            {priceText}
+                          </span>
+                          <button className="add-to-cart focus-ring" type="button" aria-label={`Añadir ${item.name} al carrito`} onClick={() => changeCartQuantity(item.id, 1)} data-testid={`button-add-menu-${item.id}`}>
+                            <Plus size={15} aria-hidden="true" /><span>Añadir</span>
+                          </button>
+                        </div>
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             ) : (
               <p className="menu-empty" data-testid={`empty-menu-${selected.id}`}>{selected.emptyMessage}</p>
