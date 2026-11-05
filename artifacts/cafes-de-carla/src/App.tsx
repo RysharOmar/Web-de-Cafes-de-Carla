@@ -136,10 +136,6 @@ function Home() {
   const [cartOpen, setCartOpen] = useState(false);
   // cart: Record<`${itemId}|${sizeLabel}`, { itemId, quantity, sizeLabel, variant }>
   const [cart, setCart] = useState<Record<string, { itemId: string; quantity: number; sizeLabel: string; variant: string | null }>>({});
-  const selected = menuCategories.find((category) => category.id === activeCategory) ?? menuCategories[0];
-  const cartTriggerRef = useRef<HTMLButtonElement>(null);
-  const cartCloseRef = useRef<HTMLButtonElement>(null);
-  const cartDrawerRef = useRef<HTMLElement>(null);
 
   const cartLines = Object.values(cart);
   const cartCount = cartLines.reduce((total, line) => total + line.quantity, 0);
@@ -397,56 +393,60 @@ function Home() {
       </footer>
 
       {/* Cart Drawer */}
-      <div className="cart-backdrop" onClick={() => setCartOpen(false)} />
-      <div className="cart-drawer" ref={cartDrawerRef} role="dialog" aria-modal="true" aria-labelledby="cart-title">
-        <div className="cart-header">
-          <div>
-            <span className="eyebrow">CARRITO</span>
-            <h2 id="cart-title">Tu pedido</h2>
+      {cartOpen && (
+        <>
+          <div className="cart-backdrop" onClick={() => setCartOpen(false)} />
+          <div className="cart-drawer" ref={cartDrawerRef} role="dialog" aria-modal="true" aria-labelledby="cart-title">
+            <div className="cart-header">
+              <div>
+                <span className="eyebrow">CARRITO</span>
+                <h2 id="cart-title">Tu pedido</h2>
+              </div>
+              <button className="cart-close" onClick={() => setCartOpen(false)}>✕</button>
+            </div>
+            <div className="cart-items" data-testid="cart-items-list">
+              {cartLines.length === 0 ? (
+                <p className="cart-empty">Tu carrito está vacío. Añade algo rico de la carta.</p>
+              ) : (
+                <ul className="cart-list">
+                  {cartLines.map((line) => {
+                    const item = menuItemsById.get(line.itemId);
+                    const price = item ? priceForSize(item, line.sizeLabel) : 0;
+                    return (
+                      <li key={`${line.itemId}|${line.sizeLabel}`} className="cart-list-item" data-testid={`cart-item-${line.itemId}-${line.sizeLabel}`}>
+                        <div className="cart-item-info">
+                          <strong>{item?.name ?? line.itemId}</strong>
+                          <span className="cart-item-size">{line.sizeLabel}{line.variant ? ` · ${line.variant}` : ''}</span>
+                        </div>
+                        <div className="cart-item-controls">
+                          <div className="cart-item-qty">
+                            <button className="cart-qty-btn" onClick={() => changeCartQuantity(line.itemId, line.sizeLabel, -1)}>−</button>
+                            <span>{line.quantity}</span>
+                            <button className="cart-qty-btn" onClick={() => changeCartQuantity(line.itemId, line.sizeLabel, 1)}>+</button>
+                          </div>
+                          <span className="cart-item-price">{formatPrice(price * line.quantity)}</span>
+                          <button className="cart-remove" onClick={() => removeFromCart(line.itemId, line.sizeLabel)}>Eliminar</button>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+            <div className="cart-footer">
+              <div className="cart-subtotal">
+                <span>Subtotal</span>
+                <span>{formatPrice(cartSubtotal)}</span>
+              </div>
+              <button className="cart-checkout focus-ring stripe-btn" type="button" onClick={checkout} disabled={!allPriced} data-testid="button-checkout">
+                <CreditCard size={18} aria-hidden="true" />
+                <span>Terminar pedido — {formatPrice(cartSubtotal)}</span>
+              </button>
+              {!allPriced && cartLines.length > 0 && <p className="cart-disclaimer">Algunos productos no tienen precio definido.</p>}
+            </div>
           </div>
-          <button className="cart-close" onClick={() => setCartOpen(false)}>✕</button>
-        </div>
-        <div className="cart-items" data-testid="cart-items-list">
-          {cartLines.length === 0 ? (
-            <p className="cart-empty">Tu carrito está vacío. Añade algo rico de la carta.</p>
-          ) : (
-            <ul className="cart-list">
-              {cartLines.map((line) => {
-                const item = menuItemsById.get(line.itemId);
-                const price = item ? priceForSize(item, line.sizeLabel) : 0;
-                return (
-                  <li key={`${line.itemId}|${line.sizeLabel}`} className="cart-list-item" data-testid={`cart-item-${line.itemId}-${line.sizeLabel}`}>
-                    <div className="cart-item-info">
-                      <strong>{item?.name ?? line.itemId}</strong>
-                      <span className="cart-item-size">{line.sizeLabel}{line.variant ? ` · ${line.variant}` : ''}</span>
-                    </div>
-                    <div className="cart-item-controls">
-                      <div className="cart-item-qty">
-                        <button className="cart-qty-btn" onClick={() => changeCartQuantity(line.itemId, line.sizeLabel, -1)}>−</button>
-                        <span>{line.quantity}</span>
-                        <button className="cart-qty-btn" onClick={() => changeCartQuantity(line.itemId, line.sizeLabel, 1)}>+</button>
-                      </div>
-                      <span className="cart-item-price">{formatPrice(price * line.quantity)}</span>
-                      <button className="cart-remove" onClick={() => removeFromCart(line.itemId, line.sizeLabel)}>Eliminar</button>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </div>
-        <div className="cart-footer">
-          <div className="cart-subtotal">
-            <span>Subtotal</span>
-            <span>{formatPrice(cartSubtotal)}</span>
-          </div>
-          <button className="cart-checkout focus-ring stripe-btn" type="button" onClick={checkout} disabled={!allPriced} data-testid="button-checkout">
-            <CreditCard size={18} aria-hidden="true" />
-            <span>Terminar pedido — {formatPrice(cartSubtotal)}</span>
-          </button>
-          {!allPriced && cartLines.length > 0 && <p className="cart-disclaimer">Algunos productos no tienen precio definido.</p>}
-        </div>
-      </div>
+        </>
+      )}
     </div>
   );
 }
