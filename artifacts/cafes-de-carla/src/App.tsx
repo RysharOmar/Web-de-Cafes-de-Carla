@@ -451,8 +451,7 @@ function Router() {
 }
 
 function RoutedErrorBoundary({ children }: { children: ReactNode }) {
-  const [location] = useLocation();
-  return <ErrorBoundary resetKey={location}>{children}</ErrorBoundary>;
+  return <ErrorBoundary resetKey="/">{children}</ErrorBoundary>;
 }
 
 function App() {
@@ -460,9 +459,11 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster position="bottom-center" />
-        <RoutedErrorBoundary>
-          <Router />
-        </RoutedErrorBoundary>
+        <WouterRouter>
+          <RoutedErrorBoundary>
+            <Router />
+          </RoutedErrorBoundary>
+        </WouterRouter>
       </TooltipProvider>
     </QueryClientProvider>
   );
