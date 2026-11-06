@@ -26,45 +26,64 @@ function formatPrice(cents: number) {
   return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(cents / 100);
 }
 
-const API_BASE = '';
+const STORAGE_KEY = 'cafes_de_carla_orders';
+
+function loadOrdersFromStorage(): Order[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    return JSON.parse(raw);
+  } catch {
+    return [];
+  }
+}
+
+function saveOrdersToStorage(orders: Order[]) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(orders));
+}
 
 export default function Cocina() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'confirmed' | 'served'>('all');
   const [loading, setLoading] = useState(true);
 
-  // Cargar pedidos desde la API
+  // Cargar pedidos desde localStorage
   useEffect(() => {
     refreshOrders();
-    const interval = setInterval(refreshOrders, 3000); // Refrescar cada 3 segundos
+    const interval = setInterval(refreshOrders, 3000);
     return () => clearInterval(interval);
   }, [filterStatus]);
 
-  async function refreshOrders() {
-    try {
-      const res = await fetch(`${API_BASE}/api/orders?status=${filterStatus}`);
-      const data = await res.json();
-      setOrders(data.orders || []);
-    } catch (err) {
-      console.error('Error cargando pedidos:', err);
-    } finally {
-      setLoading(false);
+  function refreshOrders() {
+    setLoading(true);
+    const all = loadOrdersFromStorage();
+    let filtered = all.sort(
+      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
+    if (filterStatus !== 'all') {
+      filtered = filtered.filter((o) => o.status === filterStatus);
     }
+    setOrders(filtered);
+    setLoading(false);
   }
 
   async function updateOrderStatus(orderId: string, newStatus: Order['status']) {
-    try {
-      const res = await fetch(`${API_BASE}/api/orders/${orderId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
-      });
-      if (res.ok) {
-        refreshOrders();
+    const all = loadOrdersFromStorage();
+    const updated = all.map((o) => {
+      if (o.id === orderId) {
+        const now = new Date().toISOString();
+        return {
+          ...o,
+          status: newStatus,
+          ...(newStatus === 'confirmed' ? { confirmedAt: now } : {}),
+          ...(newStatus === 'served' ? { servedAt: now } : {}),
+          ...(newStatus === 'paid' ? { paidAt: now } : {}),
+        };
       }
-    } catch (err) {
-      console.error('Error actualizando pedido:', err);
-    }
+      return o;
+    });
+    saveOrdersToStorage(updated);
+    refreshOrders();
   }
 
   const statusColor: Record<string, string> = {
@@ -80,8 +99,6 @@ export default function Cocina() {
     served: 'Servido',
     paid: 'Pagado',
   };
-
-  const filteredOrders = orders;
 
   return (
     <div className="site-shell grain min-h-[100dvh]">
@@ -134,7 +151,7 @@ export default function Cocina() {
             <Clock size={32} style={{ animation: 'spin 2s linear infinite', display: 'block', margin: '0 auto 16px' }} />
             <p style={{ color: '#7c6f5e', fontSize: '16px', margin: 0 }}>Cargando pedidos...</p>
           </div>
-        ) : filteredOrders.length === 0 ? (
+        ) : orders.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 20px', color: '#7c6f5e' }}>
             <Clock size={48} style={{ marginBottom: '16px', opacity: '.5' }} />
             <p style={{ fontSize: '18px', margin: 0 }}>
@@ -145,7 +162,7 @@ export default function Cocina() {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {filteredOrders.map((order) => (
+            {orders.map((order) => (
               <div
                 key={order.id}
                 style={{
@@ -263,7 +280,7 @@ export default function Cocina() {
       <footer className="site-footer">
         <div className="footer-main section-wrap">
           <span className="footer-tagline serif">Cafés de Carla — Cocina</span>
-          <span style={{ fontSize: '10px', color: '#9a8b75' }}>Panel solo para personal del local</span>
+          <span style={{ fontSize: '10px', color: '#9a8b75' }}>Panel solo para personal del local · Datos en memoria local</span>
         </div>
       </footer>
     </div>

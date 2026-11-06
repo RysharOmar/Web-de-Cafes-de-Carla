@@ -139,6 +139,8 @@ function Home() {
   const searchParams = new URLSearchParams(window.location.search);
   const mesaActiva = searchParams.get('mesa'); // ej: "5" o null
 
+  const STORAGE_KEY = 'cafes_de_carla_orders';
+
   // Estado para rastrear el pedido de la mesa (modo local)
   const [orderStatus, setOrderStatus] = useState<'pending' | 'confirmed' | 'served' | 'paid' | null>(null);
   const [orderItemsFromStorage, setOrderItemsFromStorage] = useState<{ id: string; name: string; quantity: number; sizeLabel: string; variant?: string | null; priceCents: number }[]>([]);
@@ -311,31 +313,32 @@ function Home() {
 
       const totalCents = items.reduce((sum, it) => sum + it.priceCents * it.quantity, 0);
 
-      const response = await fetch("/api/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          table: mesaActiva,
-          items,
-          totalCents,
-        }),
-      });
+      const now = new Date().toISOString();
+      const newOrder: any = {
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+        table: mesaActiva,
+        items,
+        totalCents,
+        status: 'pending',
+        createdAt: now,
+      };
 
-      const data = await response.json();
+      // Guardar en localStorage compartido con la cocina
+      const existing = localStorage.getItem(STORAGE_KEY);
+      const allOrders = existing ? JSON.parse(existing) : [];
+      allOrders.push(newOrder);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(allOrders));
 
-      if (!response.ok) {
-        throw new Error(data.error || "Error al enviar el pedido a cocina");
-      }
-
-      // Guardar referencia del pedido para poder pagar después
+      // También guardar referencia para la mesa
       localStorage.setItem(`order_${mesaActiva}`, JSON.stringify({
-        orderId: data.orderId,
+        orderId: newOrder.id,
         table: mesaActiva,
         totalCents,
         items,
-        createdAt: new Date().toISOString(),
+        createdAt: now,
       }));
 
+      // Vaciar carrito local pero mantener abierto para seguir agregando
       setCart({});
       setCartOpen(false);
 
@@ -720,42 +723,70 @@ function Home() {
               <div className="cart-total" data-testid="text-cart-total"><span>{allPriced ? 'Subtotal' : 'Subtotal parcial'}</span><strong>{formatPrice(cartSubtotal)}</strong></div>
               {mesaActiva ? (
                 <>
-                  {orderStatus === 'served' ? (
+                  {cartLines.length > 0 ? (
                     <>
-                      <p className="cart-preview-note" style={{ color: '#6b7d4c', fontWeight: 700, marginBottom: '12px' }}>
-                        Tu pedido está servido · Puedes pagar ahora
-                      </p>
+                      {orderStatus === 'served' ? (
+                        <>
+                          <p className="cart-preview-note" style={{ color: '#6b7d4c', fontWeight: 700, marginBottom: '12px' }}>
+                            Tu pedido anterior está servido · Puedes pagar o agregar más
+                          </p>
+                        </>
+                      ) : orderStatus === 'paid' ? (
+                        <>
+                          <p className="cart-preview-note" style={{ color: '#6b7d4c', fontWeight: 700, marginBottom: '12px' }}>
+                            Pedido anterior pagado ✓ · Puedes seguir pidiendo
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="cart-preview-note" style={{ color: '#7c6f5e', fontSize: '11px', marginBottom: '12px' }}>
+                            Tu pedido ya fue enviado a cocina. Puedes agregar más items.
+                          </p>
+                        </>
+                      )}
                       <button
-                        className="cart-checkout focus-ring stripe-btn" type="button" onClick={payTableBill} data-testid="button-pay-table"
-                        style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}
+                        className="cart-checkout focus-ring stripe-btn" type="button" onClick={sendToKitchen} disabled={!allPriced} data-testid="button-add-more-kitchen"
+                        style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', background: '#6b7d4c', borderColor: '#6b7d4c' }}
                       >
-                        <CreditCard size={18} aria-hidden="true" />
-                        <span>Pagar cuenta — {formatPrice(cartSubtotal)}</span>
+                        <span style={{ fontSize: '18px', marginRight: '6px' }}>🍽️</span>
+                        <span>Agregar más a cocina — {formatPrice(cartSubtotal)}</span>
                       </button>
+                      {orderStatus === 'served' && (
+                        <button
+                          className="cart-checkout focus-ring stripe-btn" type="button" onClick={payTableBill} data-testid="button-pay-table"
+                          style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', marginTop: '10px' }}
+                        >
+                          <CreditCard size={18} aria-hidden="true" />
+                          <span>Pagar cuenta — {formatPrice(cartSubtotal)}</span>
+                        </button>
+                      )}
                       <button className="cart-clear focus-ring" type="button" onClick={() => setCart({})} data-testid="button-clear-cart">Vaciar carrito</button>
-                    </>
-                  ) : orderStatus === 'paid' ? (
-                    <>
-                      <p className="cart-preview-note" style={{ color: '#6b7d4c', fontWeight: 700, marginBottom: '12px' }}>
-                        Pedido pagado ✓
-                      </p>
                     </>
                   ) : (
                     <>
-                      <p className="cart-preview-note" style={{ color: '#7c6f5e', fontSize: '11px', marginBottom: '12px' }}>
-                        Tu pedido ya fue enviado a cocina. Espera a que esté servido para pagar.
-                      </p>
-                      {cartLines.length > 0 && (
+                      {orderStatus === 'served' && (
                         <>
+                          <p className="cart-preview-note" style={{ color: '#6b7d4c', fontWeight: 700, marginBottom: '12px' }}>
+                            Tu pedido está servido · Puedes pagar ahora
+                          </p>
                           <button
-                            className="cart-checkout focus-ring stripe-btn" type="button" onClick={sendToKitchen} disabled={!allPriced} data-testid="button-add-more-kitchen"
-                            style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', background: '#6b7d4c', borderColor: '#6b7d4c' }}
+                            className="cart-checkout focus-ring stripe-btn" type="button" onClick={payTableBill} data-testid="button-pay-table"
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}
                           >
-                            <span style={{ fontSize: '18px', marginRight: '6px' }}>🍽️</span>
-                            <span>Agregar más a cocina — {formatPrice(cartSubtotal)}</span>
+                            <CreditCard size={18} aria-hidden="true" />
+                            <span>Pagar cuenta</span>
                           </button>
-                          <button className="cart-clear focus-ring" type="button" onClick={() => setCart({})} data-testid="button-clear-cart">Vaciar carrito</button>
                         </>
+                      )}
+                      {orderStatus === 'paid' && (
+                        <p style={{ color: '#6b7d4c', fontWeight: 700, fontSize: '14px', textAlign: 'center' }}>
+                          Pedido pagado ✓
+                        </p>
+                      )}
+                      {orderStatus !== 'served' && orderStatus !== 'paid' && (
+                        <p className="cart-preview-note" style={{ marginTop: '16px', fontSize: '11px' }}>
+                          Espera a que la cocina marque tu pedido como servido para poder pagar.
+                        </p>
                       )}
                     </>
                   )}
