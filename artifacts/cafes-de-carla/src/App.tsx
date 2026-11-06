@@ -385,14 +385,18 @@ function Home() {
     }
   };
 
-  // Cargar estado del pedido cuando cambia la mesa activa
+  // Cargar estado del pedido cuando cambia la mesa activa, con polling cada 5s
   useEffect(() => {
-    if (mesaActiva) {
-      fetchOrderStatus();
-    } else {
+    if (!mesaActiva) {
       setOrderStatus(null);
       setOrderItemsFromStorage([]);
+      return;
     }
+
+    fetchOrderStatus();
+
+    const interval = setInterval(fetchOrderStatus, 5000);
+    return () => clearInterval(interval);
   }, [mesaActiva]);
 
   useEffect(() => {
