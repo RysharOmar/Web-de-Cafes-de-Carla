@@ -148,40 +148,21 @@ function Home() {
   async function fetchOrderStatus() {
     if (!mesaActiva) return;
     try {
-      // Consultar pedidos de esta mesa directamente desde la API
-      const res = await fetch(`/api/orders?mesa=${mesaActiva}`);
-      const data = await res.json();
-      const orders = data.orders || [];
-      if (orders.length > 0) {
-        // Tomar el pedido más reciente de esta mesa
-        const latestOrder = orders[0];
-        setOrderStatus(latestOrder.status as 'pending' | 'confirmed' | 'served' | 'paid');
-        setOrderItemsFromStorage(latestOrder.items);
-        // Guardar el orderId actualizado en localStorage para referencia
-        localStorage.setItem(`order_${mesaActiva}`, JSON.stringify({
-          orderId: latestOrder.id,
-          table: mesaActiva,
-          totalCents: latestOrder.totalCents,
-          items: latestOrder.items,
-          createdAt: latestOrder.createdAt,
-        }));
-      } else {
-        // Si no hay pedidos en la API, verificar localStorage
-        const stored = localStorage.getItem(`order_${mesaActiva}`);
-        if (stored) {
-          const orderData = JSON.parse(stored);
-          setOrderStatus(orderData.paid ? 'paid' : 'pending');
-          setOrderItemsFromStorage(orderData.items);
-        }
-      }
+      // Leer pedidos desde localStorage (compartido con la cocina)
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const allOrders = JSON.parse(raw);
+      if (!Array.isArray(allOrders) || allOrders.length === 0) return;
+
+      // Filtrar pedidos de esta mesa y tomar el más reciente
+      const mesaOrders = allOrders.filter((o: any) => o.table === mesaActiva);
+      if (mesaOrders.length === 0) return;
+
+      const latestOrder = mesaOrders[mesaOrders.length - 1];
+      setOrderStatus(latestOrder.status as 'pending' | 'confirmed' | 'served' | 'paid');
+      setOrderItemsFromStorage(latestOrder.items);
     } catch (err) {
       console.error('Error fetching order status:', err);
-      const stored = localStorage.getItem(`order_${mesaActiva}`);
-      if (stored) {
-        const orderData = JSON.parse(stored);
-        setOrderStatus(orderData.paid ? 'paid' : 'pending');
-        setOrderItemsFromStorage(orderData.items);
-      }
     }
   }
 
