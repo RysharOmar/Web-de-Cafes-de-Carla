@@ -684,7 +684,7 @@ function Home() {
               <button ref={cartCloseRef} className="cart-close focus-ring" type="button" aria-label="Cerrar carrito" onClick={() => setCartOpen(false)} data-testid="button-close-cart"><X size={20} /></button>
             </div>
             <div className="cart-content">
-              <>
+              {cartLines.length === 0 && mesaActiva && orderItemsFromStorage.length > 0 ? (
                 <div className="cart-empty" data-testid="empty-cart">
                   <ShoppingBag size={28} aria-hidden="true" />
                   {orderStatus === 'served' ? (
