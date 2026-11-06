@@ -154,13 +154,21 @@ function Home() {
       const allOrders = JSON.parse(raw);
       if (!Array.isArray(allOrders) || allOrders.length === 0) return;
 
-      // Filtrar pedidos de esta mesa y tomar el más reciente
+      // Filtrar pedidos de esta mesa
       const mesaOrders = allOrders.filter((o: any) => o.table === mesaActiva);
       if (mesaOrders.length === 0) return;
 
+      // El estado general es el del pedido más reciente (o 'servido' si alguno lo está)
       const latestOrder = mesaOrders[mesaOrders.length - 1];
-      setOrderStatus(latestOrder.status as 'pending' | 'confirmed' | 'served' | 'paid');
-      setOrderItemsFromStorage(latestOrder.items);
+      const anyServed = mesaOrders.some((o) => o.status === 'served' || o.status === 'paid');
+      const status = anyServed ? (mesaOrders.some((o) => o.status === 'paid') ? 'paid' : 'served') : latestOrder.status;
+
+      setOrderStatus(status as 'pending' | 'confirmed' | 'served' | 'paid');
+      // Combinar items de todos los pedidos no pagados para mostrar en el carrito
+      const unpaidItems = mesaOrders
+        .filter((o) => o.status !== 'paid')
+        .flatMap((o: any) => o.items || []);
+      setOrderItemsFromStorage(unpaidItems);
     } catch (err) {
       console.error('Error fetching order status:', err);
     }
@@ -173,6 +181,36 @@ function Home() {
     const price = item?.sizes?.find((s: any) => s.label === line.sizeLabel)?.priceCents ?? item?.priceCents ?? 0;
     return total + price * line.quantity;
   }, 0);
+
+  // Subtotal total de la mesa: carrito local + items en cocina (no pagados)
+  const [tableTotalCents, setTableTotalCents] = useState(0);
+
+  useEffect(() => {
+    if (!mesaActiva) {
+      setTableTotalCents(cartSubtotal);
+      return;
+    }
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) {
+        setTableTotalCents(cartSubtotal);
+        return;
+      }
+      const allOrders = JSON.parse(raw);
+      if (!Array.isArray(allOrders)) {
+        setTableTotalCents(cartSubtotal);
+        return;
+      }
+      const mesaOrders = allOrders.filter((o: any) => o.table === mesaActiva && o.status !== 'paid');
+      const kitchenTotal = mesaOrders.reduce((sum: number, o: any) => {
+        return sum + (o.items || []).reduce((iSum: number, it: any) => iSum + it.priceCents * it.quantity, 0);
+      }, 0);
+      setTableTotalCents(cartSubtotal + kitchenTotal);
+    } catch {
+      setTableTotalCents(cartSubtotal);
+    }
+  }, [cartSubtotal, mesaActiva]);
+
   const allPriced = cartLines.length > 0 && cartLines.every((line) => {
     const item = menuItemsById.get(line.itemId);
     const price = item?.sizes?.find((s: any) => s.label === line.sizeLabel)?.priceCents ?? item?.priceCents ?? 0;
@@ -335,26 +373,44 @@ function Home() {
     if (!mesaActiva) return;
 
     try {
-      const stored = localStorage.getItem(`order_${mesaActiva}`);
-      const orderData = stored ? JSON.parse(stored) : null;
-
-      if (!orderData || !orderData.items || orderData.items.length === 0) {
+      // Leer TODOS los pedidos de esta mesa desde localStorage (compartido con cocina)
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) {
+        alert("No hay pedido pendiente para esta mesa.");
+        return;
+      }
+      const allOrders = JSON.parse(raw);
+      if (!Array.isArray(allOrders) || allOrders.length === 0) {
         alert("No hay pedido pendiente para esta mesa.");
         return;
       }
 
-      const items = orderData.items.map((it: any) => ({
+      const mesaOrders = allOrders.filter((o: any) => o.table === mesaActiva && o.status !== 'paid');
+      if (mesaOrders.length === 0) {
+        alert("No hay pedido pendiente para esta mesa.");
+        return;
+      }
+
+      // Combinar todos los items de todos los pedidos no pagados
+      const allItems = mesaOrders.flatMap((o: any) => (o.items || []).map((it: any) => ({
         id: it.id,
         quantity: it.quantity,
         sizeLabel: it.sizeLabel,
         variant: it.variant,
         priceCents: it.priceCents,
-      }));
+      })));
+
+      if (allItems.length === 0) {
+        alert("No hay items para pagar.");
+        return;
+      }
+
+      const totalCents = allItems.reduce((sum, it) => sum + it.priceCents * it.quantity, 0);
 
       const response = await fetch("/api/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items }),
+        body: JSON.stringify({ items: allItems }),
       });
 
       const data = await response.json();
@@ -363,9 +419,21 @@ function Home() {
         throw new Error(data.error || "Error al crear la sesión de pago");
       }
 
-      // Marcar como pagado en localStorage
+      // Marcar TODOS los pedidos de esta mesa como pagados en localStorage
+      const updatedOrders = allOrders.map((o: any) => {
+        if (o.table === mesaActiva && o.status !== 'paid') {
+          return { ...o, status: 'paid', paidAt: new Date().toISOString(), stripeUrl: data.url };
+        }
+        return o;
+      });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedOrders));
+
+      // También actualizar la referencia de la mesa
       localStorage.setItem(`order_${mesaActiva}`, JSON.stringify({
-        ...orderData,
+        orderId: mesaOrders[mesaOrders.length - 1]?.id,
+        table: mesaActiva,
+        totalCents,
+        items: allItems,
         paid: true,
         paidAt: new Date().toISOString(),
         stripeUrl: data.url,
@@ -701,7 +769,7 @@ function Home() {
             )}
             <div className="cart-footer">
               {!allPriced && cartLines.length > 0 && <p className="cart-partial-note" role="note" data-testid="text-cart-partial-total">El total es parcial: hay productos sin precio indicado en la carta.</p>}
-              <div className="cart-total" data-testid="text-cart-total"><span>{allPriced ? 'Subtotal' : 'Subtotal parcial'}</span><strong>{formatPrice(cartSubtotal)}</strong></div>
+              <div className="cart-total" data-testid="text-cart-total"><span>{allPriced ? 'Subtotal' : 'Subtotal parcial'}</span><strong>{formatPrice(tableTotalCents)}</strong></div>
               {mesaActiva ? (
                 <>
                   {cartLines.length > 0 ? (
@@ -730,7 +798,7 @@ function Home() {
                         style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', background: '#6b7d4c', borderColor: '#6b7d4c' }}
                       >
                         <span style={{ fontSize: '18px', marginRight: '6px' }}>🍽️</span>
-                        <span>Agregar más a cocina — {formatPrice(cartSubtotal)}</span>
+                        <span>Agregar más a cocina — {formatPrice(tableTotalCents)}</span>
                       </button>
                       {orderStatus === 'served' && (
                         <button
@@ -738,7 +806,7 @@ function Home() {
                           style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', marginTop: '10px' }}
                         >
                           <CreditCard size={18} aria-hidden="true" />
-                          <span>Pagar cuenta — {formatPrice(cartSubtotal)}</span>
+                          <span>Pagar cuenta — {formatPrice(tableTotalCents)}</span>
                         </button>
                       )}
                       <button className="cart-clear focus-ring" type="button" onClick={() => setCart({})} data-testid="button-clear-cart">Vaciar carrito</button>
