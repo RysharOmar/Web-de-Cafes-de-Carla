@@ -683,7 +683,7 @@ function Home() {
               <div><span className="eyebrow">TU SELECCIÓN</span><h2 className="serif" id="cart-title">Tu carrito</h2></div>
               <button ref={cartCloseRef} className="cart-close focus-ring" type="button" aria-label="Cerrar carrito" onClick={() => setCartOpen(false)} data-testid="button-close-cart"><X size={20} /></button>
             </div>
-            {cartLines.length === 0 && mesaActiva && orderItemsFromStorage.length > 0 ? (
+            <div className="cart-content">
               <>
                 <div className="cart-empty" data-testid="empty-cart">
                   <ShoppingBag size={28} aria-hidden="true" />
@@ -784,6 +784,7 @@ function Home() {
                 </ul>
               </>
             )}
+            </div>
             <div className="cart-footer">
               {!allPriced && cartLines.length > 0 && <p className="cart-partial-note" role="note" data-testid="text-cart-partial-total">El total es parcial: hay productos sin precio indicado en la carta.</p>}
               <div className="cart-total" data-testid="text-cart-total"><span>{allPriced ? 'Subtotal' : 'Subtotal parcial'}</span><strong>{formatPrice(tableTotalCents)}</strong></div>
