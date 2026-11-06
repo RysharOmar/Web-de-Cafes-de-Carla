@@ -139,6 +139,40 @@ function Home() {
   const searchParams = new URLSearchParams(window.location.search);
   const mesaActiva = searchParams.get('mesa'); // ej: "5" o null
 
+  // Estado para rastrear el pedido de la mesa (modo local)
+  const [orderStatus, setOrderStatus] = useState<'pending' | 'confirmed' | 'served' | 'paid' | null>(null);
+  const [orderItemsFromStorage, setOrderItemsFromStorage] = useState<{ id: string; name: string; quantity: number; sizeLabel: string; variant?: string | null; priceCents: number }[]>([]);
+
+  async function fetchOrderStatus() {
+    if (!mesaActiva) return;
+    try {
+      const stored = localStorage.getItem(`order_${mesaActiva}`);
+      if (!stored) return;
+      const orderData = JSON.parse(stored);
+      if (orderData.orderId) {
+        const res = await fetch(`/api/orders/${orderData.orderId}`);
+        const data = await res.json();
+        if (data.order) {
+          setOrderStatus(data.order.status as 'pending' | 'confirmed' | 'served' | 'paid');
+          setOrderItemsFromStorage(data.order.items);
+        } else {
+          // Si no hay orden en la API, usar el estado de localStorage
+          setOrderStatus(orderData.paid ? 'paid' : 'pending');
+          setOrderItemsFromStorage(orderData.items);
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching order status:', err);
+      // Fallback: usar localStorage
+      const stored = localStorage.getItem(`order_${mesaActiva}`);
+      if (stored) {
+        const orderData = JSON.parse(stored);
+        setOrderStatus(orderData.paid ? 'paid' : 'pending');
+        setOrderItemsFromStorage(orderData.items);
+      }
+    }
+  }
+
   const cartLines = Object.values(cart);
   const cartCount = cartLines.reduce((total, line) => total + line.quantity, 0);
   const cartSubtotal = cartLines.reduce((total, line) => {
@@ -351,8 +385,23 @@ function Home() {
     }
   };
 
+  // Cargar estado del pedido cuando cambia la mesa activa
+  useEffect(() => {
+    if (mesaActiva) {
+      fetchOrderStatus();
+    } else {
+      setOrderStatus(null);
+      setOrderItemsFromStorage([]);
+    }
+  }, [mesaActiva]);
+
   useEffect(() => {
     if (!cartOpen) return;
+
+    // Al abrir el carrito, cargar estado del pedido de la mesa
+    if (mesaActiva) {
+      fetchOrderStatus();
+    }
 
     const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const previousOverflow = document.body.style.overflow;
@@ -566,7 +615,56 @@ function Home() {
               <div><span className="eyebrow">TU SELECCIÓN</span><h2 className="serif" id="cart-title">Tu carrito</h2></div>
               <button ref={cartCloseRef} className="cart-close focus-ring" type="button" aria-label="Cerrar carrito" onClick={() => setCartOpen(false)} data-testid="button-close-cart"><X size={20} /></button>
             </div>
-            {cartLines.length === 0 ? (
+            {cartLines.length === 0 && mesaActiva && orderItemsFromStorage.length > 0 ? (
+              <>
+                <div className="cart-empty" data-testid="empty-cart">
+                  <ShoppingBag size={28} aria-hidden="true" />
+                  {orderStatus === 'served' ? (
+                    <p>Tu pedido está listo para pagar.</p>
+                  ) : orderStatus === 'paid' ? (
+                    <p>Tu pedido ya está pagado.</p>
+                  ) : (
+                    <p>Tu pedido ya fue enviado a cocina.</p>
+                  )}
+                  <p style={{ fontSize: '12px', color: '#7c6f5e', marginTop: '8px' }}>
+                    Puedes seguir agregando más productos o completar el pago.
+                  </p>
+                  <a className="text-cta focus-ring" href="#carta" onClick={() => setCartOpen(false)} data-testid="link-cart-to-menu">Seguir pidiendo <ArrowDown size={15} /></a>
+                </div>
+
+                <div className="cart-footer" style={{ marginTop: '20px' }}>
+                  <div style={{ fontSize: '14px', color: '#7c6f5e', marginBottom: '16px' }}>
+                    <strong>Estado:</strong>{' '}
+                    {orderStatus === 'pending' ? 'Pendiente' : orderStatus === 'confirmed' ? 'Confirmado' : orderStatus === 'served' ? 'Servido' : orderStatus === 'paid' ? 'Pagado' : ''}
+                  </div>
+                  <div style={{ borderTop: '1px solid #ddd1bd', paddingTop: '16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
+                      <span>Items en cocina</span>
+                      <strong>{formatPrice(orderItemsFromStorage.reduce((s, i) => s + i.priceCents * i.quantity, 0))}</strong>
+                    </div>
+                    {orderStatus === 'served' && (
+                      <button
+                        className="cart-checkout focus-ring stripe-btn" type="button" onClick={payTableBill} data-testid="button-pay-table"
+                        style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}
+                      >
+                        <CreditCard size={18} aria-hidden="true" />
+                        <span>Pagar cuenta</span>
+                      </button>
+                    )}
+                    {orderStatus === 'paid' && (
+                      <p style={{ color: '#6b7d4c', fontWeight: 700, fontSize: '14px', textAlign: 'center' }}>
+                        Pedido pagado ✓
+                      </p>
+                    )}
+                    {orderStatus !== 'served' && orderStatus !== 'paid' && (
+                      <p className="cart-preview-note" style={{ marginTop: '16px', fontSize: '11px' }}>
+                        Espera a que la cocina marque tu pedido como servido para poder pagar.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </>
+            ) : cartLines.length === 0 ? (
               <div className="cart-empty" data-testid="empty-cart">
                 <ShoppingBag size={28} aria-hidden="true" />
                 <p>Tu carrito todavía está vacío.</p>
@@ -606,17 +704,47 @@ function Home() {
             <div className="cart-footer">
               {!allPriced && cartLines.length > 0 && <p className="cart-partial-note" role="note" data-testid="text-cart-partial-total">El total es parcial: hay productos sin precio indicado en la carta.</p>}
               <div className="cart-total" data-testid="text-cart-total"><span>{allPriced ? 'Subtotal' : 'Subtotal parcial'}</span><strong>{formatPrice(cartSubtotal)}</strong></div>
-              <p className="cart-preview-note">{mesaActiva ? 'Pedido de mesa · se enviará a cocina' : 'Carrito de vista previa: no se envían pedidos ni se procesan pagos.'}</p>
               {mesaActiva ? (
                 <>
-                  <button
-                    className="cart-checkout focus-ring stripe-btn" type="button" onClick={sendToKitchen} disabled={!allPriced} data-testid="button-send-kitchen"
-                    style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#6b7d4c', borderColor: '#6b7d4c' }}
-                  >
-                    <span style={{ fontSize: '18px', marginRight: '6px' }}>🍽️</span>
-                    <span>Enviar a cocina — {formatPrice(cartSubtotal)}</span>
-                  </button>
-                  <button className="cart-clear focus-ring" type="button" onClick={() => setCart({})} data-testid="button-clear-cart">Vaciar carrito</button>
+                  {orderStatus === 'served' ? (
+                    <>
+                      <p className="cart-preview-note" style={{ color: '#6b7d4c', fontWeight: 700, marginBottom: '12px' }}>
+                        Tu pedido está servido · Puedes pagar ahora
+                      </p>
+                      <button
+                        className="cart-checkout focus-ring stripe-btn" type="button" onClick={payTableBill} data-testid="button-pay-table"
+                        style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}
+                      >
+                        <CreditCard size={18} aria-hidden="true" />
+                        <span>Pagar cuenta — {formatPrice(cartSubtotal)}</span>
+                      </button>
+                      <button className="cart-clear focus-ring" type="button" onClick={() => setCart({})} data-testid="button-clear-cart">Vaciar carrito</button>
+                    </>
+                  ) : orderStatus === 'paid' ? (
+                    <>
+                      <p className="cart-preview-note" style={{ color: '#6b7d4c', fontWeight: 700, marginBottom: '12px' }}>
+                        Pedido pagado ✓
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="cart-preview-note" style={{ color: '#7c6f5e', fontSize: '11px', marginBottom: '12px' }}>
+                        Tu pedido ya fue enviado a cocina. Espera a que esté servido para pagar.
+                      </p>
+                      {cartLines.length > 0 && (
+                        <>
+                          <button
+                            className="cart-checkout focus-ring stripe-btn" type="button" onClick={sendToKitchen} disabled={!allPriced} data-testid="button-add-more-kitchen"
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', background: '#6b7d4c', borderColor: '#6b7d4c' }}
+                          >
+                            <span style={{ fontSize: '18px', marginRight: '6px' }}>🍽️</span>
+                            <span>Agregar más a cocina — {formatPrice(cartSubtotal)}</span>
+                          </button>
+                          <button className="cart-clear focus-ring" type="button" onClick={() => setCart({})} data-testid="button-clear-cart">Vaciar carrito</button>
+                        </>
+                      )}
+                    </>
+                  )}
                 </>
               ) : (
                 <>
