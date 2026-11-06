@@ -59,9 +59,13 @@ export default async function handler(req: any, res: any) {
   // ---------- GET /api/orders ----------
   if (method === 'GET' && !orderId) {
     const statusFilter = url.searchParams.get('status');
+    const tableFilter = url.searchParams.get('mesa');
     let list = Array.from(orders.values()).sort(
       (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
     );
+    if (tableFilter) {
+      list = list.filter((o) => o.table === tableFilter);
+    }
     if (statusFilter && statusFilter !== 'all') {
       list = list.filter((o) => o.status === statusFilter);
     }

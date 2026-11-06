@@ -146,24 +146,34 @@ function Home() {
   async function fetchOrderStatus() {
     if (!mesaActiva) return;
     try {
-      const stored = localStorage.getItem(`order_${mesaActiva}`);
-      if (!stored) return;
-      const orderData = JSON.parse(stored);
-      if (orderData.orderId) {
-        const res = await fetch(`/api/orders/${orderData.orderId}`);
-        const data = await res.json();
-        if (data.order) {
-          setOrderStatus(data.order.status as 'pending' | 'confirmed' | 'served' | 'paid');
-          setOrderItemsFromStorage(data.order.items);
-        } else {
-          // Si no hay orden en la API, usar el estado de localStorage
+      // Consultar pedidos de esta mesa directamente desde la API
+      const res = await fetch(`/api/orders?mesa=${mesaActiva}`);
+      const data = await res.json();
+      const orders = data.orders || [];
+      if (orders.length > 0) {
+        // Tomar el pedido más reciente de esta mesa
+        const latestOrder = orders[0];
+        setOrderStatus(latestOrder.status as 'pending' | 'confirmed' | 'served' | 'paid');
+        setOrderItemsFromStorage(latestOrder.items);
+        // Guardar el orderId actualizado en localStorage para referencia
+        localStorage.setItem(`order_${mesaActiva}`, JSON.stringify({
+          orderId: latestOrder.id,
+          table: mesaActiva,
+          totalCents: latestOrder.totalCents,
+          items: latestOrder.items,
+          createdAt: latestOrder.createdAt,
+        }));
+      } else {
+        // Si no hay pedidos en la API, verificar localStorage
+        const stored = localStorage.getItem(`order_${mesaActiva}`);
+        if (stored) {
+          const orderData = JSON.parse(stored);
           setOrderStatus(orderData.paid ? 'paid' : 'pending');
           setOrderItemsFromStorage(orderData.items);
         }
       }
     } catch (err) {
       console.error('Error fetching order status:', err);
-      // Fallback: usar localStorage
       const stored = localStorage.getItem(`order_${mesaActiva}`);
       if (stored) {
         const orderData = JSON.parse(stored);
