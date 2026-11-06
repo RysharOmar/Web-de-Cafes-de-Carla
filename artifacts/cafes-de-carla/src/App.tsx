@@ -427,7 +427,12 @@ function Home() {
       </main>
 
       <footer className="site-footer">
-        <p className="footer-copy">Cafés de Carla · Demo · Precios en euros (€) · IVA incluido</p>
+        <div className="footer-main section-wrap">
+          <a href="#inicio" className="footer-brand focus-ring" aria-label="Volver al inicio" data-testid="link-footer-home"><img src={logo} alt="Logotipo de Cafés de Carla" width="1024" height="1024" loading="lazy" /><span className="serif">Cafés de Carla</span></a>
+          <p className="footer-tagline serif">Huele, Saborea, Disfruta.</p>
+          <a className="back-top" href="#inicio" data-testid="link-back-to-top">Volver arriba <ArrowUpRight size={15} /></a>
+        </div>
+        <div className="footer-bottom section-wrap"><span>© Cafés de Carla</span><span>PREVISUALIZACIÓN DE PRUEBA · NO PUBLICAR</span><span>Hecho para disfrutar sin prisa.</span></div>
       </footer>
 
       {/* Cart Drawer - only rendered when open */}
