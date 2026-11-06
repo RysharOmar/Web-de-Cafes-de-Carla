@@ -6,6 +6,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
 import Success from '@/pages/success';
+import Cocina from '@/pages/cocina';
 import { Route, Switch, useLocation, Router as WouterRouter } from 'wouter';
 import { menuCategories } from './data/menu';
 
@@ -135,6 +136,10 @@ function Home() {
   const cartCloseRef = useRef<HTMLButtonElement>(null);
   const cartDrawerRef = useRef<HTMLElement>(null);
 
+  const [location] = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const mesaActiva = searchParams.get('mesa'); // ej: "5" o null
+
   const cartLines = Object.values(cart);
   const cartCount = cartLines.reduce((total, line) => total + line.quantity, 0);
   const cartSubtotal = cartLines.reduce((total, line) => {
@@ -238,6 +243,115 @@ function Home() {
     }
   };
 
+  // --- Funciones para modo "En el local" (mesa) ---
+
+  const sendToKitchen = async () => {
+    if (!mesaActiva) {
+      alert("No se ha detectado una mesa activa.");
+      return;
+    }
+    if (!allPriced) return;
+
+    try {
+      const items = cartLines.map((line) => {
+        const item = menuItemsById.get(line.itemId);
+        const price = item?.sizes?.find((s: any) => s.label === line.sizeLabel)?.priceCents ?? item?.priceCents ?? 0;
+        return {
+          id: line.itemId,
+          name: item?.name ?? line.itemId,
+          quantity: line.quantity,
+          sizeLabel: line.sizeLabel,
+          variant: line.variant ?? undefined,
+          priceCents: price,
+        };
+      });
+
+      const totalCents = items.reduce((sum, it) => sum + it.priceCents * it.quantity, 0);
+
+      const response = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          table: mesaActiva,
+          items,
+          totalCents,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Error al enviar el pedido a cocina");
+      }
+
+      // Guardar referencia del pedido para poder pagar después
+      localStorage.setItem(`order_${mesaActiva}`, JSON.stringify({
+        orderId: data.orderId,
+        table: mesaActiva,
+        totalCents,
+        items,
+        createdAt: new Date().toISOString(),
+      }));
+
+      setCart({});
+      setCartOpen(false);
+
+      alert(`Pedido enviado a cocina — Mesa ${mesaActiva}`);
+    } catch (err) {
+      console.error("Send to kitchen error:", err);
+      const msg = err instanceof Error ? err.message : String(err);
+      alert("No se pudo enviar el pedido a cocina.\n\nDetalle: " + msg);
+    }
+  };
+
+  const payTableBill = async () => {
+    if (!mesaActiva) return;
+
+    try {
+      const stored = localStorage.getItem(`order_${mesaActiva}`);
+      const orderData = stored ? JSON.parse(stored) : null;
+
+      if (!orderData || !orderData.items || orderData.items.length === 0) {
+        alert("No hay pedido pendiente para esta mesa.");
+        return;
+      }
+
+      const items = orderData.items.map((it: any) => ({
+        id: it.id,
+        quantity: it.quantity,
+        sizeLabel: it.sizeLabel,
+        variant: it.variant,
+        priceCents: it.priceCents,
+      }));
+
+      const response = await fetch("/api/create-checkout-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.url) {
+        throw new Error(data.error || "Error al crear la sesión de pago");
+      }
+
+      // Marcar como pagado en localStorage
+      localStorage.setItem(`order_${mesaActiva}`, JSON.stringify({
+        ...orderData,
+        paid: true,
+        paidAt: new Date().toISOString(),
+        stripeUrl: data.url,
+      }));
+
+      window.location.href = data.url;
+    } catch (err) {
+      console.error("Pay table bill error:", err);
+      const msg = err instanceof Error ? err.message : String(err);
+      alert("No se pudo procesar el pago de la mesa.\n\nDetalle: " + msg);
+    }
+  };
+
   useEffect(() => {
     if (!cartOpen) return;
 
@@ -304,6 +418,15 @@ function Home() {
       <span className="sr-only" role="status" aria-live="polite" data-testid="status-cart-count">
         {cartCount === 1 ? '1 artículo en el carrito' : `${cartCount} artículos en el carrito`}
       </span>
+
+      {mesaActiva && (
+        <section className="mesa-banner">
+          <div className="mesa-banner-inner section-wrap">
+            <span className="mesa-badge">🍽️ Mesa {mesaActiva}</span>
+            <span className="mesa-note">Estás en el local · Pide lo que quieras y paga al final</span>
+          </div>
+        </section>
+      )}
 
       <main>
         {/* Sección 1: Héroe - BIENVENIDOS */}
@@ -484,15 +607,30 @@ function Home() {
             <div className="cart-footer">
               {!allPriced && cartLines.length > 0 && <p className="cart-partial-note" role="note" data-testid="text-cart-partial-total">El total es parcial: hay productos sin precio indicado en la carta.</p>}
               <div className="cart-total" data-testid="text-cart-total"><span>{allPriced ? 'Subtotal' : 'Subtotal parcial'}</span><strong>{formatPrice(cartSubtotal)}</strong></div>
-              <p className="cart-preview-note">Carrito de vista previa: no se envían pedidos ni se procesan pagos.</p>
-              <button
-                className="cart-checkout focus-ring stripe-btn" type="button" onClick={checkout} disabled={!allPriced} data-testid="button-checkout"
-                style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-              >
-                <CreditCard size={18} aria-hidden="true" />
-                <span>Terminar pedido — {formatPrice(cartSubtotal)}</span>
-              </button>
-              <button className="cart-clear focus-ring" type="button" onClick={() => setCart({})} data-testid="button-clear-cart">Vaciar carrito</button>
+              <p className="cart-preview-note">{mesaActiva ? 'Pedido de mesa · se enviará a cocina' : 'Carrito de vista previa: no se envían pedidos ni se procesan pagos.'}</p>
+              {mesaActiva ? (
+                <>
+                  <button
+                    className="cart-checkout focus-ring stripe-btn" type="button" onClick={sendToKitchen} disabled={!allPriced} data-testid="button-send-kitchen"
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#6b7d4c', borderColor: '#6b7d4c' }}
+                  >
+                    <span style={{ fontSize: '18px', marginRight: '6px' }}>🍽️</span>
+                    <span>Enviar a cocina — {formatPrice(cartSubtotal)}</span>
+                  </button>
+                  <button className="cart-clear focus-ring" type="button" onClick={() => setCart({})} data-testid="button-clear-cart">Vaciar carrito</button>
+                </>
+              ) : (
+                <>
+                  <button
+                    className="cart-checkout focus-ring stripe-btn" type="button" onClick={checkout} disabled={!allPriced} data-testid="button-checkout"
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                  >
+                    <CreditCard size={18} aria-hidden="true" />
+                    <span>Terminar pedido — {formatPrice(cartSubtotal)}</span>
+                  </button>
+                  <button className="cart-clear focus-ring" type="button" onClick={() => setCart({})} data-testid="button-clear-cart">Vaciar carrito</button>
+                </>
+              )}
             </div>
           </aside>
         </>
@@ -502,7 +640,7 @@ function Home() {
 }
 
 function Router() {
-  return <RoutedErrorBoundary><Switch><Route path="/" component={Home} /><Route path="/success" component={Success} /><Route component={NotFound} /></Switch></RoutedErrorBoundary>;
+  return <RoutedErrorBoundary><Switch><Route path="/" component={Home} /><Route path="/success" component={Success} /><Route path="/cocina" component={Cocina} /><Route component={NotFound} /></Switch></RoutedErrorBoundary>;
 }
 
 function RoutedErrorBoundary({ children }: { children: ReactNode }) {

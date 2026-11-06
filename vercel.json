@@ -2,9 +2,14 @@
   "installCommand": "pnpm install --no-frozen-lockfile",
   "buildCommand": "pnpm -r build",
   "outputDirectory": "artifacts/cafes-de-carla/dist/public",
-  "rewrites": [{ "source": "/success", "destination": "/index.html" }],
+  "rewrites": [
+    { "source": "/success", "destination": "/index.html" },
+    { "source": "/cocina", "destination": "/index.html" }
+  ],
   "routes": [
     { "src": "/api/create-checkout-session", "dest": "/api/create-checkout-session", "methods": ["POST"] },
-    { "src": "/api/webhook", "dest": "/api/webhook", "methods": ["POST"] }
+    { "src": "/api/webhook", "dest": "/api/webhook", "methods": ["POST"] },
+    { "src": "/api/orders", "dest": "/api/orders", "methods": ["GET", "POST", "PATCH", "OPTIONS"] },
+    { "src": "/api/orders/(.*)", "dest": "/api/orders", "methods": ["GET", "POST", "PATCH", "OPTIONS"] }
   ]
 }
