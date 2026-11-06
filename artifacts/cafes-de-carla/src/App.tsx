@@ -136,8 +136,7 @@ function Home() {
   const cartCloseRef = useRef<HTMLButtonElement>(null);
   const cartDrawerRef = useRef<HTMLElement>(null);
 
-  const [location] = useLocation();
-  const searchParams = new URLSearchParams(location.search);
+  const searchParams = new URLSearchParams(window.location.search);
   const mesaActiva = searchParams.get('mesa'); // ej: "5" o null
 
   const cartLines = Object.values(cart);
