@@ -326,6 +326,22 @@ function Home() {
           <div className="hero-seal" aria-hidden="true"><span>Huele · Saborea · Disfruta</span><b>CD</b></div>
         </section>
 
+        {/* Seccion: Nuestra esencia - 01 / NUESTRA ESENCIA */}
+        <section className="story-section" id="historia" aria-labelledby="story-title">
+          <div className="section-wrap story-grid">
+            <div className="story-marker"><span className="eyebrow">01 / NUESTRA ESENCIA</span><span className="marker-line" /></div>
+            <div className="story-content">
+              <h2 className="serif" id="story-title" data-testid="heading-brand-story">Hay dias que piden<br /><em>una pausa bonita.</em></h2>
+              <div className="story-bottom">
+                <p>En Cafes de Carla creemos en el placer sencillo de parar un momento. En el aroma que llega antes del primer sorbo, en algo rico sobre la mesa y en sentirte bien recibido.</p>
+              </div>
+              <div className="story-signature">Cafes de Carla <span>— Huele, Saborea, Disfruta</span></div>
+            </div>
+            <div className="story-aside" aria-hidden="true"><span className="sun-shape" /><span className="aside-words serif">despacio<br />sabe mejor</span></div>
+          </div>
+        </section>
+
+
         {/* Sección 2: Carta */}
         <section id="carta" className="menu-section section-wrap" aria-labelledby="menu-title">
           <div className="section-kicker"><span className="eyebrow">02 / PARA DISFRUTAR</span><span className="kicker-line" /></div>
@@ -366,18 +382,33 @@ function Home() {
           <div className="pause-inner section-wrap"><span className="pause-small">EL PLACER DE HACER UNA COSA A LA VEZ</span><p className="serif">"Cafés de Carla: Huele, Saborea, Disfruta"</p><span className="pause-ornament" aria-hidden="true" /></div>
         </section>
 
-        {/* Sección 3: Nuestra esencia */}
-        <section className="story-section" id="visitanos" aria-labelledby="visit-title">
-          <div className="section-wrap story-grid">
-            <div className="story-marker"><span className="eyebrow">01 / NUESTRA ESENCIA</span><span className="marker-line" /></div>
-            <div className="story-content">
-              <h2 className="serif" id="visit-title" data-testid="heading-visit">Hay días que piden<br /><em>una pausa bonita.</em></h2>
-              <div className="story-bottom">
-                <p>En Cafés de Carla creemos en el placer sencillo de parar un momento. En el aroma que llega antes del primer sorbo, en algo rico sobre la mesa y en sentirse bien recibido.</p>
-              </div>
-              <div className="story-signature">Cafés de Carla <span>— Huele, Saborea, Disfruta</span></div>
+
+{/* Sección 3: Visítanos - 03 / CUANDO QUIERAS */}
+        <section className="visit-section section-wrap" id="visitanos" aria-labelledby="visit-title">
+          <div className="section-kicker"><span className="eyebrow">03 / CUANDO QUIERAS</span><span className="kicker-line" /></div>
+          <div className="visit-heading">
+            <h2 id="visit-title" className="serif" data-testid="heading-visit">La mesa está<br /><em>por poner.</em></h2>
+            <p data-testid="text-visit-introduction">Queremos que encontrar Cafés de Carla sea fácil. Estamos preparando esta información con los datos oficiales del negocio.</p>
+          </div>
+          <div className="visit-grid">
+            <div className="map-placeholder" role="img" aria-label="Mapa pendiente de añadir cuando se confirme la dirección" data-testid="map-preview-placeholder">
+              <div className="map-pattern" aria-hidden="true" />
+              <div className="map-card"><span className="map-pin"><MapPin size={18} /></span><div><strong>El mapa viene pronto</strong><p>Añadiremos la ubicación exacta al confirmar la dirección.</p></div></div>
+              <span className="map-label">VISTA PREVIA · SIN UBICACIÓN REAL</span>
             </div>
-            <div className="story-aside" aria-hidden="true"><span className="sun-shape" /><span className="aside-words serif">despacio<br />sabe mejor</span></div>
+            <div className="visit-details">
+              <article className="detail-block"><span className="detail-icon"><MapPin size={17} /></span><div><span className="eyebrow">DÓNDE ENCONTRARNOS</span><h3>Dirección</h3><p data-testid="text-address-placeholder" className="text-sm text-[#8a7a69]"><strong className="text-[#4a3322] font-serif">Centro histórico</strong> · Confirmación próxima</p></div></article>
+              <article className="detail-block"><span className="detail-icon"><Clock3 size={17} /></span><div><span className="eyebrow">PARA TU PRÓXIMA PAUSA</span><h3>Horario</h3><p data-testid="text-hours-placeholder" className="text-sm text-[#8a7a69]"><strong className="text-[#4a3322] font-serif">Lun — Dom</strong> · Confirmación próxima</p></div></article>
+              <div className="contact-box" id="contacto">
+                <span className="eyebrow">ESTAMOS AQUÍ PARA AYUDAR</span>
+                <p>Los datos directos de contacto estarán disponibles en cuanto los confirme el equipo de Cafés de Carla.</p>
+                <div className="contact-placeholders">
+                  <span className="contact-placeholder"><Phone size={15} /> Contacto — Confirmación próxima</span>
+                  <span className="contact-placeholder"><span className="whatsapp-mark">W</span> WhatsApp — Confirmación próxima</span>
+                </div>
+                <span className="contact-footnote">No se muestran enlaces hasta confirmar los números oficiales.</span>
+              </div>
+            </div>
           </div>
         </section>
 
