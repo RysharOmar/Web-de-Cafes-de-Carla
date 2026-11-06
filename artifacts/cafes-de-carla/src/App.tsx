@@ -158,16 +158,18 @@ function Home() {
       const mesaOrders = allOrders.filter((o: any) => o.table === mesaActiva);
       if (mesaOrders.length === 0) return;
 
-      // El estado general es el del pedido más reciente (o 'servido' si alguno lo está)
-      const latestOrder = mesaOrders[mesaOrders.length - 1];
-      const anyServed = mesaOrders.some((o) => o.status === 'served' || o.status === 'paid');
-      const status = anyServed ? (mesaOrders.some((o) => o.status === 'paid') ? 'paid' : 'served') : latestOrder.status;
+      // Tomar solo pedidos NO pagados para mostrar estado
+      const unpaidOrders = mesaOrders.filter((o: any) => o.status !== 'paid');
+      
+      if (unpaidOrders.length === 0) {
+        setOrderStatus('paid');
+        setOrderItemsFromStorage([]);
+        return;
+      }
 
-      setOrderStatus(status as 'pending' | 'confirmed' | 'served' | 'paid');
-      // Combinar items de todos los pedidos no pagados para mostrar en el carrito
-      const unpaidItems = mesaOrders
-        .filter((o) => o.status !== 'paid')
-        .flatMap((o: any) => o.items || []);
+      const latestOrder = unpaidOrders[unpaidOrders.length - 1];
+      setOrderStatus(latestOrder.status as 'pending' | 'confirmed' | 'served');
+      const unpaidItems = unpaidOrders.flatMap((o: any) => o.items || []);
       setOrderItemsFromStorage(unpaidItems);
     } catch (err) {
       console.error('Error fetching order status:', err);
@@ -704,9 +706,24 @@ function Home() {
                     {orderStatus === 'pending' ? 'Pendiente' : orderStatus === 'confirmed' ? 'Confirmado' : orderStatus === 'served' ? 'Servido' : orderStatus === 'paid' ? 'Pagado' : ''}
                   </div>
                   <div style={{ borderTop: '1px solid #ddd1bd', paddingTop: '16px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
-                      <span>Items en cocina</span>
-                      <strong>{formatPrice(orderItemsFromStorage.reduce((s, i) => s + i.priceCents * i.quantity, 0))}</strong>
+                    <div style={{ marginBottom: '16px' }}>
+                      <strong style={{ fontSize: '12px', color: '#7c6f5e' }}>Items en cocina:</strong>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
+                        {orderItemsFromStorage.map((item) => (
+                          <div key={item.id + '-' + item.quantity} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', padding: '6px', background: '#fbf8f0', borderRadius: '6px' }}>
+                            <span>
+                              {item.quantity} × {item.name}
+                              {item.sizeLabel ? ` (${item.sizeLabel})` : ''}
+                              {item.variant ? ` · ${item.variant}` : ''}
+                            </span>
+                            <strong>{formatPrice(item.priceCents * item.quantity)}</strong>
+                          </div>
+                        ))}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, marginTop: '8px', fontSize: '14px', borderTop: '1px solid #ddd1bd', paddingTop: '8px' }}>
+                          <span>Total cocina</span>
+                          <strong>{formatPrice(orderItemsFromStorage.reduce((s, i) => s + i.priceCents * i.quantity, 0))}</strong>
+                        </div>
+                      </div>
                     </div>
                     {orderStatus === 'served' && (
                       <button
