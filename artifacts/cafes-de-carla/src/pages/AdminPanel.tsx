@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import Sonner from 'sonner';
 
 type ProductoAdmin = {
   id: string;
@@ -66,13 +65,13 @@ export function AdminPanel() {
         )
       );
 
-      Sonner.success(
+      alert(
         nuevoEstado
-          ? `Producto marcado como agotado`
-          : `Producto disponible nuevamente`
+          ? 'Producto marcado como agotado'
+          : 'Producto disponible nuevamente'
       );
     } catch (error: any) {
-      Sonner.error(error.message || 'Error al actualizar estado');
+      alert(error.message || 'Error al actualizar estado');
       // Revertir estado local en caso de error
       setProductos((prev) =>
         prev.map((p) =>
@@ -86,8 +85,6 @@ export function AdminPanel() {
 
   return (
     <div className="admin-panel p-6 max-w-4xl mx-auto">
-      <Sonner />
-
       <div className="mb-8">
         <h1 className="serif text-3xl font-bold mb-2">Panel de Administración</h1>
         <p className="text-muted-foreground">
