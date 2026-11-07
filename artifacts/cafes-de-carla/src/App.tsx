@@ -7,6 +7,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
 import Success from '@/pages/success';
 import Cocina from '@/pages/cocina';
+import AdminPanel from '@/pages/AdminPanel';
 import { Route, Switch, useLocation, Router as WouterRouter } from 'wouter';
 import { menuCategories } from './data/menu';
 
@@ -878,7 +879,7 @@ function Home() {
 }
 
 function Router() {
-  return <RoutedErrorBoundary><Switch><Route path="/" component={Home} /><Route path="/success" component={Success} /><Route path="/cocina" component={Cocina} /><Route component={NotFound} /></Switch></RoutedErrorBoundary>;
+  return <RoutedErrorBoundary><Switch><Route path="/" component={Home} /><Route path="/success" component={Success} /><Route path="/cocina" component={Cocina} /><Route path="/admin" component={AdminPanel} /><Route component={NotFound} /></Switch></RoutedErrorBoundary>;
 }
 
 function RoutedErrorBoundary({ children }: { children: ReactNode }) {
