@@ -7,13 +7,32 @@
 import { neon } from '@neondatabase/serverless';
 
 export default async function handler(req: any, res: any) {
+  // Cabeceras CORS y JSON
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Método no permitido' });
     return;
   }
 
   try {
-    const { id, agotado } = req.body as { id?: string; agotado?: boolean };
+    let body;
+    try {
+      body = req.body;
+    } catch {
+      res.status(400).json({ error: 'Cuerpo de petición inválido' });
+      return;
+    }
+
+    const { id, agotado } = body as { id?: string; agotado?: boolean };
 
     if (!id || agotado === undefined) {
       res.status(400).json({ error: 'Faltan parámetros: id y agotado' });
