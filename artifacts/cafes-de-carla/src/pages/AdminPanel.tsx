@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Sonner } from 'sonner';
+import Sonner from 'sonner';
 
 type ProductoAdmin = {
   id: string;
