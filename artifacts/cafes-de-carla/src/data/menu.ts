@@ -5,7 +5,7 @@ export type MenuItem = {
   sizes: Array<{ label: string; priceCents: number }>; // ej: [{label:'Mini',priceCents:285},{label:'Normal',priceCents:440}]
   defaultSize: string;
   variants?: string[];         // ej: ["Leche entera","Leche desnatada",...]
-  defaultVariant?: string;
+  defaultVariant?: string;\n  agotado?: boolean;
 };
 
 export type MenuCategory = {
