@@ -1,7 +1,6 @@
 /**
  * Función serverless de Vercel: POST /api/update-producto
  * Actualiza el estado de agotado de un producto en Neon (PostgreSQL).
- * Usa el cliente pg (postgresql) para conectar a Neon.
  */
 import { Pool } from 'pg';
 
@@ -27,7 +26,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Faltan parámetros: id y agotado' });
     }
 
-    const databaseUrl = process.env.DATABASE_URL || process.env.VITE_DATABASE_URL;
+    const databaseUrl = process.env.DATABASE_URL;
     if (!databaseUrl) {
       return res.status(500).json({ error: 'DATABASE_URL no configurada en Vercel' });
     }
