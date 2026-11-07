@@ -2,15 +2,11 @@ export type MenuItem = {
   id: string;
   name: string;
   description?: string;
-  sizes: Array<{ label: string; priceCents: number }>; // ej: [{label:'Mini',priceCents:285},{label:'Normal',priceCents:440}]
+  sizes: Array<{ label: string; priceCents: number }>;
   defaultSize: string;
-  variants?: string[];         // ej: ["Leche entera","Leche desnatada",...]
-<<<<<<< HEAD
-  defaultVariant?: string;\n  agotado?: boolean;
-=======
+  variants?: string[];
   defaultVariant?: string;
   agotado?: boolean;
->>>>>>> 9ffa7c5578c121475854702a4a70b215ebee855c
 };
 
 export type MenuCategory = {
@@ -300,3 +296,6 @@ export const menuCategories: MenuCategory[] = [
     ],
   },
 ];
+
+
+
