@@ -6,6 +6,7 @@ export type MenuItem = {
   defaultSize: string;
   variants?: string[];         // ej: ["Leche entera","Leche desnatada",...]
   defaultVariant?: string;
+  agotado?: boolean;
 };
 
 export type MenuCategory = {
