@@ -5,6 +5,7 @@
 import { neon } from '@neondatabase/serverless';
 
 export default async function handler(req, res) {
+  // Cabeceras CORS y JSON
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -26,10 +27,9 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Faltan parámetros: id y agotado' });
     }
 
-    const databaseUrl = process.env.DATABASE_URL || process.env.VITE_DATABASE_URL;
+    const databaseUrl = process.env.DATABASE_URL;
     if (!databaseUrl) {
-      console.error('DATABASE_URL no configurada');
-      return res.status(500).json({ error: 'DATABASE_URL no configurada en el servidor' });
+      return res.status(500).json({ error: 'DATABASE_URL no configurada en Vercel' });
     }
 
     const sql = neon(databaseUrl);
@@ -48,10 +48,9 @@ export default async function handler(req, res) {
     return res.status(200).json({
       success: true,
       data: result[0],
-      message: `Producto ${agotado ? 'marcado como agotado' : 'disponible nuevamente'}`,
     });
   } catch (error) {
-    console.error('Error updating product:', error);
+    console.error('Error:', error);
     return res.status(500).json({ error: error.message || 'Error interno del servidor' });
   }
 }
