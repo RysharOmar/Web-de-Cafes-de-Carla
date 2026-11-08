@@ -24,5 +24,3 @@ export const insertProductoSchema = createInsertSchema(productosTable).omit({
 
 export type InsertProducto = z.infer<typeof insertProductoSchema>;
 export type Producto = typeof productosTable.$inferSelect;
-
-export { productosTable };
