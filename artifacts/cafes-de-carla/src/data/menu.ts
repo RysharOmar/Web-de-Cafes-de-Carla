@@ -6,6 +6,7 @@ export type MenuItem = {
   defaultSize: string;
   variants?: string[];         // ej: ["Leche entera","Leche desnatada",...]
   defaultVariant?: string;
+  agotado?: boolean;           // true = producto agotado, no se puede pedir
 };
 
 export type MenuCategory = {
@@ -26,7 +27,8 @@ const m = (
   defaultSize: string,
   variants?: string[],
   defaultVariant?: string,
-): MenuItem => ({ id, name, description, sizes, defaultSize, variants, defaultVariant });
+  agotado?: boolean,
+): MenuItem => ({ id, name, description, sizes, defaultSize, variants, defaultVariant, agotado: agotado ?? false });
 
 export const menuCategories: MenuCategory[] = [
   // ================= FEATURED =================

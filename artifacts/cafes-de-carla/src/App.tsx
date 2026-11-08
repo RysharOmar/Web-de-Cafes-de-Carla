@@ -7,6 +7,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
 import Success from '@/pages/success';
 import Cocina from '@/pages/cocina';
+import Admin from '@/pages/admin';
 import { Route, Switch, useLocation, Router as WouterRouter } from 'wouter';
 import { menuCategories } from './data/menu';
 
@@ -69,6 +70,11 @@ function ProductCard({ item, category, onAdd }: { item: any; category: any; onAd
       </div>
       <div className="product-card-content">
         <h4 data-testid={`name-menu-${item.id}`}>{item.name}</h4>
+        {item.agotado && (
+          <span className="product-card-unavailable" style={{ color: '#b9aa95', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em' }}>
+            AGOTADO
+          </span>
+        )}
         <p data-testid={`description-menu-${item.id}`}>{item.description ?? 'Detalles por confirmar'}</p>
 
         {hasSizes && (
@@ -82,6 +88,7 @@ function ProductCard({ item, category, onAdd }: { item: any; category: any; onAd
                   className={`variant-btn ${selectedSize === s.label ? 'active' : ''}`}
                   onClick={() => setSelectedSize(s.label)}
                   data-testid={`size-${item.id}-${s.label}`}
+                  disabled={item.agotado}
                 >
                   {s.label}
                 </button>
@@ -101,6 +108,7 @@ function ProductCard({ item, category, onAdd }: { item: any; category: any; onAd
                   className={`variant-btn ${selectedVariant === v ? 'active' : ''}`}
                   onClick={() => setSelectedVariant(v)}
                   data-testid={`variant-${item.id}-${v}`}
+                  disabled={item.agotado}
                 >
                   {v}
                 </button>
@@ -117,8 +125,8 @@ function ProductCard({ item, category, onAdd }: { item: any; category: any; onAd
                 : formatPrice(item.sizes[0].priceCents)
               : formatPrice(item.priceCents ?? 0)}
           </span>
-          <button className="add-to-cart focus-ring" type="button" aria-label={`Añadir ${item.name} al carrito`} onClick={() => onAdd(selectedSize, selectedVariant)} data-testid={`button-add-menu-${item.id}`}>
-            <Plus size={15} aria-hidden="true" /><span>Añadir</span>
+          <button className="add-to-cart focus-ring" type="button" aria-label={`Añadir ${item.name} al carrito`} onClick={() => onAdd(selectedSize, selectedVariant)} data-testid={`button-add-menu-${item.id}`} disabled={item.agotado}>
+            <Plus size={15} aria-hidden="true" /><span>{item.agotado ? 'Agotado' : 'Añadir'}</span>
           </button>
         </div>
       </div>
@@ -878,7 +886,7 @@ function Home() {
 }
 
 function Router() {
-  return <RoutedErrorBoundary><Switch><Route path="/" component={Home} /><Route path="/success" component={Success} /><Route path="/cocina" component={Cocina} /><Route component={NotFound} /></Switch></RoutedErrorBoundary>;
+  return <RoutedErrorBoundary><Switch><Route path="/" component={Home} /><Route path="/success" component={Success} /><Route path="/cocina" component={Cocina} /><Route path="/admin" component={Admin} /><Route component={NotFound} /></Switch></RoutedErrorBoundary>;
 }
 
 function RoutedErrorBoundary({ children }: { children: ReactNode }) {
