@@ -7,13 +7,10 @@ import { z } from "zod/v4";
 
 export const productosTable = pgTable("products", {
   id: serial("id").primaryKey(),
-  id_de_serie: text("id_de_serie").notNull().unique(),
   nombre: text("nombre").notNull(),
   precio: integer("precio").notNull(), // en céntimos
   categoria: text("categoria").notNull(),
   agotado: boolean("agotado").notNull().default(false),
-  creado_en: timestamp("creado_en").notNull().defaultNow(),
-  actualizado_en: timestamp("actualizado_en").notNull().defaultNow(),
 });
 
 export const insertProductoSchema = createInsertSchema(productosTable).omit({

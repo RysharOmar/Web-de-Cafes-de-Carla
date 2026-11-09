@@ -34,7 +34,7 @@ export default async function handler(req: any, res: any) {
     // ---------- GET /api/products ----------
     if (method === 'GET' && !productId) {
       const result = await sql`
-        SELECT id, id_de_serie, nombre, precio, categoria, agotado, creado_en, actualizado_en
+        SELECT id, nombre, precio, categoria, agotado
         FROM products
         ORDER BY id
       `;
@@ -51,9 +51,9 @@ export default async function handler(req: any, res: any) {
 
       const result = await sql`
         UPDATE products
-        SET agotado = ${agotado}, actualizado_en = NOW()
+        SET agotado = ${agotado}
         WHERE id = ${productId}
-        RETURNING id, id_de_serie, nombre, precio, categoria, agotado, creado_en, actualizado_en
+        RETURNING id, nombre, precio, categoria, agotado
       `;
 
       if (result.length === 0) {
