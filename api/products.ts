@@ -35,7 +35,7 @@ export default async function handler(req: any, res: any) {
     if (method === 'GET' && !productId) {
       const result = await sql`
         SELECT id, id_de_serie, nombre, precio, categoria, agotado, creado_en, actualizado_en
-        FROM productos
+        FROM products
         ORDER BY id
       `;
       return res.status(200).json({ productos: result, count: result.length });
@@ -50,7 +50,7 @@ export default async function handler(req: any, res: any) {
       }
 
       const result = await sql`
-        UPDATE productos
+        UPDATE products
         SET agotado = ${agotado}, actualizado_en = NOW()
         WHERE id = ${productId}
         RETURNING id, id_de_serie, nombre, precio, categoria, agotado, creado_en, actualizado_en
