@@ -9,11 +9,6 @@
 import Stripe from 'stripe';
 import { neon } from '@neondatabase/serverless';
 
-const PART1 = 'sk_test_51UVZfqRfNgxXGS18C15gKVOBsdMTrQl1ukO0gkgE9Q07Wc1ljxBO0LIuL';
-const PART2 = 'AgNbRDYiuAvjnwBYSuxyOzPPuNCE7Bo00mV4LIR3d';
-const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || PART1 + PART2;
-
-const stripe = new Stripe(STRIPE_SECRET_KEY);
 const sql = neon(process.env.DATABASE_URL!);
 
 type CartItem = {
@@ -60,6 +55,14 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
+    const stripeSecret = process.env.STRIPE_SECRET_KEY;
+
+    if (!stripeSecret) {
+      res.status(500).json({ error: 'STRIPE_SECRET_KEY no está configurada en el servidor' });
+      return;
+    }
+
+    const stripe = new Stripe(stripeSecret);
     const { items } = req.body as { items?: CartItem[] };
 
     if (!Array.isArray(items) || items.length === 0) {
