@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ArrowDown, ArrowRight, ArrowUpRight, Clock3, CreditCard, Instagram, MapPin, Menu as MenuIcon, Minus, Phone, Plus, ShoppingBag, X } from 'lucide-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/components/error-boundary';
@@ -9,13 +9,10 @@ import Success from '@/pages/success';
 import Cocina from '@/pages/cocina';
 import Admin from '@/pages/admin';
 import { Route, Switch, useLocation, Router as WouterRouter } from 'wouter';
-import { menuCategories } from './data/menu';
+import { groupProductos, priceForLine, type ApiProducto, type MenuItem } from '@/lib/products';
 
 const queryClient = new QueryClient();
 const logo = '/cafes-de-carla-logo.jpg';
-
-const menuItemsById = new Map(menuCategories.flatMap((category) => category.items).map((item) => [item.id, item] as const));
-const menuItemCategoryById = new Map(menuCategories.flatMap((category) => category.items.map((item) => [item.id, category.id] as const)));
 
 // Global types
 declare global {
@@ -40,77 +37,50 @@ function formatPrice(cents: number) {
   return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(cents / 100);
 }
 
-// Price fetching function
-async function priceForSize(itemId: string, sizeLabel: string): Promise<number> {
-  const res = await fetch(`/api/price?itemId=${encodeURIComponent(itemId)}&size=${encodeURIComponent(sizeLabel)}`);
-  const data = await res.json();
-  return data.priceCents ?? 0;
-}
-
-function ProductCard({ item, category, onAdd }: { item: any; category: any; onAdd: (size: string, variant: string | null) => void }) {
+// Product card: image, description, sizes and availability all come from Neon.
+function ProductCard({ item, onAdd }: { item: MenuItem; onAdd: (size: string, variant: string | null) => void }) {
   const [selectedSize, setSelectedSize] = useState(item.defaultSize);
-  const [selectedVariant, setSelectedVariant] = useState(item.defaultVariant ?? null);
+  const [imageFailed, setImageFailed] = useState(false);
 
-  const hasSizes = item.sizes && item.sizes.length > 1;
-  const hasVariants = Boolean(item.variants?.length);
+  const hasSizes = item.sizes.length > 1;
+  const usingFallback = !item.imageUrl || imageFailed;
+  const imageSrc = usingFallback ? '/sample-brunch.jpg' : item.imageUrl!;
+  const selectedSizeOption = item.sizes.find((size) => size.label === selectedSize) ?? item.sizes[0];
 
   return (
-    <li className="product-card" key={item.id} data-testid={`item-menu-${item.id}`}>
+    <li className={`product-card${item.agotado ? ' is-sold-out' : ''}`} data-testid={`item-menu-${item.id}`}>
       <div className="product-photo">
         <img
-          src={category.image ?? '/sample-brunch.jpg'}
-          alt={`Imagen de muestra; no es una fotografía real de ${item.name}`}
+          src={imageSrc}
+          alt={usingFallback ? `Imagen de muestra de ${item.name}` : item.name}
           loading="lazy"
           decoding="async"
           width="960"
           height="720"
+          onError={() => setImageFailed(true)}
           data-testid={`img-product-${item.id}`}
         />
-        <span className="product-photo-label">IMAGEN DE MUESTRA</span>
+        {usingFallback && <span className="product-photo-label">IMAGEN DE MUESTRA</span>}
       </div>
       <div className="product-card-content">
         <h4 data-testid={`name-menu-${item.id}`}>{item.name}</h4>
-        {item.agotado && (
-          <span className="product-card-unavailable" style={{ color: '#b9aa95', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em' }}>
-            AGOTADO
-          </span>
-        )}
-        <p data-testid={`description-menu-${item.id}`}>{item.description ?? 'Detalles por confirmar'}</p>
+        {item.agotado && <span className="product-card-unavailable">AGOTADO</span>}
+        {item.description && <p data-testid={`description-menu-${item.id}`}>{item.description}</p>}
 
         {hasSizes && (
           <div className="variant-selector" data-testid={`size-selector-${item.id}`}>
             <label>Tamaño:</label>
             <div className="variant-options">
-              {item.sizes.map((s: any) => (
+              {item.sizes.map((size) => (
                 <button
-                  key={s.label}
+                  key={size.label}
                   type="button"
-                  className={`variant-btn ${selectedSize === s.label ? 'active' : ''}`}
-                  onClick={() => setSelectedSize(s.label)}
-                  data-testid={`size-${item.id}-${s.label}`}
+                  className={`variant-btn ${selectedSize === size.label ? 'active' : ''}`}
+                  onClick={() => setSelectedSize(size.label)}
+                  data-testid={`size-${item.id}-${size.label}`}
                   disabled={item.agotado}
                 >
-                  {s.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {hasVariants && (
-          <div className="variant-selector" data-testid={`variant-selector-${item.id}`}>
-            <label>Elige tu opción:</label>
-            <div className="variant-options">
-              {item.variants.map((v: string) => (
-                <button
-                  key={v}
-                  type="button"
-                  className={`variant-btn ${selectedVariant === v ? 'active' : ''}`}
-                  onClick={() => setSelectedVariant(v)}
-                  data-testid={`variant-${item.id}-${v}`}
-                  disabled={item.agotado}
-                >
-                  {v}
+                  {size.label}
                 </button>
               ))}
             </div>
@@ -119,14 +89,18 @@ function ProductCard({ item, category, onAdd }: { item: any; category: any; onAd
 
         <div className="product-card-footer">
           <span className="product-card-price" data-testid={`price-menu-${item.id}`}>
-            {item.sizes && item.sizes.length > 1
-              ? item.sizes.find((s: any) => s.label === selectedSize)
-                ? formatPrice(item.sizes.find((s: any) => s.label === selectedSize).priceCents)
-                : formatPrice(item.sizes[0].priceCents)
-              : formatPrice(item.priceCents ?? 0)}
+            {formatPrice(selectedSizeOption?.priceCents ?? 0)}
           </span>
-          <button className="add-to-cart focus-ring" type="button" aria-label={`Añadir ${item.name} al carrito`} onClick={() => onAdd(selectedSize, selectedVariant)} data-testid={`button-add-menu-${item.id}`} disabled={item.agotado}>
-            <Plus size={15} aria-hidden="true" /><span>{item.agotado ? 'Agotado' : 'Añadir'}</span>
+          <button
+            className="add-to-cart focus-ring"
+            type="button"
+            aria-label={`Añadir ${item.name} al carrito`}
+            onClick={() => onAdd(selectedSize, item.defaultVariant ?? null)}
+            data-testid={`button-add-menu-${item.id}`}
+            disabled={item.agotado}
+          >
+            <Plus size={15} aria-hidden="true" />
+            <span>{item.agotado ? 'Agotado' : 'Añadir'}</span>
           </button>
         </div>
       </div>
@@ -135,10 +109,24 @@ function ProductCard({ item, category, onAdd }: { item: any; category: any; onAd
 }
 
 function Home() {
-  const [activeCategory, setActiveCategory] = useState('featured');
+  const [activeCategory, setActiveCategory] = useState('');
   const [mobileOpen, setMobileOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [cart, setCart] = useState<Record<string, { itemId: string; quantity: number; sizeLabel: string; variant: string | null }>>({});
+  const [productos, setProductos] = useState<ApiProducto[]>([]);
+  const [menuLoading, setMenuLoading] = useState(true);
+  const [menuError, setMenuError] = useState<string | null>(null);
+
+  const menuCategories = useMemo(() => groupProductos(productos), [productos]);
+  const menuItemsById = useMemo(
+    () => new Map(menuCategories.flatMap((category) => category.items).map((item) => [item.id, item] as const)),
+    [menuCategories],
+  );
+  const menuItemCategoryById = useMemo(
+    () => new Map(menuCategories.flatMap((category) => category.items.map((item) => [item.id, category.id] as const))),
+    [menuCategories],
+  );
+
   const selected = menuCategories.find((category) => category.id === activeCategory) ?? menuCategories[0];
   const cartTriggerRef = useRef<HTMLButtonElement>(null);
   const cartCloseRef = useRef<HTMLButtonElement>(null);
@@ -148,6 +136,35 @@ function Home() {
   const mesaActiva = searchParams.get('mesa'); // ej: "5" o null
 
   const STORAGE_KEY = 'cafes_de_carla_orders';
+
+  const loadMenu = async () => {
+    setMenuLoading(true);
+    setMenuError(null);
+    try {
+      const response = await fetch('/api/products', { cache: 'no-store' });
+      if (!response.ok) {
+        throw new Error(`Error ${response.status} al cargar la carta`);
+      }
+      const data = await response.json();
+      setProductos(Array.isArray(data.productos) ? data.productos : []);
+    } catch (err) {
+      console.error('Error cargando la carta:', err);
+      setMenuError(err instanceof Error ? err.message : 'No se pudo cargar la carta');
+    } finally {
+      setMenuLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadMenu();
+  }, []);
+
+  useEffect(() => {
+    if (menuCategories.length === 0) return;
+    if (!menuCategories.some((category) => category.id === activeCategory)) {
+      setActiveCategory(menuCategories[0].id);
+    }
+  }, [menuCategories, activeCategory]);
 
   // Estado para rastrear el pedido de la mesa (modo local)
   const [orderStatus, setOrderStatus] = useState<'pending' | 'confirmed' | 'served' | 'paid' | null>(null);
@@ -188,8 +205,7 @@ function Home() {
   const cartCount = cartLines.reduce((total, line) => total + line.quantity, 0);
   const cartSubtotal = cartLines.reduce((total, line) => {
     const item = menuItemsById.get(line.itemId);
-    const price = item?.sizes?.find((s: any) => s.label === line.sizeLabel)?.priceCents ?? item?.priceCents ?? 0;
-    return total + price * line.quantity;
+    return total + priceForLine(item, line.sizeLabel) * line.quantity;
   }, 0);
 
   // Subtotal total de la mesa: carrito local + items en cocina (no pagados)
@@ -223,8 +239,7 @@ function Home() {
 
   const allPriced = cartLines.length > 0 && cartLines.every((line) => {
     const item = menuItemsById.get(line.itemId);
-    const price = item?.sizes?.find((s: any) => s.label === line.sizeLabel)?.priceCents ?? item?.priceCents ?? 0;
-    return price > 0;
+    return priceForLine(item, line.sizeLabel) > 0;
   });
 
   const closeNav = () => setMobileOpen(false);
@@ -272,17 +287,12 @@ function Home() {
     if (!allPriced) return;
 
     try {
-      const items = cartLines.map((line) => {
-        const item = menuItemsById.get(line.itemId);
-        const price = item?.sizes?.find((s: any) => s.label === line.sizeLabel)?.priceCents ?? item?.priceCents ?? 0;
-        return {
-          id: line.itemId,
-          quantity: line.quantity,
-          sizeLabel: line.sizeLabel,
-          variant: line.variant ?? undefined,
-          priceCents: price,
-        };
-      });
+      const items = cartLines.map((line) => ({
+        id: line.itemId,
+        quantity: line.quantity,
+        sizeLabel: line.sizeLabel,
+        variant: line.variant ?? undefined,
+      }));
 
       const response = await fetch("/api/create-checkout-session", {
         method: "POST",
@@ -298,13 +308,12 @@ function Home() {
 
       const cartSummary = cartLines.map((line) => {
         const item = menuItemsById.get(line.itemId);
-        const price = item?.sizes?.find((s: any) => s.label === line.sizeLabel)?.priceCents ?? item?.priceCents ?? 0;
         return {
           name: item?.name ?? line.itemId,
           qty: line.quantity,
           sizeLabel: line.sizeLabel,
           variant: line.variant ?? undefined,
-          priceCents: price,
+          priceCents: priceForLine(item, line.sizeLabel),
         };
       });
       localStorage.setItem('cart_success', JSON.stringify(cartSummary));
@@ -329,7 +338,7 @@ function Home() {
     try {
       const items = cartLines.map((line) => {
         const item = menuItemsById.get(line.itemId);
-        const price = item?.sizes?.find((s: any) => s.label === line.sizeLabel)?.priceCents ?? item?.priceCents ?? 0;
+        const price = priceForLine(item, line.sizeLabel);
         return {
           id: line.itemId,
           name: item?.name ?? line.itemId,
@@ -417,10 +426,18 @@ function Home() {
 
       const totalCents = allItems.reduce((sum, it) => sum + it.priceCents * it.quantity, 0);
 
+      // El servidor vuelve a calcular los precios desde Neon; nunca confía en priceCents.
+      const checkoutItems = allItems.map(({ id, quantity, sizeLabel, variant }) => ({
+        id,
+        quantity,
+        sizeLabel,
+        variant,
+      }));
+
       const response = await fetch("/api/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items: allItems }),
+        body: JSON.stringify({ items: checkoutItems }),
       });
 
       const data = await response.json();
@@ -594,34 +611,51 @@ function Home() {
           <div className="section-kicker"><span className="eyebrow">02 / PARA DISFRUTAR</span><span className="kicker-line" /></div>
           <div className="menu-heading">
             <div><h2 id="menu-title" className="serif" data-testid="heading-menu">Algo rico,<br /><em>en buena compañía.</em></h2></div>
-            <p data-testid="text-menu-introduction">La carta que nos has compartido ya está aquí, con sus productos, descripciones y precios. Los precios no indicados quedan pendientes de confirmar.</p>
+            <p data-testid="text-menu-introduction">Nuestra carta se actualiza desde la base de datos: productos, precios, tamaños y disponibilidad en tiempo real.</p>
           </div>
-          <div className="category-list" role="tablist" aria-label="Categorías de la carta" data-testid="menu-category-tabs">
-            {menuCategories.map((category, index) => (
-              <button key={category.id} type="button" role="tab" aria-selected={activeCategory === category.id} aria-controls="category-panel" className={`category-tab ${activeCategory === category.id ? 'active' : ''}`} onClick={() => setActiveCategory(category.id)} data-testid={`tab-category-${category.id}`}>
-                <span className="category-number">{String(index + 1).padStart(2, '0')}</span><span className="category-name">{category.title}</span><ArrowRight size={17} aria-hidden="true" />
-              </button>
-            ))}
-          </div>
-          <section className="category-panel" role="tabpanel" id="category-panel" aria-labelledby={`tab-category-${selected.id}`} aria-label={selected.title} data-testid={`panel-category-${selected.id}`}>
-            <div className="category-copy">
-              <div>
-                <span className="eyebrow">EN LA CARTA</span>
-                <h3 className="serif" data-testid={`heading-category-${selected.id}`}>{selected.title}</h3>
-              </div>
-              <p>{selected.note}</p>
+
+          {menuLoading ? (
+            <div className="menu-status" role="status" data-testid="menu-loading">
+              <Clock3 size={22} aria-hidden="true" />
+              <p>Cargando la carta...</p>
             </div>
-            {selected.items.length > 0 ? (
-              <ul className="product-grid" data-testid={`list-menu-${selected.id}`}>
-                {selected.items.map((item) => (
-                  <ProductCard key={item.id} item={item} category={selected} onAdd={(size, variant) => changeCartQuantity(item.id, size, 1, variant)} />
+          ) : menuError ? (
+            <div className="menu-status" role="alert" data-testid="menu-error">
+              <p>{menuError}</p>
+              <button type="button" className="text-cta focus-ring" onClick={loadMenu}>Reintentar</button>
+            </div>
+          ) : menuCategories.length === 0 ? (
+            <div className="menu-status" data-testid="menu-empty">
+              <p>La carta está vacía en este momento. Vuelve a intentarlo en unos minutos.</p>
+            </div>
+          ) : (
+            <>
+              <div className="category-list" role="tablist" aria-label="Categorías de la carta" data-testid="menu-category-tabs">
+                {menuCategories.map((category, index) => (
+                  <button key={category.id} type="button" role="tab" aria-selected={selected?.id === category.id} aria-controls="category-panel" className={`category-tab ${selected?.id === category.id ? 'active' : ''}`} onClick={() => setActiveCategory(category.id)} data-testid={`tab-category-${category.id}`}>
+                    <span className="category-number">{String(index + 1).padStart(2, '0')}</span><span className="category-name">{category.title}</span><ArrowRight size={17} aria-hidden="true" />
+                  </button>
                 ))}
-              </ul>
-            ) : (
-              <p className="menu-empty" data-testid={`empty-menu-${selected.id}`}>{selected.emptyMessage}</p>
-            )}
-          </section>
-          <p className="menu-disclaimer" data-testid="text-menu-preview-disclosure">Precios transcritos de la carta compartida; los que no figuraban se muestran por confirmar. Las fotos son ilustrativas y se sustituirán por imágenes reales de los productos.</p>
+              </div>
+              {selected && (
+                <section className="category-panel" role="tabpanel" id="category-panel" aria-labelledby={`tab-category-${selected.id}`} aria-label={selected.title} data-testid={`panel-category-${selected.id}`}>
+                  <div className="category-copy">
+                    <div>
+                      <span className="eyebrow">EN LA CARTA</span>
+                      <h3 className="serif" data-testid={`heading-category-${selected.id}`}>{selected.title}</h3>
+                    </div>
+                    {selected.note && <p>{selected.note}</p>}
+                  </div>
+                  <ul className="product-grid" data-testid={`list-menu-${selected.id}`}>
+                    {selected.items.map((item) => (
+                      <ProductCard key={item.id} item={item} onAdd={(size, variant) => changeCartQuantity(item.id, size, 1, variant)} />
+                    ))}
+                  </ul>
+                </section>
+              )}
+            </>
+          )}
+          <p className="menu-disclaimer" data-testid="text-menu-preview-disclosure">Precios y disponibilidad actualizados desde la base de datos. Las fotos son ilustrativas y pueden sustituirse por imágenes reales de los productos.</p>
         </section>
 
         {/* Pausa */}
@@ -766,7 +800,7 @@ function Home() {
                 <ul className="cart-lines" data-testid="list-cart-items">
                   {cartLines.map((line) => {
                     const item = menuItemsById.get(line.itemId);
-                    const price = item?.sizes?.find((s: any) => s.label === line.sizeLabel)?.priceCents ?? item?.priceCents ?? 0;
+                    const price = priceForLine(item, line.sizeLabel);
                     return (
                       <li className="cart-line" key={`${line.itemId}|${line.sizeLabel}`} data-testid={`cart-item-${line.itemId}-${line.sizeLabel}`}>
                         <div className="cart-line-main">
@@ -896,7 +930,7 @@ function RoutedErrorBoundary({ children }: { children: ReactNode }) {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}><TooltipProvider><Toaster position="bottom-center" /><WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}><Router /></WouterRouter></TooltipProvider></QueryClientProvider>
+    <QueryClientProvider client={queryClient}><TooltipProvider><Toaster /><WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}><Router /></WouterRouter></TooltipProvider></QueryClientProvider>
   );
 }
 

@@ -1,11 +1,9 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { requiredEnv } from "../../../../lib/env";
+import { requiredEnv } from "../lib/env";
 import Stripe from "stripe";
 import { logger } from "../lib/logger";
 
-export const stripe = new Stripe(requiredEnv("STRIPE_SECRET_KEY"), {
-  apiVersion: "2025-04-30.acacia",
-});
+export const stripe = new Stripe(requiredEnv("STRIPE_SECRET_KEY"));
 
 export const stripeRouter: IRouter = Router();
 
@@ -73,7 +71,8 @@ export const stripeWebhookHandler = async (
     );
   } catch (err) {
     logger.warn({ err }, "Webhook signature verification failed");
-    res.status(400).send(`Webhook Error: ${err.message}`);
+    const message = err instanceof Error ? err.message : String(err);
+    res.status(400).send(`Webhook Error: ${message}`);
     return;
   }
 

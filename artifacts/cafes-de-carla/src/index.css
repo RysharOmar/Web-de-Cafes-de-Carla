@@ -167,6 +167,9 @@
 .category-copy p { max-width: 440px; font-size: 11px; line-height: 1.65; color: #7c6f5e; margin: 0; text-align: right; }
 .product-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; list-style: none; margin: 0; padding: 0; }
 .product-card { min-width: 0; display: flex; flex-direction: column; overflow: hidden; border: 1px solid #e2d8c8; border-radius: 10px; background: #fbf8f0; box-shadow: 0 7px 22px rgba(74, 51, 34, .055); }
+.product-card.is-sold-out .product-photo img { opacity: .55; filter: grayscale(.25); }
+.product-card.is-sold-out .product-card-content { opacity: .82; }
+.product-card-unavailable { display: inline-block; color: #b9aa95; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; margin: 4px 0 0; }
 .product-photo { position: relative; aspect-ratio: 4 / 3; overflow: hidden; background: #e4e0d2; }
 .product-photo img { width: 100%; height: 100%; display: block; object-fit: cover; transition: transform .55s cubic-bezier(.2,.7,.2,1); }
 .product-card:hover .product-photo img { transform: scale(1.04); }
@@ -185,7 +188,11 @@
 .variant-btn.active { border-color: #81945b; background: #81945b; color: #fff; }
 .add-to-cart { display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-height: 38px; padding: 0 11px; border: 1px solid #81945b; border-radius: 99px; color: #fff9ec; background: #81945b; font: inherit; font-size: 10px; cursor: pointer; white-space: nowrap; transition: background .2s, border-color .2s, color .2s; }
 .add-to-cart:hover { background: #637746; border-color: #637746; }
+.add-to-cart:disabled { cursor: not-allowed; opacity: .55; background: #b9aa95; border-color: #b9aa95; }
 .menu-empty { color: #7c6f5e; font-size: 12px; line-height: 1.7; margin: 22px 0 0; padding: 17px; border-top: 1px solid #d8ccb9; }
+.menu-status { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 180px; margin: 22px 0 0; padding: 24px; border: 1px dashed #d8ccb9; border-radius: 10px; color: #7c6f5e; font-size: 13px; text-align: center; }
+.menu-status p { margin: 0; }
+.menu-status .text-cta { justify-content: center; }
 .preview-note { display: block; color: #8a7a65; font-size: 9px; line-height: 1.5; margin-top: 22px; }
 .menu-disclaimer { text-align: right; margin: 15px 0 0; color: #9a8b77; font-size: 9px; line-height: 1.6; }
 @media (min-width: 1120px) { .product-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }

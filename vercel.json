@@ -12,6 +12,7 @@
     { "src": "/api/webhook", "dest": "/api/webhook", "methods": ["POST"] },
     { "src": "/api/orders", "dest": "/api/orders", "methods": ["GET", "POST", "PATCH", "OPTIONS"] },
     { "src": "/api/orders/(.*)", "dest": "/api/orders", "methods": ["GET", "POST", "PATCH", "OPTIONS"] },
+    { "src": "/api/admin-auth", "dest": "/api/admin-auth", "methods": ["POST", "OPTIONS"] },
     { "src": "/api/products", "dest": "/api/products", "methods": ["GET", "PATCH", "OPTIONS"] },
     { "src": "/api/products/(.*)", "dest": "/api/products", "methods": ["GET", "PATCH", "OPTIONS"] }
   ]
