@@ -84,6 +84,7 @@ export default function Admin() {
     agotado: boolean;
   } | null>(null);
   const [saving, setSaving] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
   const [activeTab, setActiveTab] = useState<'disponibilidad' | 'edicion'>('disponibilidad');
   const [filter, setFilter] = useState<'todos' | 'disponibles' | 'agotados'>('todos');
 
@@ -251,6 +252,24 @@ export default function Admin() {
   const closeEdit = () => {
     setEditingProduct(null);
     setEditForm(null);
+    setIsAdding(false);
+  };
+
+  const openAdd = () => {
+    setEditForm({
+      nombre: '',
+      precio: '',
+      precio_mini: null,
+      precio_grande: null,
+      categoria: '',
+      descripcion: null,
+      imagen_url: null,
+      agotado: false,
+    });
+    setEditingProduct(null);
+    setIsAdding(true);
+    setError(null);
+    setSuccess(null);
   };
 
   const handleEditChange = (field: string, value: string | null | boolean) => {
@@ -260,7 +279,8 @@ export default function Admin() {
 
   const handleSaveEdit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!editForm || !editingProduct) return;
+    if (!editForm) return;
+    if (!isAdding && !editingProduct) return;
 
     setSaving(true);
     setError(null);
@@ -314,8 +334,10 @@ export default function Admin() {
       body.imagen_url = editForm.imagen_url ?? null;
       body.agotado = Boolean(editForm.agotado);
 
-      const res = await fetch(`/api/products/${editingProduct.id}`, {
-        method: 'PATCH',
+      const isCreating = isAdding;
+
+      const res = await fetch(isCreating ? '/api/products' : `/api/products/${editingProduct!.id}`, {
+        method: isCreating ? 'POST' : 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           'x-admin-password': password,
@@ -333,17 +355,19 @@ export default function Admin() {
       }
 
       if (!res.ok) {
-        throw new Error(data.error || `Error ${res.status} al actualizar producto`);
+        throw new Error(data.error || `Error ${res.status} al ${isCreating ? 'crear' : 'actualizar'} producto`);
       }
 
       // Refrescar la lista inmediatamente
       await fetchProductos();
 
-      setSuccess(`"${body.nombre}" actualizado correctamente.`);
+      setSuccess(
+        `"${body.nombre}" ${isCreating ? 'creado correctamente.' : 'actualizado correctamente.'}`,
+      );
       closeEdit();
     } catch (err: any) {
-      setError(err.message || 'Error actualizando producto');
-      console.error('Error guardando edición:', err);
+      setError(err.message || `Error al ${isAdding ? 'crear' : 'actualizar'} producto`);
+      console.error(`Error guardando ${isAdding ? 'creación' : 'edición'}:`, err);
     } finally {
       setSaving(false);
     }
@@ -623,9 +647,7 @@ export default function Admin() {
                     {filteredProductos.length} producto{filteredProductos.length !== 1 ? 's' : ''}
                   </span>
                   <button
-                    onClick={() => {
-                      alert('La creación de productos requiere un endpoint POST en el backend. Por ahora puedes editar los datos y la disponibilidad de los productos existentes.');
-                    }}
+                    onClick={openAdd}
                     className="focus-ring"
                     style={{
                       border: '1px solid #81945b',
@@ -810,7 +832,7 @@ export default function Admin() {
                     margin: 0,
                   }}
                 >
-                  Editar producto
+                  {isAdding ? 'Agregar producto' : 'Editar producto'}
                 </h2>
                 <button
                   onClick={closeEdit}

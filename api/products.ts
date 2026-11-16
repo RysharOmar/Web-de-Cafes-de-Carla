@@ -4,6 +4,7 @@
  *
  * Endpoints:
  *   GET    /api/products     → lista todos los productos (público, para la Carta)
+ *   POST   /api/products     → crea un nuevo producto (requiere x-admin-password)
  *   PATCH  /api/products/:id → actualiza uno o más campos del producto (requiere x-admin-password)
  *     Campos aceptados: nombre, precio, precio_mini, precio_grande, categoria, descripcion, imagen_url, agotado
  *
@@ -76,7 +77,7 @@ export default async function handler(req: any, res: any) {
 
   // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, PATCH, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-admin-password');
   res.setHeader('Cache-Control', 'no-store');
 
@@ -252,6 +253,99 @@ export default async function handler(req: any, res: any) {
       }
 
       return res.status(200).json({ ok: true, producto: mapProducto(result[0] as ProductoRow) });
+    }
+
+    // ---------- POST /api/products ----------
+    if (method === 'POST' && rawId == null) {
+      const adminPassword = process.env.ADMIN_PASSWORD;
+
+      if (!adminPassword) {
+        return res.status(500).json({ error: 'ADMIN_PASSWORD no está configurada en el servidor' });
+      }
+
+      if (getAdminPassword(req) !== adminPassword) {
+        return res.status(401).json({ error: 'No autorizado' });
+      }
+
+      const {
+        nombre,
+        precio,
+        precio_mini,
+        precio_grande,
+        categoria,
+        descripcion,
+        imagen_url,
+        agotado,
+      } = body;
+
+      // ---- validar nombre (requerido) ----
+      if (typeof nombre !== 'string' || nombre.trim() === '') {
+        return res.status(400).json({ error: 'El campo nombre es requerido y no puede estar vacío' });
+      }
+
+      // ---- validar precio (requerido) ----
+      const precioNum = toNumber(precio);
+      if (precioNum === null || precioNum < 0) {
+        return res.status(400).json({ error: 'El campo precio es requerido y debe ser un número mayor o igual a 0' });
+      }
+
+      // ---- validar categoria (requerido) ----
+      if (typeof categoria !== 'string' || categoria.trim() === '') {
+        return res.status(400).json({ error: 'El campo categoría es requerido y no puede estar vacío' });
+      }
+
+      // ---- precio_mini (opcional, null o número >= 0) ----
+      let precioMiniFinal: number | null = null;
+      if (precio_mini !== undefined && precio_mini !== null && precio_mini !== '') {
+        const pm = toNumber(precio_mini);
+        if (pm === null || pm < 0) {
+          return res.status(400).json({ error: 'precio_mini debe ser número >= 0 o null' });
+        }
+        precioMiniFinal = pm;
+      }
+
+      // ---- precio_grande (opcional, null o número >= 0) ----
+      let precioGrandeFinal: number | null = null;
+      if (precio_grande !== undefined && precio_grande !== null && precio_grande !== '') {
+        const pg = toNumber(precio_grande);
+        if (pg === null || pg < 0) {
+          return res.status(400).json({ error: 'precio_grande debe ser número >= 0 o null' });
+        }
+        precioGrandeFinal = pg;
+      }
+
+      // ---- descripcion (opcional, null o texto) ----
+      let descripcionFinal: string | null = null;
+      if (descripcion !== undefined && descripcion !== null && descripcion !== '') {
+        if (typeof descripcion !== 'string') {
+          return res.status(400).json({ error: 'descripcion debe ser texto o null' });
+        }
+        descripcionFinal = descripcion.trim() || null;
+      }
+
+      // ---- imagen_url (opcional, null o texto) ----
+      let imagenUrlFinal: string | null = null;
+      if (imagen_url !== undefined && imagen_url !== null && imagen_url !== '') {
+        if (typeof imagen_url !== 'string') {
+          return res.status(400).json({ error: 'imagen_url debe ser texto o null' });
+        }
+        imagenUrlFinal = imagen_url.trim() || null;
+      }
+
+      // ---- agotado (opcional, booleano, default false) ----
+      const agotadoFinal = typeof agotado === 'boolean' ? agotado : false;
+
+      const result = await sql`
+        INSERT INTO products (nombre, precio, precio_mini, precio_grande, categoria, agotado, imagen_url, descripcion)
+        VALUES (${nombre.trim()}, ${precioNum}, ${precioMiniFinal}, ${precioGrandeFinal}, ${categoria.trim()}, ${agotadoFinal}, ${imagenUrlFinal}, ${descripcionFinal})
+        RETURNING id, nombre, precio, precio_mini, precio_grande, categoria, agotado, imagen_url, descripcion
+      `;
+
+      if (result.length === 0) {
+        return res.status(500).json({ error: 'No se pudo crear el producto' });
+      }
+
+      return res.status(201).json({ ok: true, producto: mapProducto(result[0] as ProductoRow) });
     }
 
     return res.status(405).json({ error: 'Método no permitido' });
