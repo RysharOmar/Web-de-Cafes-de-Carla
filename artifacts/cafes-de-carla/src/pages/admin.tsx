@@ -245,6 +245,7 @@ export default function Admin() {
       agotado: Boolean(producto.agotado),
     });
     setEditingProduct(producto);
+    setIsAdding(false);
     setError(null);
     setSuccess(null);
   };
@@ -785,7 +786,7 @@ export default function Admin() {
       </main>
 
       {/* Modal Editar Producto */}
-      {editingProduct && editForm && (
+      {editForm && (
         <>
           <div
             style={{
