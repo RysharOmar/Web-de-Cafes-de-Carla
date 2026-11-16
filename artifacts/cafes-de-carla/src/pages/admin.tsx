@@ -237,18 +237,19 @@ export default function Admin() {
   // --- Funciones de edición de producto (modal) ---
 
   const openEdit = (producto: ApiProducto) => {
+    console.log('openEdit disparado', producto);
+    setIsAdding(false);
+    setEditingProduct(producto);
     setEditForm({
       nombre: producto.nombre,
       precio: String(producto.precio ?? ''),
-      precio_mini: producto.precio_mini !== null ? String(producto.precio_mini) : null,
-      precio_grande: producto.precio_grande !== null ? String(producto.precio_grande) : null,
+      precio_mini: producto.precio_mini !== null ? String(producto.precio_mini) : '',
+      precio_grande: producto.precio_grande !== null ? String(producto.precio_grande) : '',
       categoria: producto.categoria,
-      descripcion: producto.descripcion ?? null,
-      imagen_url: producto.imagen_url ?? null,
+      descripcion: producto.descripcion ?? '',
+      imagen_url: producto.imagen_url ?? '',
       agotado: Boolean(producto.agotado),
     });
-    setEditingProduct(producto);
-    setIsAdding(false);
     setError(null);
     setSuccess(null);
     setImagePreview(null);
