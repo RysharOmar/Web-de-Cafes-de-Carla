@@ -1,7 +1,4 @@
 import { useEffect, useState, type FormEvent } from 'react';
-
-// BroadcastChannel para notificar al instante a otras pestañas (ej. la carta pública)
-const channel = new BroadcastChannel('cafes_de_carla_menu');
 import { Check, X, Clock, RefreshCw, Lock, LogOut } from 'lucide-react';
 import type { ApiProducto } from '@/lib/products';
 
@@ -93,6 +90,8 @@ export default function Admin() {
   const [uploading, setUploading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  // BroadcastChannel para notificar a otras pestañas (carta pública)
+  const channelRef = useRef<BroadcastChannel | null>(null);
 
   // Recuperar la sesión del panel al recargar la página.
   useEffect(() => {
@@ -153,6 +152,24 @@ export default function Admin() {
     const interval = setInterval(fetchProductos, 3000);
     return () => clearInterval(interval);
   }, [password, editingProduct]);
+
+  // BroadcastChannel: notificar a otras pestañas (carta pública) cuando hay cambios en el panel
+  useEffect(() => {
+    const channel = new BroadcastChannel('cafes_de_carla_menu');
+    channelRef.current = channel;
+    // No podemos postMessage aquí inmediatamente porque las funciones
+    // que lo llaman (toggleAgotado, handleSaveEdit) están fuera de este useEffect.
+    // Usamos channelRef.current para tener acceso al canal desde esas funciones.
+    const handleMessage = (event: MessageEvent) => {
+      // Este listener está aquí por si alguna otra pestaña envía un mensaje al panel
+    };
+    channel.onmessage = handleMessage;
+
+    return () => {
+      channel.close();
+      channelRef.current = null;
+    };
+  }, []);
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -230,7 +247,7 @@ export default function Admin() {
       );
       // Notificar a otras pestañas que la lista de productos cambió
       try {
-        channel.postMessage({ type: 'producto:actualizado', productoId: producto.id });
+        channelRef.current?.postMessage({ type: 'producto:actualizado', productoId: producto.id });
       } catch {
         // BroadcastChannel no disponible en este contexto; el polling fallback se encargará
       }
@@ -416,7 +433,7 @@ export default function Admin() {
       );
       // Notificar a otras pestañas que la lista de productos cambió
       try {
-        channel.postMessage({ type: 'producto:actualizado' });
+        channelRef.current?.postMessage({ type: 'producto:actualizado' });
       } catch {
         // BroadcastChannel no disponible en este contexto; el polling fallback se encargará
       }
