@@ -87,6 +87,9 @@ export default function Admin() {
   const [isAdding, setIsAdding] = useState(false);
   const [activeTab, setActiveTab] = useState<'disponibilidad' | 'edicion'>('disponibilidad');
   const [filter, setFilter] = useState<'todos' | 'disponibles' | 'agotados'>('todos');
+  const [uploading, setUploading] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   // Recuperar la sesión del panel al recargar la página.
   useEffect(() => {
@@ -248,12 +251,44 @@ export default function Admin() {
     setIsAdding(false);
     setError(null);
     setSuccess(null);
+    setImagePreview(null);
   };
 
   const closeEdit = () => {
     setEditingProduct(null);
     setEditForm(null);
     setIsAdding(false);
+    setImagePreview(null);
+    setUploadError(null);
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    setUploadError(null);
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'x-admin-password': password },
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error('Error al subir la imagen');
+
+      const data = await res.json();
+      setEditForm(prev => prev ? { ...prev, imagen_url: data.url } : null);
+      setImagePreview(data.url);
+    } catch (err: any) {
+      setUploadError(err.message);
+    } finally {
+      setUploading(false);
+    }
   };
 
   const openAdd = () => {
@@ -271,6 +306,7 @@ export default function Admin() {
     setIsAdding(true);
     setError(null);
     setSuccess(null);
+    setImagePreview(null);
   };
 
   const handleEditChange = (field: string, value: string | null | boolean) => {
@@ -1035,23 +1071,63 @@ export default function Admin() {
                   >
                     URL de imagen
                   </label>
-                  <input
-                    type="text"
-                    placeholder="https://..."
-                    value={editForm.imagen_url ?? ''}
-                    onChange={(e) =>
-                      handleEditChange('imagen_url', e.target.value || null)
-                    }
-                    style={{
-                      width: '100%',
-                      boxSizing: 'border-box',
-                      padding: '10px 12px',
-                      border: '1px solid #ddd1bd',
-                      borderRadius: '8px',
-                      fontSize: '14px',
-                    }}
-                  />
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <input
+                      type="text"
+                      placeholder="https://..."
+                      value={editForm.imagen_url ?? ''}
+                      onChange={(e) =>
+                        handleEditChange('imagen_url', e.target.value || null)
+                      }
+                      style={{
+                        flex: 1,
+                        boxSizing: 'border-box',
+                        padding: '10px 12px',
+                        border: '1px solid #ddd1bd',
+                        borderRadius: '8px',
+                        fontSize: '14px',
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => document.getElementById('file-upload')?.click()}
+                      disabled={uploading}
+                      className="focus-ring"
+                      style={{
+                        padding: '10px 16px',
+                        border: '1px solid #81945b',
+                        background: uploading ? '#ddd1bd' : '#fff',
+                        color: '#81945b',
+                        borderRadius: '8px',
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        cursor: uploading ? 'not-allowed' : 'pointer',
+                      }}
+                    >
+                      {uploading ? 'Subiendo...' : 'Subir foto'}
+                    </button>
+                  </div>
+                  {imagePreview && (
+                    <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <img
+                        src={imagePreview}
+                        alt="Vista previa"
+                        style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: '8px', border: '1px solid #ddd1bd' }}
+                      />
+                      <span style={{ fontSize: '12px', color: '#6b7d4c', fontWeight: 600 }}>Lista</span>
+                    </div>
+                  )}
+                  {uploadError && (
+                    <p style={{ color: '#a33a2b', fontSize: '12px', marginTop: '6px' }}>{uploadError}</p>
+                  )}
                 </div>
+                <input
+                  id="file-upload"
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={handleImageUpload}
+                />
 
                 <div
                   style={{

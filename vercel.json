@@ -14,6 +14,7 @@
     { "src": "/api/orders/(.*)", "dest": "/api/orders", "methods": ["GET", "POST", "PATCH", "OPTIONS"] },
     { "src": "/api/admin-auth", "dest": "/api/admin-auth", "methods": ["POST", "OPTIONS"] },
     { "src": "/api/products", "dest": "/api/products", "methods": ["GET", "PATCH", "OPTIONS"] },
-    { "src": "/api/products/(.*)", "dest": "/api/products", "methods": ["GET", "PATCH", "OPTIONS"] }
+    { "src": "/api/products/(.*)", "dest": "/api/products", "methods": ["GET", "PATCH", "OPTIONS"] },
+    { "src": "/api/upload", "dest": "/api/upload", "methods": ["POST", "OPTIONS"] }
   ]
 }
