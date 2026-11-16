@@ -1,4 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
+
+// BroadcastChannel para notificar al instante a otras pestañas (ej. la carta pública)
+const channel = new BroadcastChannel('cafes_de_carla_menu');
 import { Check, X, Clock, RefreshCw, Lock, LogOut } from 'lucide-react';
 import type { ApiProducto } from '@/lib/products';
 
@@ -225,6 +228,12 @@ export default function Admin() {
       setSuccess(
         `"${producto.nombre}" ${nuevoEstado ? 'marcado como agotado' : 'marcado como disponible'}.`,
       );
+      // Notificar a otras pestañas que la lista de productos cambió
+      try {
+        channel.postMessage({ type: 'producto:actualizado', productoId: producto.id });
+      } catch {
+        // BroadcastChannel no disponible en este contexto; el polling fallback se encargará
+      }
     } catch (err: any) {
       setError(err.message || 'Error actualizando producto');
       console.error('Error actualizando producto:', err);
@@ -405,6 +414,12 @@ export default function Admin() {
       setSuccess(
         `"${body.nombre}" ${isCreating ? 'creado correctamente.' : 'actualizado correctamente.'}`,
       );
+      // Notificar a otras pestañas que la lista de productos cambió
+      try {
+        channel.postMessage({ type: 'producto:actualizado' });
+      } catch {
+        // BroadcastChannel no disponible en este contexto; el polling fallback se encargará
+      }
       closeEdit();
     } catch (err: any) {
       setError(err.message || `Error al ${isAdding ? 'crear' : 'actualizar'} producto`);

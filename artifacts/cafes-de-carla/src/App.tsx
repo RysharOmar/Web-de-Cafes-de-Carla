@@ -117,6 +117,19 @@ function Home() {
   const [menuLoading, setMenuLoading] = useState(true);
   const [menuError, setMenuError] = useState<string | null>(null);
 
+  // BroadcastChannel: cuando el panel de admin guarda un cambio, la carta se actualiza al instante
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const channel = new BroadcastChannel('cafes_de_carla_menu');
+    channel.onmessage = (event: MessageEvent) => {
+      // Recargar la lista de productos para reflejar el cambio en la carta
+      loadMenu();
+    };
+    return () => {
+      channel.close();
+    };
+  }, [loadMenu]);
+
   const menuCategories = useMemo(() => groupProductos(productos), [productos]);
   const menuItemsById = useMemo(
     () => new Map(menuCategories.flatMap((category) => category.items).map((item) => [item.id, item] as const)),
@@ -165,6 +178,15 @@ function Home() {
       setActiveCategory(menuCategories[0].id);
     }
   }, [menuCategories, activeCategory]);
+
+  // Polling cada 10 segundos como fallback por si BroadcastChannel no está disponible
+  // o las pestañas no están en la misma sesión
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadMenu();
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [loadMenu]);
 
   // Estado para rastrear el pedido de la mesa (modo local)
   const [orderStatus, setOrderStatus] = useState<'pending' | 'confirmed' | 'served' | 'paid' | null>(null);
