@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Check, X, Clock, RefreshCw, Lock, LogOut } from 'lucide-react';
 import type { ApiProducto } from '@/lib/products';
 
