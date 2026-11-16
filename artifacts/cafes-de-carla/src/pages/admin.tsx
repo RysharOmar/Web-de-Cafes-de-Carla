@@ -193,13 +193,13 @@ export default function Admin() {
     setSuccess(null);
 
     try {
-      const res = await fetch('/api/products', {
+      const res = await fetch(`/api/products/${producto.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           'x-admin-password': password,
         },
-        body: JSON.stringify({ id: producto.id, agotado: nuevoEstado }),
+        body: JSON.stringify({ agotado: nuevoEstado }),
       });
 
       const data = await res.json().catch(() => ({}));
@@ -214,13 +214,16 @@ export default function Admin() {
         throw new Error(data.error || `Error ${res.status} al actualizar producto`);
       }
 
+      // Actualizar la lista local para reflejar el cambio inmediatamente.
       setProductos((prev) =>
         prev.map((p) =>
-          p.id === producto.id ? { ...p, ...data.producto } : p,
+          p.id === producto.id
+            ? { ...p, agotado: nuevoEstado, ...(data.producto || {}) }
+            : p,
         ),
       );
       setSuccess(
-        `"${producto.nombre}" ${data.producto.agotado ? 'marcado como agotado' : 'marcado como disponible'}.`,
+        `"${producto.nombre}" ${nuevoEstado ? 'marcado como agotado' : 'marcado como disponible'}.`,
       );
     } catch (err: any) {
       setError(err.message || 'Error actualizando producto');
@@ -237,7 +240,7 @@ export default function Admin() {
   // --- Funciones de edición de producto (modal) ---
 
   const openEdit = (producto: ApiProducto) => {
-    console.log('openEdit disparado', producto);
+    console.log("Abriendo modal para:", producto.nombre);
     setIsAdding(false);
     setEditingProduct(producto);
     setEditForm({
@@ -794,7 +797,7 @@ export default function Admin() {
                         ) : (
                           <button
                             onClick={() => openEdit(producto)}
-                            disabled={updating.has(producto.id) || editingProduct?.id !== null}
+                            disabled={updating.has(producto.id) || editingProduct !== null}
                             className="focus-ring"
                             style={{
                               background: '#4a3322',
@@ -804,8 +807,8 @@ export default function Admin() {
                               borderRadius: '8px',
                               fontSize: '12px',
                               fontWeight: 600,
-                              cursor: updating.has(producto.id) || editingProduct?.id !== null ? 'not-allowed' : 'pointer',
-                              opacity: (updating.has(producto.id) || editingProduct?.id !== null) ? 0.6 : 1,
+                              cursor: updating.has(producto.id) || editingProduct !== null ? 'not-allowed' : 'pointer',
+                              opacity: (updating.has(producto.id) || editingProduct !== null) ? 0.6 : 1,
                               whiteSpace: 'nowrap',
                             }}
                           >

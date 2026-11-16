@@ -232,7 +232,7 @@ export default async function handler(req: any, res: any) {
         const col = allowedColumns[key];
         if (!col) return null;
         const value = updates.find((u) => u.key === key)!.value;
-        return sql`${sql.raw(col)} = ${value}`;
+        return sql`${col} = ${value}`;
       }).filter(Boolean);
 
       await sql`
