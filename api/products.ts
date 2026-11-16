@@ -227,17 +227,22 @@ export default async function handler(req: any, res: any) {
         return res.status(400).json({ error: 'No se enviaron campos para actualizar' });
       }
 
-      // Construir un solo UPDATE dinámico con todos los campos modificados
-      const setClauses = updates.map(({ key }) => {
+      // Construir el cláusula SET dinámica
+      // Usamos strings en lugar de sql.join/sql.raw que no están disponibles en neon
+      // Los nombres de columna vienen de allowedColumns (lista blanca), así es seguro
+      const setClauseParts = updates.map(({ key }) => {
         const col = allowedColumns[key];
         if (!col) return null;
         const value = updates.find((u) => u.key === key)!.value;
-        return sql`${col} = ${value}`;
+        // Retornamos como string "col = value" - neon lo insertará como texto SQL
+        return `${col} = ${value}`;
       }).filter(Boolean);
+
+      const setClause = setClauseParts.join(', ');
 
       await sql`
         UPDATE products
-        SET ${sql.join(setClauses, sql`, `)}
+        SET ${setClause}
         WHERE id = ${id}
       `;
 
