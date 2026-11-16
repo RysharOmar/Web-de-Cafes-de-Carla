@@ -216,10 +216,31 @@ export default async function handler(req: any, res: any) {
       }
 
       // ---- agotado ----
-      if (agotado !== undefined) {
+      // Caso especial: si solo se envía el campo agotado (toggle del panel),
+      // hacemos un UPDATE directo y simple para evitar problemas de parámetros
+      // de neon (sql.join is not a function, sql.raw is not a function).
+      // Si vienen otros campos junto con agotado, seguimos el flujo normal.
+      if (agotado !== undefined && Object.keys(body).length === 1) {
         if (typeof agotado !== 'boolean') {
           return res.status(400).json({ error: 'El campo agotado debe ser booleano' });
         }
+        // UPDATE directo y simple para el campo agotado
+        await sql`
+          UPDATE products SET agotado = ${agotado} WHERE id = ${id}
+        `;
+        // Devolver producto actualizado
+        const result = await sql`
+          SELECT id, nombre, precio, precio_mini, precio_grande, categoria, agotado, imagen_url, descripcion
+          FROM products
+          WHERE id = ${id}
+        `;
+        if (result.length === 0) {
+          return res.status(404).json({ error: 'Producto no encontrado' });
+        }
+        return res.status(200).json({ ok: true, producto: mapProducto(result[0] as ProductoRow) });
+      }
+
+      if (agotado !== undefined) {
         updates.push({ key: 'agotado', value: agotado });
       }
 
@@ -227,14 +248,11 @@ export default async function handler(req: any, res: any) {
         return res.status(400).json({ error: 'No se enviaron campos para actualizar' });
       }
 
-      // Construir el cláusula SET dinámica
-      // Usamos strings en lugar de sql.join/sql.raw que no están disponibles en neon
-      // Los nombres de columna vienen de allowedColumns (lista blanca), así es seguro
+      // Construir el cláusula SET dinámica para múltiples campos
       const setClauseParts = updates.map(({ key }) => {
         const col = allowedColumns[key];
         if (!col) return null;
         const value = updates.find((u) => u.key === key)!.value;
-        // Retornamos como string "col = value" - neon lo insertará como texto SQL
         return `${col} = ${value}`;
       }).filter(Boolean);
 
