@@ -147,7 +147,7 @@ export default function Admin() {
     if (!password || editingProduct) return;
 
     fetchProductos();
-    const interval = setInterval(fetchProductos, 5000);
+    const interval = setInterval(fetchProductos, 3000);
     return () => clearInterval(interval);
   }, [password, editingProduct]);
 
