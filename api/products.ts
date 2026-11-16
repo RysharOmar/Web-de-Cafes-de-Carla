@@ -4,7 +4,8 @@
  *
  * Endpoints:
  *   GET    /api/products     → lista todos los productos (público, para la Carta)
- *   PATCH  /api/products/:id → actualiza agotado (requiere x-admin-password)
+ *   PATCH  /api/products/:id → actualiza uno o más campos del producto (requiere x-admin-password)
+ *     Campos aceptados: nombre, precio, precio_mini, precio_grande, categoria, descripcion, imagen_url, agotado
  *
  * La tabla `products` de Neon usa precios en euros con tipo NUMERIC(10,2).
  * La API devuelve esos valores en euros y también en céntimos para el carrito.
@@ -114,17 +115,136 @@ export default async function handler(req: any, res: any) {
         return res.status(400).json({ error: 'ID de producto no válido' });
       }
 
-      const { agotado } = body;
+      const {
+        nombre,
+        precio,
+        precio_mini,
+        precio_grande,
+        categoria,
+        descripcion,
+        imagen_url,
+        agotado,
+      } = body;
 
-      if (typeof agotado !== 'boolean') {
-        return res.status(400).json({ error: 'El campo agotado debe ser booleano' });
+      // Columnas permitidas (evita inyección por nombre de columna)
+      const allowedColumns: Record<string, string> = {
+        nombre: 'nombre',
+        precio: 'precio',
+        precio_mini: 'precio_mini',
+        precio_grande: 'precio_grande',
+        categoria: 'categoria',
+        descripcion: 'descripcion',
+        imagen_url: 'imagen_url',
+        agotado: 'agotado',
+      };
+
+      type UpdateField = { key: string; value: unknown };
+      const updates: UpdateField[] = [];
+
+      // ---- nombre ----
+      if (nombre !== undefined) {
+        if (typeof nombre !== 'string' || nombre.trim() === '') {
+          return res.status(400).json({ error: 'El campo nombre debe ser un texto no vacío' });
+        }
+        updates.push({ key: 'nombre', value: nombre.trim() });
       }
 
-      const result = await sql`
+      // ---- precio ----
+      if (precio !== undefined) {
+        const p = toNumber(precio);
+        if (p === null || p < 0) {
+          return res.status(400).json({ error: 'El campo precio debe ser un número mayor o igual a 0' });
+        }
+        updates.push({ key: 'precio', value: p });
+      }
+
+      // ---- precio_mini (admite null) ----
+      if (precio_mini !== undefined) {
+        if (precio_mini === null || precio_mini === '') {
+          updates.push({ key: 'precio_mini', value: null });
+        } else {
+          const pm = toNumber(precio_mini);
+          if (pm === null || pm < 0) {
+            return res.status(400).json({ error: 'precio_mini debe ser número >= 0 o null' });
+          }
+          updates.push({ key: 'precio_mini', value: pm });
+        }
+      }
+
+      // ---- precio_grande (admite null) ----
+      if (precio_grande !== undefined) {
+        if (precio_grande === null || precio_grande === '') {
+          updates.push({ key: 'precio_grande', value: null });
+        } else {
+          const pg = toNumber(precio_grande);
+          if (pg === null || pg < 0) {
+            return res.status(400).json({ error: 'precio_grande debe ser número >= 0 o null' });
+          }
+          updates.push({ key: 'precio_grande', value: pg });
+        }
+      }
+
+      // ---- categoria ----
+      if (categoria !== undefined) {
+        if (typeof categoria !== 'string' || categoria.trim() === '') {
+          return res.status(400).json({ error: 'El campo categoría debe ser un texto no vacío' });
+        }
+        updates.push({ key: 'categoria', value: categoria.trim() });
+      }
+
+      // ---- descripcion (admite null) ----
+      if (descripcion !== undefined) {
+        if (descripcion === null || descripcion === '') {
+          updates.push({ key: 'descripcion', value: null });
+        } else if (typeof descripcion !== 'string') {
+          return res.status(400).json({ error: 'descripcion debe ser texto o null' });
+        } else {
+          updates.push({ key: 'descripcion', value: descripcion.trim() || null });
+        }
+      }
+
+      // ---- imagen_url (admite null) ----
+      if (imagen_url !== undefined) {
+        if (imagen_url === null || imagen_url === '') {
+          updates.push({ key: 'imagen_url', value: null });
+        } else if (typeof imagen_url !== 'string') {
+          return res.status(400).json({ error: 'imagen_url debe ser texto o null' });
+        } else {
+          updates.push({ key: 'imagen_url', value: imagen_url.trim() || null });
+        }
+      }
+
+      // ---- agotado ----
+      if (agotado !== undefined) {
+        if (typeof agotado !== 'boolean') {
+          return res.status(400).json({ error: 'El campo agotado debe ser booleano' });
+        }
+        updates.push({ key: 'agotado', value: agotado });
+      }
+
+      if (updates.length === 0) {
+        return res.status(400).json({ error: 'No se enviaron campos para actualizar' });
+      }
+
+      // Construir un solo UPDATE dinámico con todos los campos modificados
+      const setClauses = updates.map(({ key }) => {
+        const col = allowedColumns[key];
+        if (!col) return null;
+        const value = updates.find((u) => u.key === key)!.value;
+        return sql`${sql.raw(col)} = ${value}`;
+      }).filter(Boolean);
+
+      await sql`
         UPDATE products
-        SET agotado = ${agotado}
+        SET ${sql.join(setClauses, sql`, `)}
         WHERE id = ${id}
-        RETURNING id, nombre, precio, precio_mini, precio_grande, categoria, agotado, imagen_url, descripcion
+      `;
+
+      // Devolver producto actualizado
+      const result = await sql`
+        SELECT id, nombre, precio, precio_mini, precio_grande, categoria, agotado, imagen_url, descripcion
+        FROM products
+        WHERE id = ${id}
       `;
 
       if (result.length === 0) {
