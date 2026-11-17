@@ -24,6 +24,7 @@ type ProductoRow = {
   precio: string | number;
   precio_mini: string | number | null;
   precio_grande: string | number | null;
+  categoria: string;
   agotado: boolean;
   descripcion: string | null;
 };
@@ -33,6 +34,12 @@ type SizeLabel = 'Mini' | 'Normal' | 'Grande';
 function normalizeSize(value: unknown): SizeLabel {
   if (value === 'Mini' || value === 'Grande') return value;
   return 'Normal';
+}
+
+/** En Cereales las tallas internas Mini/Normal/Grande se muestran como S/M/L. */
+function displaySizeName(categoria: string, size: SizeLabel): string {
+  if (categoria?.trim().toLocaleLowerCase('es') !== 'cereales') return size;
+  return size === 'Mini' ? 'S' : size === 'Grande' ? 'L' : 'M';
 }
 
 function priceForSize(producto: ProductoRow, size: SizeLabel): number | null {
@@ -83,7 +90,7 @@ export default async function handler(req: any, res: any) {
       }
 
       const rows = await sql`
-        SELECT id, nombre, precio, precio_mini, precio_grande, agotado, descripcion
+        SELECT id, nombre, precio, precio_mini, precio_grande, categoria, agotado, descripcion
         FROM products
         WHERE id = ${productId}
         LIMIT 1
@@ -102,14 +109,15 @@ export default async function handler(req: any, res: any) {
       }
 
       const unitAmount = priceForSize(producto, size);
+      const sizeName = displaySizeName(producto.categoria, size);
 
       if (unitAmount === null || unitAmount <= 0) {
-        res.status(400).json({ error: `Tamaño no disponible para: ${producto.nombre} (${size})` });
+        res.status(400).json({ error: `Tamaño no disponible para: ${producto.nombre} (${sizeName})` });
         return;
       }
 
       const hasAlternatives = producto.precio_mini != null || producto.precio_grande != null;
-      const name = hasAlternatives ? `${producto.nombre} (${size})` : producto.nombre;
+      const name = hasAlternatives ? `${producto.nombre} (${sizeName})` : producto.nombre;
       const description = [producto.descripcion, item.variant]
         .filter((value): value is string => Boolean(value && value.trim()))
         .join(' · ');

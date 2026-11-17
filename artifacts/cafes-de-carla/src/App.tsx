@@ -9,7 +9,7 @@ import Success from '@/pages/success';
 import Cocina from '@/pages/cocina';
 import Admin from '@/pages/admin';
 import { Route, Switch, useLocation, Router as WouterRouter } from 'wouter';
-import { groupProductos, priceForLine, type ApiProducto, type MenuItem } from '@/lib/products';
+import { displaySizeLabel, groupProductos, priceForLine, type ApiProducto, type MenuItem } from '@/lib/products';
 
 const queryClient = new QueryClient();
 const logo = '/cafes-de-carla-logo.jpg';
@@ -80,7 +80,7 @@ function ProductCard({ item, onAdd }: { item: MenuItem; onAdd: (size: string, va
                   data-testid={`size-${item.id}-${size.label}`}
                   disabled={item.agotado}
                 >
-                  {size.label}
+                  {displaySizeLabel(item.category, size.label)}
                 </button>
               ))}
             </div>
@@ -108,6 +108,35 @@ function ProductCard({ item, onAdd }: { item: MenuItem; onAdd: (size: string, va
   );
 }
 
+function PageLoader({ error, onRetry }: { error?: string | null; onRetry?: () => void }) {
+  return (
+    <div
+      className="page-loader"
+      role={error ? 'alert' : 'status'}
+      aria-live="polite"
+      data-testid={error ? 'page-load-error' : 'page-loading'}
+    >
+      <img className="page-loader-logo" src={logo} alt="Cafés de Carla" width="1024" height="1024" />
+      {error ? (
+        <>
+          <h1 className="serif">No pudimos cargar la carta</h1>
+          <p>{error}</p>
+          {onRetry && (
+            <button type="button" className="text-cta focus-ring" onClick={onRetry}>
+              Reintentar
+            </button>
+          )}
+        </>
+      ) : (
+        <>
+          <span className="page-loader-spinner" aria-hidden="true" />
+          <p>Cargando carta...</p>
+        </>
+      )}
+    </div>
+  );
+}
+
 function Home() {
   const [activeCategory, setActiveCategory] = useState('');
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -116,6 +145,8 @@ function Home() {
   const [productos, setProductos] = useState<ApiProducto[]>([]);
   const [menuLoading, setMenuLoading] = useState(true);
   const [menuError, setMenuError] = useState<string | null>(null);
+  const lastMenuFetchRef = useRef(0);
+  const hasLoadedMenuRef = useRef(false);
 
   const menuCategories = useMemo(() => groupProductos(productos), [productos]);
   const menuItemsById = useMemo(
@@ -137,9 +168,20 @@ function Home() {
 
   const STORAGE_KEY = 'cafes_de_carla_orders';
 
-  const loadMenu = async () => {
-    setMenuLoading(true);
-    setMenuError(null);
+  const loadMenu = async (silent = false) => {
+    // Las actualizaciones en segundo plano no muestran la pantalla de carga
+    // ni se repiten si acaban de ejecutarse (focus + visibilitychange + poll).
+    if (silent && (!hasLoadedMenuRef.current || Date.now() - lastMenuFetchRef.current < 3000)) {
+      return;
+    }
+
+    lastMenuFetchRef.current = Date.now();
+
+    if (!silent) {
+      setMenuLoading(true);
+      setMenuError(null);
+    }
+
     try {
       const response = await fetch('/api/products', { cache: 'no-store' });
       if (!response.ok) {
@@ -147,16 +189,41 @@ function Home() {
       }
       const data = await response.json();
       setProductos(Array.isArray(data.productos) ? data.productos : []);
+      setMenuError(null);
+      hasLoadedMenuRef.current = true;
     } catch (err) {
       console.error('Error cargando la carta:', err);
-      setMenuError(err instanceof Error ? err.message : 'No se pudo cargar la carta');
+      if (!silent) {
+        setMenuError(err instanceof Error ? err.message : 'No se pudo cargar la carta');
+      }
     } finally {
-      setMenuLoading(false);
+      if (!silent) {
+        setMenuLoading(false);
+      }
     }
   };
 
   useEffect(() => {
     loadMenu();
+  }, []);
+
+  // Mantiene el estado de agotado al día al volver a la pestaña y cada 30 s.
+  useEffect(() => {
+    const refreshMenu = () => {
+      if (document.visibilityState === 'visible') {
+        loadMenu(true);
+      }
+    };
+
+    window.addEventListener('focus', refreshMenu);
+    document.addEventListener('visibilitychange', refreshMenu);
+    const intervalId = window.setInterval(refreshMenu, 30000);
+
+    return () => {
+      window.removeEventListener('focus', refreshMenu);
+      document.removeEventListener('visibilitychange', refreshMenu);
+      window.clearInterval(intervalId);
+    };
   }, []);
 
   useEffect(() => {
@@ -310,6 +377,7 @@ function Home() {
         const item = menuItemsById.get(line.itemId);
         return {
           name: item?.name ?? line.itemId,
+          category: item?.category ?? '',
           qty: line.quantity,
           sizeLabel: line.sizeLabel,
           variant: line.variant ?? undefined,
@@ -531,6 +599,14 @@ function Home() {
     };
   }, [cartOpen]);
 
+  if (menuLoading) {
+    return <PageLoader />;
+  }
+
+  if (menuError && productos.length === 0) {
+    return <PageLoader error={menuError} onRetry={() => loadMenu()} />;
+  }
+
   return (
     <div className="site-shell grain min-h-[100dvh]">
       <div className="launch-ribbon" data-testid="preview-status">
@@ -619,10 +695,10 @@ function Home() {
               <Clock3 size={22} aria-hidden="true" />
               <p>Cargando la carta...</p>
             </div>
-          ) : menuError ? (
+          ) : menuError && menuCategories.length === 0 ? (
             <div className="menu-status" role="alert" data-testid="menu-error">
               <p>{menuError}</p>
-              <button type="button" className="text-cta focus-ring" onClick={loadMenu}>Reintentar</button>
+              <button type="button" className="text-cta focus-ring" onClick={() => loadMenu()}>Reintentar</button>
             </div>
           ) : menuCategories.length === 0 ? (
             <div className="menu-status" data-testid="menu-empty">
@@ -786,7 +862,7 @@ function Home() {
                           <div key={item.id + '-' + item.quantity} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', padding: '6px', background: '#fbf8f0', borderRadius: '6px' }}>
                             <span>
                               {item.quantity} × {item.name}
-                              {item.sizeLabel ? ` (${item.sizeLabel})` : ''}
+                              {item.sizeLabel ? ` (${displaySizeLabel(menuItemsById.get(item.id)?.category ?? '', item.sizeLabel)})` : ''}
                               {item.variant ? ` · ${item.variant}` : ''}
                             </span>
                             <strong>{formatPrice(item.priceCents * item.quantity)}</strong>
@@ -848,7 +924,7 @@ function Home() {
                           </div>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', gap: '8px' }}>
-                          <span style={{ fontSize: '11px', color: '#7c6f5e' }}>{line.sizeLabel}{line.variant ? ` · ${line.variant}` : ''}</span>
+                          <span style={{ fontSize: '11px', color: '#7c6f5e' }}>{displaySizeLabel(item?.category ?? '', line.sizeLabel)}{line.variant ? ` · ${line.variant}` : ''}</span>
                           <button style={{ background: 'none', border: 'none', color: '#948675', fontSize: '10px', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => removeFromCart(line.itemId, line.sizeLabel)}>Eliminar</button>
                         </div>
                       </li>

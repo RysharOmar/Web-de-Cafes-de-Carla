@@ -1,8 +1,10 @@
 import { Check, ArrowUpRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { displaySizeLabel } from '@/lib/products';
 
 type CartSummaryItem = {
   name: string;
+  category?: string;
   qty: number;
   sizeLabel: string;
   variant?: string;
@@ -51,7 +53,7 @@ export default function Success() {
           )}
           {items.map((it, idx) => (
             <div key={idx} className="flex items-center justify-between gap-4 text-sm text-[#4a3322] whitespace-nowrap">
-              <span className="truncate"><strong>{it.name}</strong> · {it.qty} unidad{it.qty > 1 ? 'es' : ''} ({it.sizeLabel}{it.variant ? ` · ${it.variant}` : ''})</span>
+              <span className="truncate"><strong>{it.name}</strong> · {it.qty} unidad{it.qty > 1 ? 'es' : ''} ({displaySizeLabel(it.category ?? '', it.sizeLabel)}{it.variant ? ` · ${it.variant}` : ''})</span>
               <span className="font-serif text-lg shrink-0">{(it.priceCents * it.qty / 100).toFixed(2).replace('.', ',')} €</span>
             </div>
           ))}

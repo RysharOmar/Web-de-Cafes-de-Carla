@@ -27,6 +27,7 @@ export type MenuItem = {
   id: string;
   name: string;
   description?: string;
+  category: string;
   sizes: SizeOption[];
   defaultSize: string;
   variants?: string[];
@@ -45,6 +46,25 @@ export type MenuCategory = {
 };
 
 const DEFAULT_CATEGORY = 'Otros';
+const CEREALES_CATEGORY = 'cereales';
+const CEREAL_SIZE_LABELS: Record<string, string> = {
+  Mini: 'S',
+  Normal: 'M',
+  Grande: 'L',
+};
+
+function normalizeCategory(value: string): string {
+  return value.trim().toLocaleLowerCase('es');
+}
+
+/**
+ * Etiqueta visible para una talla. En Cereales las columnas Mini/Normal/Grande
+ * representan S/M/L; el resto de categorías conserva sus nombres.
+ */
+export function displaySizeLabel(categoria: string, sizeLabel: string): string {
+  if (normalizeCategory(categoria) !== CEREALES_CATEGORY) return sizeLabel;
+  return CEREAL_SIZE_LABELS[sizeLabel] ?? sizeLabel;
+}
 
 function slugify(value: string): string {
   const slug = value
@@ -77,6 +97,7 @@ export function productToMenuItem(producto: ApiProducto): MenuItem {
     id: String(producto.id),
     name: producto.nombre,
     description: producto.descripcion?.trim() || undefined,
+    category: producto.categoria?.trim() || DEFAULT_CATEGORY,
     sizes,
     defaultSize: sizes.some((size) => size.label === 'Normal')
       ? 'Normal'
