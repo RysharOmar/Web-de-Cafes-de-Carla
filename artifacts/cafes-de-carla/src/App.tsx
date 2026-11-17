@@ -304,10 +304,11 @@ function Home() {
     }
   }, [cartSubtotal, mesaActiva]);
 
-  const allPriced = cartLines.length > 0 && cartLines.every((line) => {
+  const hasUnpricedLines = cartLines.some((line) => {
     const item = menuItemsById.get(line.itemId);
-    return priceForLine(item, line.sizeLabel) > 0;
+    return priceForLine(item, line.sizeLabel) <= 0;
   });
+  const allPriced = cartLines.length > 0 && !hasUnpricedLines;
 
   const closeNav = () => setMobileOpen(false);
   const cartKey = (itemId: string, sizeLabel: string) => `${itemId}|${sizeLabel}`;
@@ -832,9 +833,10 @@ function Home() {
               <div><span className="eyebrow">TU SELECCIÓN</span><h2 className="serif" id="cart-title">Tu carrito</h2></div>
               <button ref={cartCloseRef} className="cart-close focus-ring" type="button" aria-label="Cerrar carrito" onClick={() => setCartOpen(false)} data-testid="button-close-cart"><X size={20} /></button>
             </div>
+            <div className="cart-body">
             {cartLines.length === 0 && mesaActiva && orderItemsFromStorage.length > 0 ? (
               <>
-                <div className="cart-empty" data-testid="empty-cart">
+                <div className="cart-empty cart-empty--order" data-testid="empty-cart">
                   <ShoppingBag size={28} aria-hidden="true" />
                   {orderStatus === 'served' ? (
                     <p>Tu pedido está listo para pagar.</p>
@@ -843,56 +845,37 @@ function Home() {
                   ) : (
                     <p>Tu pedido ya fue enviado a cocina.</p>
                   )}
-                  <p style={{ fontSize: '12px', color: '#7c6f5e', marginTop: '8px' }}>
+                  <p className="cart-empty-copy">
                     Puedes seguir agregando más productos o completar el pago.
                   </p>
                   <a className="text-cta focus-ring" href="#carta" onClick={() => setCartOpen(false)} data-testid="link-cart-to-menu">Seguir pidiendo <ArrowDown size={15} /></a>
                 </div>
 
-                <div className="cart-footer" style={{ marginTop: '20px' }}>
-                  <div style={{ fontSize: '14px', color: '#7c6f5e', marginBottom: '16px' }}>
-                    <strong>Estado:</strong>{' '}
-                    {orderStatus === 'pending' ? 'Pendiente' : orderStatus === 'confirmed' ? 'Confirmado' : orderStatus === 'served' ? 'Servido' : orderStatus === 'paid' ? 'Pagado' : ''}
+                <div className="cart-table-info">
+                  <div className="cart-table-status">
+                    <span>Estado</span>
+                    <strong>
+                      {orderStatus === 'pending' ? 'Pendiente' : orderStatus === 'confirmed' ? 'Confirmado' : orderStatus === 'served' ? 'Servido' : orderStatus === 'paid' ? 'Pagado' : '—'}
+                    </strong>
                   </div>
-                  <div style={{ borderTop: '1px solid #ddd1bd', paddingTop: '16px' }}>
-                    <div style={{ marginBottom: '16px' }}>
-                      <strong style={{ fontSize: '12px', color: '#7c6f5e' }}>Items en cocina:</strong>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
-                        {orderItemsFromStorage.map((item) => (
-                          <div key={item.id + '-' + item.quantity} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', padding: '6px', background: '#fbf8f0', borderRadius: '6px' }}>
-                            <span>
-                              {item.quantity} × {item.name}
-                              {item.sizeLabel ? ` (${displaySizeLabel(menuItemsById.get(item.id)?.category ?? '', item.sizeLabel)})` : ''}
-                              {item.variant ? ` · ${item.variant}` : ''}
-                            </span>
-                            <strong>{formatPrice(item.priceCents * item.quantity)}</strong>
-                          </div>
-                        ))}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, marginTop: '8px', fontSize: '14px', borderTop: '1px solid #ddd1bd', paddingTop: '8px' }}>
-                          <span>Total cocina</span>
-                          <strong>{formatPrice(orderItemsFromStorage.reduce((s, i) => s + i.priceCents * i.quantity, 0))}</strong>
+                  <div className="cart-table-items">
+                    <strong className="cart-table-items-title">Items en cocina</strong>
+                    <div className="cart-table-list">
+                      {orderItemsFromStorage.map((item) => (
+                        <div className="cart-table-item" key={item.id + '-' + item.quantity}>
+                          <span className="cart-table-item-name">
+                            {item.quantity} × {item.name}
+                            {item.sizeLabel ? ` (${displaySizeLabel(menuItemsById.get(item.id)?.category ?? '', item.sizeLabel)})` : ''}
+                            {item.variant ? ` · ${item.variant}` : ''}
+                          </span>
+                          <strong>{formatPrice(item.priceCents * item.quantity)}</strong>
                         </div>
-                      </div>
+                      ))}
                     </div>
-                    {orderStatus === 'served' && (
-                      <button
-                        className="cart-checkout focus-ring stripe-btn" type="button" onClick={payTableBill} data-testid="button-pay-table"
-                        style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}
-                      >
-                        <CreditCard size={18} aria-hidden="true" />
-                        <span>Pagar cuenta</span>
-                      </button>
-                    )}
-                    {orderStatus === 'paid' && (
-                      <p style={{ color: '#6b7d4c', fontWeight: 700, fontSize: '14px', textAlign: 'center' }}>
-                        Pedido pagado ✓
-                      </p>
-                    )}
-                    {orderStatus !== 'served' && orderStatus !== 'paid' && (
-                      <p className="cart-preview-note" style={{ marginTop: '16px', fontSize: '11px' }}>
-                        Espera a que la cocina marque tu pedido como servido para poder pagar.
-                      </p>
-                    )}
+                    <div className="cart-table-total">
+                      <span>Total cocina</span>
+                      <strong>{formatPrice(orderItemsFromStorage.reduce((s, i) => s + i.priceCents * i.quantity, 0))}</strong>
+                    </div>
                   </div>
                 </div>
               </>
@@ -933,9 +916,10 @@ function Home() {
                 </ul>
               </>
             )}
+            </div>
             <div className="cart-footer">
               {!allPriced && cartLines.length > 0 && <p className="cart-partial-note" role="note" data-testid="text-cart-partial-total">El total es parcial: hay productos sin precio indicado en la carta.</p>}
-              <div className="cart-total" data-testid="text-cart-total"><span>{allPriced ? 'Subtotal' : 'Subtotal parcial'}</span><strong>{formatPrice(tableTotalCents)}</strong></div>
+              <div className="cart-total" data-testid="text-cart-total"><span>{hasUnpricedLines ? 'Subtotal parcial' : 'Subtotal'}</span><strong>{formatPrice(tableTotalCents)}</strong></div>
               {mesaActiva ? (
                 <>
                   {cartLines.length > 0 ? (
