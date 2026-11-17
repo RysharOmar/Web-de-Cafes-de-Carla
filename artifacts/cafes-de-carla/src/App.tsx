@@ -668,26 +668,31 @@ function Home() {
         <section className="visit-section section-wrap" id="visitanos" aria-labelledby="visit-title">
           <div className="section-kicker"><span className="eyebrow">03 / CUANDO QUIERAS</span><span className="kicker-line" /></div>
           <div className="visit-heading">
-            <h2 id="visit-title" className="serif" data-testid="heading-visit">La mesa está<br /><em>por poner.</em></h2>
-            <p data-testid="text-visit-introduction">Queremos que encontrar Cafés de Carla sea fácil. Estamos preparando esta información con los datos oficiales del negocio.</p>
+            <h2 id="visit-title" className="serif" data-testid="heading-visit">La mesa está<br /><em>servida.</em></h2>
+            <p data-testid="text-visit-introduction">Encuéntranos en el Centro Comercial Las Arenas, en Las Palmas de Gran Canaria. Te esperamos con el café recién hecho.</p>
           </div>
           <div className="visit-grid">
-            <div className="map-placeholder" role="img" aria-label="Mapa pendiente de añadir cuando se confirme la dirección" data-testid="map-preview-placeholder">
-              <div className="map-pattern" aria-hidden="true" />
-              <div className="map-card"><span className="map-pin"><MapPin size={18} /></span><div><strong>El mapa viene pronto</strong><p>Añadiremos la ubicación exacta al confirmar la dirección.</p></div></div>
-              <span className="map-label">VISTA PREVIA · SIN UBICACIÓN REAL</span>
+            <div className="map-placeholder" data-testid="map-embed">
+              <iframe
+                title="Mapa de Cafés de Carla — Centro Comercial Las Arenas"
+                src="https://www.google.com/maps?q=28.1282921,-15.4487836&z=17&output=embed"
+                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0, zIndex: 2 }}
+                loading="lazy"
+                allowFullScreen
+                referrerPolicy="no-referrer-when-downgrade"
+              />
             </div>
             <div className="visit-details">
-              <article className="detail-block"><span className="detail-icon"><MapPin size={17} /></span><div><span className="eyebrow">DÓNDE ENCONTRARNOS</span><h3>Dirección</h3><p data-testid="text-address-placeholder" className="text-sm text-[#8a7a69]"><strong className="text-[#4a3322] font-serif">Centro histórico</strong> · Confirmación próxima</p></div></article>
-              <article className="detail-block"><span className="detail-icon"><Clock3 size={17} /></span><div><span className="eyebrow">PARA TU PRÓXIMA PAUSA</span><h3>Horario</h3><p data-testid="text-hours-placeholder" className="text-sm text-[#8a7a69]"><strong className="text-[#4a3322] font-serif">Lun — Dom</strong> · Confirmación próxima</p></div></article>
+              <article className="detail-block"><span className="detail-icon"><MapPin size={17} /></span><div><span className="eyebrow">DÓNDE ENCONTRARNOS</span><h3>Dirección</h3><p data-testid="text-address" className="text-sm text-[#8a7a69]"><strong className="text-[#4a3322] font-serif">Centro Comercial Las Arenas</strong> · Ctra. del Rincón, 35010 · Las Palmas de Gran Canaria</p></div></article>
+              <article className="detail-block"><span className="detail-icon"><Clock3 size={17} /></span><div><span className="eyebrow">PARA TU PRÓXIMA PAUSA</span><h3>Horario</h3><p data-testid="text-hours" className="text-sm text-[#8a7a69]"><strong className="text-[#4a3322] font-serif">Lunes a sábado</strong> · 10:00 — 22:00</p></div></article>
               <div className="contact-box" id="contacto">
                 <span className="eyebrow">ESTAMOS AQUÍ PARA AYUDAR</span>
-                <p>Los datos directos de contacto estarán disponibles en cuanto los confirme el equipo de Cafés de Carla.</p>
+                <p>Si tienes cualquier duda, llámanos o escríbenos y te atenderemos encantados.</p>
                 <div className="contact-placeholders">
-                  <span className="contact-placeholder"><Phone size={15} /> Contacto — Confirmación próxima</span>
-                  <span className="contact-placeholder"><span className="whatsapp-mark">W</span> WhatsApp — Confirmación próxima</span>
+                  <a className="contact-placeholder focus-ring" href="tel:+34928493380"><Phone size={15} /> 928 49 33 80</a>
+                  <a className="contact-placeholder focus-ring" href="https://www.facebook.com/cafesdecarla/" target="_blank" rel="noreferrer">Facebook · Cafés de Carla</a>
                 </div>
-                <span className="contact-footnote">No se muestran enlaces hasta confirmar los números oficiales.</span>
+                <span className="contact-footnote">También puedes ver la ubicación exacta en el mapa.</span>
               </div>
             </div>
           </div>
