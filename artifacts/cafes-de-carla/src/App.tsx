@@ -675,16 +675,42 @@ function Home() {
             <div className="map-placeholder" data-testid="map-embed">
               <iframe
                 title="Mapa de Cafés de Carla — Centro Comercial Las Arenas"
-                src="https://www.google.com/maps?q=28.1282921,-15.4487836&z=17&output=embed"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1000!2d-15.4487836!3d28.1282921!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xc40951c500e904b%3A0xf76cda3da985224b!2sCaf%C3%A9s%20de%20Carla!5e0!3m2!1ses!2ses!4v1763000000000"
                 style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0, zIndex: 2 }}
                 loading="lazy"
                 allowFullScreen
                 referrerPolicy="no-referrer-when-downgrade"
               />
+              <a
+                className="map-open-link focus-ring"
+                href="https://www.google.com/maps/place/Caf%C3%A9s+de+Carla/@28.1282921,-15.4487836,17z"
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  position: 'absolute',
+                  bottom: 14,
+                  right: 14,
+                  zIndex: 3,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  background: '#4a3322',
+                  color: '#fff',
+                  padding: '9px 14px',
+                  borderRadius: 8,
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                  boxShadow: '0 6px 16px rgba(74, 51, 34, 0.28)',
+                }}
+              >
+                <MapPin size={14} aria-hidden="true" />
+                Abrir en Google Maps
+              </a>
             </div>
             <div className="visit-details">
               <article className="detail-block"><span className="detail-icon"><MapPin size={17} /></span><div><span className="eyebrow">DÓNDE ENCONTRARNOS</span><h3>Dirección</h3><p data-testid="text-address" className="text-sm text-[#8a7a69]"><strong className="text-[#4a3322] font-serif">Centro Comercial Las Arenas</strong> · Ctra. del Rincón, 35010 · Las Palmas de Gran Canaria</p></div></article>
-              <article className="detail-block"><span className="detail-icon"><Clock3 size={17} /></span><div><span className="eyebrow">PARA TU PRÓXIMA PAUSA</span><h3>Horario</h3><p data-testid="text-hours" className="text-sm text-[#8a7a69]"><strong className="text-[#4a3322] font-serif">Lunes a sábado</strong> · 10:00 — 22:00</p></div></article>
+              <article className="detail-block"><span className="detail-icon"><Clock3 size={17} /></span><div><span className="eyebrow">PARA TU PRÓXIMA PAUSA</span><h3>Horario</h3><p data-testid="text-hours" className="text-sm text-[#8a7a69]"><strong className="text-[#4a3322] font-serif">Lunes a viernes</strong> · 9:00 — 22:00<br /><strong className="text-[#4a3322] font-serif">Sábado y domingo</strong> · 10:00 — 22:00</p></div></article>
               <div className="contact-box" id="contacto">
                 <span className="eyebrow">ESTAMOS AQUÍ PARA AYUDAR</span>
                 <p>Si tienes cualquier duda, llámanos o escríbenos y te atenderemos encantados.</p>
