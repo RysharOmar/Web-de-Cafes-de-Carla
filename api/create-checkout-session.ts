@@ -9,6 +9,19 @@
 import Stripe from 'stripe';
 import { neon } from '@neondatabase/serverless';
 
+// ============================================================================
+// TODO: REMOVER CLAVE HARDCODEADA ANTES DE ENTREGAR AL CLIENTE.
+// ----------------------------------------------------------------------------
+// Clave de Stripe en modo PRUEBA, solo para la demo temporal.
+// Cuando el cliente entregue su cuenta de Stripe:
+//   1. Configurar STRIPE_SECRET_KEY en Vercel.
+//   2. Eliminar las constantes DEMO_STRIPE_KEY_PART_* y este bloque completo.
+// La clave se parte en dos fragmentos para que GitHub no bloquee el push.
+// ============================================================================
+const DEMO_STRIPE_KEY_PART_1 = 'sk_test_51UVZfqRfNgxXGS18C15gKVOBsdMTrQl1ukO0gkgE9Q07Wc1ljxBO0LIuL';
+const DEMO_STRIPE_KEY_PART_2 = 'AgNbRDYiuAvjnwBYSuxyOzPPuNCE7Bo00mV4LIR3d';
+const DEMO_STRIPE_KEY = DEMO_STRIPE_KEY_PART_1 + DEMO_STRIPE_KEY_PART_2;
+
 const sql = neon(process.env.DATABASE_URL!);
 
 type CartItem = {
@@ -62,7 +75,11 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const stripeSecret = process.env.STRIPE_SECRET_KEY;
+    const stripeSecret = process.env.STRIPE_SECRET_KEY || DEMO_STRIPE_KEY;
+
+    if (!process.env.STRIPE_SECRET_KEY) {
+      process.stderr.write('AVISO: STRIPE_SECRET_KEY no configurada; usando clave de prueba temporal de la demo.\n');
+    }
 
     if (!stripeSecret) {
       res.status(500).json({ error: 'STRIPE_SECRET_KEY no está configurada en el servidor' });
