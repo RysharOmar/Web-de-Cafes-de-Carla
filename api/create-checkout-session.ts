@@ -69,10 +69,29 @@ function priceForSize(producto: ProductoRow, size: SizeLabel): number | null {
   return Math.round(euros * 100);
 }
 
+function cleanStripeKey(value: string | undefined): string | null {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+  // Una clave de Stripe válida es ASCII imprimible y empieza por sk_test_/sk_live_.
+  if (!/^sk_(test|live)_[A-Za-z0-9]+$/.test(trimmed)) return null;
+  return trimmed;
+}
+
 export default async function handler(req: any, res: any) {
+  const rawEnvSecret = process.env.STRIPE_SECRET_KEY;
+  const envSecret = cleanStripeKey(rawEnvSecret);
+  const stripeSecret = envSecret || DEMO_STRIPE_KEY;
+
+  const envInfo = {
+    envKeyPresent: Boolean(rawEnvSecret),
+    envKeyLength: rawEnvSecret?.length ?? 0,
+    envKeyValidFormat: Boolean(envSecret),
+    usingFallback: !envSecret,
+  };
+
   // Diagnóstico temporal de conectividad con Stripe (se elimina tras depurar).
   if (req.method === 'GET') {
-    const out: Record<string, unknown> = {};
+    const out: Record<string, unknown> = { ...envInfo };
     try {
       out.dns = await lookup('api.stripe.com', { all: true });
     } catch (error: any) {
@@ -99,15 +118,11 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const stripeSecret = process.env.STRIPE_SECRET_KEY || DEMO_STRIPE_KEY;
-
-    if (!process.env.STRIPE_SECRET_KEY) {
-      process.stderr.write('AVISO: STRIPE_SECRET_KEY no configurada; usando clave de prueba temporal de la demo.\n');
-    }
-
-    if (!stripeSecret) {
-      res.status(500).json({ error: 'STRIPE_SECRET_KEY no está configurada en el servidor' });
-      return;
+    if (!envSecret) {
+      const reason = rawEnvSecret
+        ? 'STRIPE_SECRET_KEY existe pero tiene un formato inválido'
+        : 'STRIPE_SECRET_KEY no configurada';
+      process.stderr.write(`AVISO: ${reason}; usando clave de prueba temporal de la demo.\n`);
     }
 
     const stripe = new Stripe(stripeSecret);
@@ -199,6 +214,7 @@ export default async function handler(req: any, res: any) {
       causeMessage: err?.cause?.message,
       rawCode: err?.raw?.code,
       rawMessage: err?.raw?.message,
+      ...envInfo,
     };
     process.stderr.write('Stripe checkout error: ' + JSON.stringify(diagnostic) + '\n');
     res.status(500).json({ error: msg, diagnostic });
