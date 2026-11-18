@@ -8,7 +8,6 @@
  */
 import Stripe from 'stripe';
 import { neon } from '@neondatabase/serverless';
-import { lookup } from 'node:dns/promises';
 
 // ============================================================================
 // TODO: REMOVER CLAVE HARDCODEADA ANTES DE ENTREGAR AL CLIENTE.
@@ -72,8 +71,8 @@ function priceForSize(producto: ProductoRow, size: SizeLabel): number | null {
 function cleanStripeKey(value: string | undefined): string | null {
   const trimmed = value?.trim();
   if (!trimmed) return null;
-  // Una clave de Stripe válida es ASCII imprimible y empieza por sk_test_/sk_live_.
-  if (!/^sk_(test|live)_[A-Za-z0-9]+$/.test(trimmed)) return null;
+  // Claves estándar (sk_) o restringidas (rk_), en modo test o live.
+  if (!/^(sk|rk)_(test|live)_[A-Za-z0-9]+$/.test(trimmed)) return null;
   return trimmed;
 }
 
@@ -81,36 +80,6 @@ export default async function handler(req: any, res: any) {
   const rawEnvSecret = process.env.STRIPE_SECRET_KEY;
   const envSecret = cleanStripeKey(rawEnvSecret);
   const stripeSecret = envSecret || DEMO_STRIPE_KEY;
-
-  const envInfo = {
-    envKeyPresent: Boolean(rawEnvSecret),
-    envKeyLength: rawEnvSecret?.length ?? 0,
-    envKeyValidFormat: Boolean(envSecret),
-    usingFallback: !envSecret,
-  };
-
-  // Diagnóstico temporal de conectividad con Stripe (se elimina tras depurar).
-  if (req.method === 'GET') {
-    const out: Record<string, unknown> = { ...envInfo };
-    try {
-      out.dns = await lookup('api.stripe.com', { all: true });
-    } catch (error: any) {
-      out.dnsError = { code: error?.code, message: error?.message };
-    }
-    try {
-      const response = await fetch('https://api.stripe.com/healthcheck');
-      out.fetchStatus = response.status;
-      out.fetchBody = (await response.text()).slice(0, 80);
-    } catch (error: any) {
-      out.fetchError = {
-        name: error?.name,
-        message: error?.message,
-        cause: error?.cause?.code ?? error?.cause?.message,
-      };
-    }
-    res.status(200).json(out);
-    return;
-  }
 
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Método no permitido' });
@@ -205,18 +174,7 @@ export default async function handler(req: any, res: any) {
     res.status(200).json({ url: session.url });
   } catch (err: any) {
     const msg = err && err.message ? err.message : String(err);
-    const diagnostic = {
-      message: msg,
-      type: err?.type,
-      code: err?.code,
-      detail: err?.detail,
-      causeCode: err?.cause?.code,
-      causeMessage: err?.cause?.message,
-      rawCode: err?.raw?.code,
-      rawMessage: err?.raw?.message,
-      ...envInfo,
-    };
-    process.stderr.write('Stripe checkout error: ' + JSON.stringify(diagnostic) + '\n');
-    res.status(500).json({ error: msg, diagnostic });
+    process.stderr.write('Stripe checkout error: ' + msg + '\n');
+    res.status(500).json({ error: msg || 'No se pudo preparar el pago' });
   }
 }
