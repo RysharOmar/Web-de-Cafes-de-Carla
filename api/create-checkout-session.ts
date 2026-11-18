@@ -8,6 +8,7 @@
  */
 import Stripe from 'stripe';
 import { neon } from '@neondatabase/serverless';
+import { lookup } from 'node:dns/promises';
 
 // ============================================================================
 // TODO: REMOVER CLAVE HARDCODEADA ANTES DE ENTREGAR AL CLIENTE.
@@ -69,6 +70,29 @@ function priceForSize(producto: ProductoRow, size: SizeLabel): number | null {
 }
 
 export default async function handler(req: any, res: any) {
+  // Diagnóstico temporal de conectividad con Stripe (se elimina tras depurar).
+  if (req.method === 'GET') {
+    const out: Record<string, unknown> = {};
+    try {
+      out.dns = await lookup('api.stripe.com', { all: true });
+    } catch (error: any) {
+      out.dnsError = { code: error?.code, message: error?.message };
+    }
+    try {
+      const response = await fetch('https://api.stripe.com/healthcheck');
+      out.fetchStatus = response.status;
+      out.fetchBody = (await response.text()).slice(0, 80);
+    } catch (error: any) {
+      out.fetchError = {
+        name: error?.name,
+        message: error?.message,
+        cause: error?.cause?.code ?? error?.cause?.message,
+      };
+    }
+    res.status(200).json(out);
+    return;
+  }
+
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Método no permitido' });
     return;
@@ -166,7 +190,17 @@ export default async function handler(req: any, res: any) {
     res.status(200).json({ url: session.url });
   } catch (err: any) {
     const msg = err && err.message ? err.message : String(err);
-    process.stderr.write('Stripe checkout error: ' + msg + '\n');
-    res.status(500).json({ error: msg || 'No se pudo preparar el pago' });
+    const diagnostic = {
+      message: msg,
+      type: err?.type,
+      code: err?.code,
+      detail: err?.detail,
+      causeCode: err?.cause?.code,
+      causeMessage: err?.cause?.message,
+      rawCode: err?.raw?.code,
+      rawMessage: err?.raw?.message,
+    };
+    process.stderr.write('Stripe checkout error: ' + JSON.stringify(diagnostic) + '\n');
+    res.status(500).json({ error: msg, diagnostic });
   }
 }
