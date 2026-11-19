@@ -4,9 +4,15 @@
  *
  * Endpoint:
  *   POST /api/upload → sube archivo (requiere x-admin-password)
+ *
+ * NOTA: Vercel no parsea multipart/form-data automáticamente en serverless
+ * functions, así que desactivamos el bodyParser y usamos busboy para extraer
+ * el archivo del cuerpo crudo.
  */
 
 import { put } from '@vercel/blob';
+import Busboy from 'busboy';
+import { PassThrough } from 'stream';
 
 function getAdminPassword(req: any): string | null {
   const header = req.headers?.['x-admin-password'];
@@ -42,20 +48,43 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    // Vercel serverless functions no parsean multipart/formData automáticamente.
-    // El cuerpo ya viene como un Buffer o stream según el runtime.
-    // Usamos req.body tal como llega (Vercel lo expone como objeto con los campos del form).
-    const file = req.body?.file;
-    const filename = req.body?.filename || 'imagen';
+    // Parsear multipart/form-data con busboy (Vercel no lo hace automáticamente)
+    const busboyInstance = Busboy({ headers: req.headers as Record<string, string> });
 
-    if (!file) {
+    let fileBuffer: Buffer | null = null;
+    let filename = 'imagen';
+    let contentType = 'image/jpeg';
+
+    busboyInstance.on('file', (fieldname, stream, fname, encoding, mime) => {
+      filename = fname || 'imagen';
+      contentType = mime || 'image/jpeg';
+      const chunks: Buffer[] = [];
+      stream.on('data', (chunk: Buffer) => chunks.push(chunk));
+      stream.on('end', () => {
+        fileBuffer = Buffer.concat(chunks);
+      });
+    });
+
+    // Conectar el cuerpo crudo de la request a busboy
+    const rawBody = req.body instanceof Buffer ? req.body : Buffer.from(req.body || '', 'latin1');
+    const readable = new PassThrough();
+    readable.end(rawBody);
+    readable.pipe(busboyInstance);
+
+    // Esperar a que busboy termine de procesar el multipart
+    await new Promise<void>((resolve, reject) => {
+      busboyInstance.on('finish', resolve);
+      busboyInstance.on('error', reject);
+    });
+
+    if (!fileBuffer) {
       return res.status(400).json({ error: 'No se proporcionó ningún archivo' });
     }
 
     // Subir a Vercel Blob
-    const blob = await put(filename, file, {
+    const blob = await put(filename, fileBuffer, {
       access: 'public',
-      contentType: file.type || 'image/jpeg',
+      contentType,
     });
 
     return res.status(200).json({
@@ -68,3 +97,9 @@ export default async function handler(req: any, res: any) {
     return res.status(500).json({ error: err.message || 'Error subiendo la imagen' });
   }
 }
+
+export const config = {
+  api: {
+    bodyParser: false, // Crítico: desactivar para que Vercel no intente parsear multipart
+  },
+};

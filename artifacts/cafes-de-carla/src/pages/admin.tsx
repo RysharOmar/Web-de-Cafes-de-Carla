@@ -344,9 +344,9 @@ export default function Admin() {
         body: formData,
       });
 
-      if (!res.ok) throw new Error('Error al subir la imagen');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Error al subir la imagen');
 
-      const data = await res.json();
       setEditForm(prev => prev ? { ...prev, imagen_url: data.url } : null);
       setImagePreview(data.url);
     } catch (err: any) {
