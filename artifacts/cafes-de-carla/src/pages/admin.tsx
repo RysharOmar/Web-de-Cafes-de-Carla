@@ -90,6 +90,8 @@ export default function Admin() {
   const [uploading, setUploading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [categorias, setCategorias] = useState<string[]>([]);
+  const [nuevaCategoria, setNuevaCategoria] = useState('');
 
   // Recuperar la sesión del panel al recargar la página.
   useEffect(() => {
@@ -140,6 +142,21 @@ export default function Admin() {
     }
   }
 
+  async function fetchCategorias() {
+    try {
+      const res = await fetch('/api/categories', { cache: 'no-store' });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (Array.isArray(data.categorias)) {
+        setCategorias(
+          data.categorias.filter((c: unknown) => typeof c === 'string' && c.trim() !== ''),
+        );
+      }
+    } catch (err) {
+      console.error('Error cargando categorías:', err);
+    }
+  }
+
   // Cargar productos y refrescar cada 5 segundos mientras haya sesión.
   // Se pausa la recarga automática mientras se está editando un producto
   // para no sobrescribir cambios en curso.
@@ -147,6 +164,7 @@ export default function Admin() {
     if (!password || editingProduct) return;
 
     fetchProductos();
+    fetchCategorias();
     const interval = setInterval(fetchProductos, 5000);
     return () => clearInterval(interval);
   }, [password, editingProduct]);
@@ -237,6 +255,47 @@ export default function Admin() {
     }
   }
 
+  async function eliminarProducto(producto: ApiProducto) {
+    if (!window.confirm(`¿Eliminar "${producto.nombre}"? Esta acción no se puede deshacer.`)) {
+      return;
+    }
+
+    setUpdating((prev) => new Set([...prev, producto.id]));
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const res = await fetch(`/api/products/${producto.id}`, {
+        method: 'DELETE',
+        headers: { 'x-admin-password': password },
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (res.status === 401) {
+        logout();
+        setAuthError(data.error || 'La sesión ha caducado. Vuelve a entrar.');
+        return;
+      }
+
+      if (!res.ok) {
+        throw new Error(data.error || `Error ${res.status} al eliminar producto`);
+      }
+
+      setProductos((prev) => prev.filter((p) => p.id !== producto.id));
+      setSuccess(`"${producto.nombre}" eliminado correctamente.`);
+    } catch (err: any) {
+      setError(err.message || 'Error eliminando producto');
+      console.error('Error eliminando producto:', err);
+    } finally {
+      setUpdating((prev) => {
+        const next = new Set(prev);
+        next.delete(producto.id);
+        return next;
+      });
+    }
+  }
+
   // --- Funciones de edición de producto (modal) ---
 
   const openEdit = (producto: ApiProducto) => {
@@ -253,6 +312,7 @@ export default function Admin() {
       imagen_url: producto.imagen_url ?? '',
       agotado: Boolean(producto.agotado),
     });
+    setNuevaCategoria('');
     setError(null);
     setSuccess(null);
     setImagePreview(null);
@@ -264,6 +324,7 @@ export default function Admin() {
     setIsAdding(false);
     setImagePreview(null);
     setUploadError(null);
+    setNuevaCategoria('');
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -308,6 +369,7 @@ export default function Admin() {
     });
     setEditingProduct(null);
     setIsAdding(true);
+    setNuevaCategoria('');
     setError(null);
     setSuccess(null);
     setImagePreview(null);
@@ -370,7 +432,17 @@ export default function Admin() {
         body.precio_grande = pg;
       }
 
-      body.categoria = String(editForm.categoria).trim() || '';
+      const categoriaFinal =
+        editForm.categoria === '__nueva__'
+          ? nuevaCategoria.trim()
+          : String(editForm.categoria).trim();
+
+      if (categoriaFinal === '') {
+        setError('La categoría es obligatoria');
+        setSaving(false);
+        return;
+      }
+      body.categoria = categoriaFinal;
       body.descripcion = editForm.descripcion ?? null;
       body.imagen_url = editForm.imagen_url ?? null;
       body.agotado = Boolean(editForm.agotado);
@@ -401,6 +473,7 @@ export default function Admin() {
 
       // Refrescar la lista inmediatamente
       await fetchProductos();
+      fetchCategorias();
 
       setSuccess(
         `"${body.nombre}" ${isCreating ? 'creado correctamente.' : 'actualizado correctamente.'}`,
@@ -795,25 +868,46 @@ export default function Admin() {
                             {producto.agotado ? 'Disponible' : 'Agotado'}
                           </button>
                         ) : (
-                          <button
-                            onClick={() => openEdit(producto)}
-                            disabled={updating.has(producto.id) || editingProduct !== null}
-                            className="focus-ring"
-                            style={{
-                              background: '#4a3322',
-                              color: '#fff',
-                              border: 'none',
-                              padding: '8px 14px',
-                              borderRadius: '8px',
-                              fontSize: '12px',
-                              fontWeight: 600,
-                              cursor: updating.has(producto.id) || editingProduct !== null ? 'not-allowed' : 'pointer',
-                              opacity: (updating.has(producto.id) || editingProduct !== null) ? 0.6 : 1,
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            Editar
-                          </button>
+                          <>
+                            <button
+                              onClick={() => openEdit(producto)}
+                              disabled={updating.has(producto.id) || editingProduct !== null}
+                              className="focus-ring"
+                              style={{
+                                background: '#4a3322',
+                                color: '#fff',
+                                border: 'none',
+                                padding: '8px 14px',
+                                borderRadius: '8px',
+                                fontSize: '12px',
+                                fontWeight: 600,
+                                cursor: updating.has(producto.id) || editingProduct !== null ? 'not-allowed' : 'pointer',
+                                opacity: (updating.has(producto.id) || editingProduct !== null) ? 0.6 : 1,
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              Editar
+                            </button>
+                            <button
+                              onClick={() => eliminarProducto(producto)}
+                              disabled={updating.has(producto.id)}
+                              className="focus-ring"
+                              style={{
+                                background: '#a33a2b',
+                                color: '#fff',
+                                border: 'none',
+                                padding: '8px 14px',
+                                borderRadius: '8px',
+                                fontSize: '12px',
+                                fontWeight: 600,
+                                cursor: updating.has(producto.id) ? 'not-allowed' : 'pointer',
+                                opacity: updating.has(producto.id) ? 0.6 : 1,
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              Eliminar
+                            </button>
+                          </>
                         )}
                       </div>
                     </div>
@@ -926,6 +1020,7 @@ export default function Admin() {
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   <label
+                    htmlFor="edit-categoria"
                     style={{
                       fontSize: '12px',
                       fontWeight: 600,
@@ -934,8 +1029,8 @@ export default function Admin() {
                   >
                     Categoría
                   </label>
-                  <input
-                    type="text"
+                  <select
+                    id="edit-categoria"
                     value={editForm.categoria}
                     onChange={(e) => handleEditChange('categoria', e.target.value)}
                     style={{
@@ -945,9 +1040,43 @@ export default function Admin() {
                       border: '1px solid #ddd1bd',
                       borderRadius: '8px',
                       fontSize: '14px',
+                      background: '#fff',
                     }}
                     required
-                  />
+                  >
+                    <option value="" disabled>
+                      Selecciona una categoría
+                    </option>
+                    {Array.from(
+                      new Set([
+                        ...categorias,
+                        ...(editForm.categoria && editForm.categoria !== '__nueva__'
+                          ? [editForm.categoria]
+                          : []),
+                      ]),
+                    ).map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                    <option value="__nueva__">+ Crear nueva categoría</option>
+                  </select>
+                  {editForm.categoria === '__nueva__' && (
+                    <input
+                      type="text"
+                      placeholder="Nombre de la nueva categoría"
+                      value={nuevaCategoria}
+                      onChange={(e) => setNuevaCategoria(e.target.value)}
+                      style={{
+                        width: '100%',
+                        boxSizing: 'border-box',
+                        padding: '10px 12px',
+                        border: '1px solid #ddd1bd',
+                        borderRadius: '8px',
+                        fontSize: '14px',
+                      }}
+                    />
+                  )}
                 </div>
 
                 <div

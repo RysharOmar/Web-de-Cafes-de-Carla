@@ -7,14 +7,20 @@
  *   POST   /api/products     → crea un nuevo producto (requiere x-admin-password)
  *   PATCH  /api/products/:id → actualiza uno o más campos del producto (requiere x-admin-password)
  *     Campos aceptados: nombre, precio, precio_mini, precio_grande, categoria, descripcion, imagen_url, agotado
+ *   DELETE /api/products/:id → elimina el producto (requiere x-admin-password)
  *
  * La tabla `products` de Neon usa precios en euros con tipo NUMERIC(10,2).
  * La API devuelve esos valores en euros y también en céntimos para el carrito.
  */
 
 import { neon } from '@neondatabase/serverless';
+import { Pool } from 'pg';
 
 const sql = neon(process.env.DATABASE_URL!);
+
+// Pool de pg para consultas con parámetros ($1, $2, ...) en UPDATE/DELETE dinámicos.
+// `neon` no expone sql.raw/sql.join, así que usamos pg para esos casos.
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
 type ProductoRow = {
   id: number;
@@ -77,7 +83,7 @@ export default async function handler(req: any, res: any) {
 
   // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-admin-password');
   res.setHeader('Cache-Control', 'no-store');
 
@@ -248,34 +254,52 @@ export default async function handler(req: any, res: any) {
         return res.status(400).json({ error: 'No se enviaron campos para actualizar' });
       }
 
-      // Construir el cláusula SET dinámica para múltiples campos
-      const setClauseParts = updates.map(({ key }) => {
-        const col = allowedColumns[key];
-        if (!col) return null;
-        const value = updates.find((u) => u.key === key)!.value;
-        return `${col} = ${value}`;
-      }).filter(Boolean);
+      // Construir el UPDATE con parámetros $1, $2, ... (nombres de columna
+      // validados contra la lista blanca; los valores SIEMPRE van como parámetros).
+      const validUpdates = updates.filter((u) => allowedColumns[u.key]);
+      const setClause = validUpdates
+        .map((u, i) => `${allowedColumns[u.key]} = $${i + 1}`)
+        .join(', ');
+      const values: unknown[] = validUpdates.map((u) => u.value);
+      values.push(id);
 
-      const setClause = setClauseParts.join(', ');
+      const result = await pool.query(
+        `UPDATE products SET ${setClause} WHERE id = $${validUpdates.length + 1}
+         RETURNING id, nombre, precio, precio_mini, precio_grande, categoria, agotado, imagen_url, descripcion`,
+        values,
+      );
 
-      await sql`
-        UPDATE products
-        SET ${setClause}
-        WHERE id = ${id}
-      `;
-
-      // Devolver producto actualizado
-      const result = await sql`
-        SELECT id, nombre, precio, precio_mini, precio_grande, categoria, agotado, imagen_url, descripcion
-        FROM products
-        WHERE id = ${id}
-      `;
-
-      if (result.length === 0) {
+      if (result.rows.length === 0) {
         return res.status(404).json({ error: 'Producto no encontrado' });
       }
 
-      return res.status(200).json({ ok: true, producto: mapProducto(result[0] as ProductoRow) });
+      return res.status(200).json({ ok: true, producto: mapProducto(result.rows[0] as ProductoRow) });
+    }
+
+    // ---------- DELETE /api/products/:id ----------
+    if (method === 'DELETE' && rawId != null) {
+      const adminPassword = process.env.ADMIN_PASSWORD;
+
+      if (!adminPassword) {
+        return res.status(500).json({ error: 'ADMIN_PASSWORD no está configurada en el servidor' });
+      }
+
+      if (getAdminPassword(req) !== adminPassword) {
+        return res.status(401).json({ error: 'No autorizado' });
+      }
+
+      const id = Number(rawId);
+      if (!Number.isInteger(id) || id <= 0) {
+        return res.status(400).json({ error: 'ID de producto no válido' });
+      }
+
+      const result = await pool.query('DELETE FROM products WHERE id = $1', [id]);
+
+      if (result.rowCount === 0) {
+        return res.status(404).json({ error: 'Producto no encontrado' });
+      }
+
+      return res.status(200).json({ ok: true });
     }
 
     // ---------- POST /api/products ----------
