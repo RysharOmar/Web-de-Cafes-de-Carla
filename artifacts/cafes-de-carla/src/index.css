@@ -555,6 +555,34 @@
   .cart-empty { padding: 18px; }
 }
 
+/* Modales: animaciones de entrada/salida */
+.modal-overlay--in { animation: modal-overlay-in .24s ease-out both; }
+.modal-overlay--out { animation: modal-overlay-out .22s ease-in both; }
+.modal-card--in { animation: modal-card-in .28s cubic-bezier(.16, 1, .3, 1) both; }
+.modal-card--out { animation: modal-card-out .22s cubic-bezier(.4, 0, 1, 1) both; }
+.modal-progress { animation-name: modal-progress; animation-timing-function: linear; animation-fill-mode: both; }
+
+@keyframes modal-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes modal-overlay-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes modal-card-in {
+  from { opacity: 0; transform: translateY(14px) scale(.94); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes modal-card-out {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(8px) scale(.96); }
+}
+@keyframes modal-progress {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }

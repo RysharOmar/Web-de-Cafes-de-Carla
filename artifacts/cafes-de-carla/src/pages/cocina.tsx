@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, Banknote, Check, Clock, RotateCcw, Volume2, VolumeX, X } from 'lucide-react';
+import ConfirmModal from '@/components/ui/confirm-modal';
 
 type OrderStatus = 'pending' | 'confirmed' | 'served' | 'paid';
 
@@ -112,6 +113,7 @@ export default function Cocina() {
   const [alarmActive, setAlarmActive] = useState(false);
   const [feedback, setFeedback] = useState('');
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [confirmTable, setConfirmTable] = useState<string | null>(null);
 
   const soundEnabledRef = useRef(soundEnabled);
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -332,11 +334,6 @@ export default function Cocina() {
   }
 
   function markTableAsCollected(table: string) {
-    const confirmed = window.confirm(
-      `¿Estás seguro de que la Mesa ${table} ha pagado? Esta acción eliminará la mesa del panel.`
-    );
-    if (!confirmed) return;
-
     const all = loadOrdersFromStorage();
     const now = new Date().toISOString();
     let changed = false;
@@ -716,7 +713,7 @@ export default function Cocina() {
                       <button
                         type="button"
                         className={`cocina-collect-btn${group.cashPending ? ' cocina-collect-btn--cash' : ''}`}
-                        onClick={() => markTableAsCollected(group.table)}
+                        onClick={() => setConfirmTable(group.table)}
                         disabled={hasOrdersInProgress && !group.cashPending}
                         title={hasOrdersInProgress && !group.cashPending ? 'Sirve todos los pedidos antes de cobrar la mesa' : undefined}
                         data-testid={`button-collect-table-${group.table}`}
@@ -740,6 +737,20 @@ export default function Cocina() {
           </span>
         </div>
       </footer>
+
+      <ConfirmModal
+        open={confirmTable !== null}
+        onClose={() => setConfirmTable(null)}
+        onConfirm={() => {
+          if (confirmTable) markTableAsCollected(confirmTable);
+          setConfirmTable(null);
+        }}
+        title="Confirmar cobro"
+        message={confirmTable ? `¿Estás seguro de que la Mesa ${confirmTable} ha pagado?` : ''}
+        hint="Esta acción eliminará la mesa del panel."
+        confirmLabel="Sí, marcar como cobrado"
+        cancelLabel="Cancelar"
+      />
     </div>
   );
 }

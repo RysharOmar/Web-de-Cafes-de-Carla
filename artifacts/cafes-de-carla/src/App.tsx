@@ -3,6 +3,7 @@ import { ArrowDown, ArrowRight, ArrowUpRight, Banknote, Clock3, CreditCard, Inst
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
+import NotificationModal, { type NotificationVariant } from '@/components/ui/notification-modal';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
 import Success from '@/pages/success';
@@ -237,6 +238,11 @@ function Home() {
   const [orderStatus, setOrderStatus] = useState<'pending' | 'confirmed' | 'served' | 'paid' | null>(null);
   const [orderItemsFromStorage, setOrderItemsFromStorage] = useState<{ id: string; name: string; quantity: number; sizeLabel: string; variant?: string | null; priceCents: number }[]>([]);
   const [cashPending, setCashPending] = useState(false);
+  const [notice, setNotice] = useState<{ title: string; message?: string; variant: NotificationVariant } | null>(null);
+
+  const showNotice = (title: string, message?: string, variant: NotificationVariant = 'info') => {
+    setNotice({ title, message, variant });
+  };
 
   async function fetchOrderStatus() {
     if (!mesaActiva) {
@@ -389,7 +395,7 @@ function Home() {
     } catch (err) {
       console.error("Checkout error:", err);
       const msg = err instanceof Error ? err.message : String(err);
-      alert("No se pudo preparar el pago. Inténtalo de nuevo.\n\nDetalle: " + msg);
+      showNotice("No se pudo preparar el pago", "Inténtalo de nuevo.\n\nDetalle: " + msg, "error");
     }
   };
 
@@ -397,7 +403,7 @@ function Home() {
 
   const sendToKitchen = async () => {
     if (!mesaActiva) {
-      alert("No se ha detectado una mesa activa.");
+      showNotice("No se ha detectado una mesa activa.", undefined, "error");
       return;
     }
     if (!allPriced) return;
@@ -447,11 +453,15 @@ function Home() {
       setCart({});
       setCartOpen(false);
 
-      alert(`Pedido enviado a cocina — Mesa ${mesaActiva}`);
+      showNotice(
+        "¡Pedido enviado a cocina!",
+        `Mesa ${mesaActiva} · Ya lo tenemos en el panel de cocina.`,
+        "success",
+      );
     } catch (err) {
       console.error("Send to kitchen error:", err);
       const msg = err instanceof Error ? err.message : String(err);
-      alert("No se pudo enviar el pedido a cocina.\n\nDetalle: " + msg);
+      showNotice("No se pudo enviar el pedido a cocina", "Detalle: " + msg, "error");
     }
   };
 
@@ -462,18 +472,18 @@ function Home() {
       // Leer TODOS los pedidos de esta mesa desde localStorage (compartido con cocina)
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) {
-        alert("No hay pedido pendiente para esta mesa.");
+        showNotice("No hay pedido pendiente", "No hay pedido pendiente para esta mesa.", "error");
         return;
       }
       const allOrders = JSON.parse(raw);
       if (!Array.isArray(allOrders) || allOrders.length === 0) {
-        alert("No hay pedido pendiente para esta mesa.");
+        showNotice("No hay pedido pendiente", "No hay pedido pendiente para esta mesa.", "error");
         return;
       }
 
       const mesaOrders = allOrders.filter((o: any) => o.table === mesaActiva && o.status !== 'paid');
       if (mesaOrders.length === 0) {
-        alert("No hay pedido pendiente para esta mesa.");
+        showNotice("No hay pedido pendiente", "No hay pedido pendiente para esta mesa.", "error");
         return;
       }
 
@@ -487,7 +497,7 @@ function Home() {
       })));
 
       if (allItems.length === 0) {
-        alert("No hay items para pagar.");
+        showNotice("No hay items para pagar", undefined, "error");
         return;
       }
 
@@ -545,32 +555,32 @@ function Home() {
     } catch (err) {
       console.error("Pay table bill error:", err);
       const msg = err instanceof Error ? err.message : String(err);
-      alert("No se pudo procesar el pago de la mesa.\n\nDetalle: " + msg);
+      showNotice("No se pudo procesar el pago de la mesa", "Detalle: " + msg, "error");
     }
   };
 
   const payWithCash = () => {
     if (!mesaActiva) {
-      alert("No se ha detectado una mesa activa.");
+      showNotice("No se ha detectado una mesa activa.", undefined, "error");
       return;
     }
 
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) {
-        alert("No hay pedido pendiente para esta mesa.");
+        showNotice("No hay pedido pendiente", "No hay pedido pendiente para esta mesa.", "error");
         return;
       }
 
       const allOrders = JSON.parse(raw);
       if (!Array.isArray(allOrders)) {
-        alert("No hay pedido pendiente para esta mesa.");
+        showNotice("No hay pedido pendiente", "No hay pedido pendiente para esta mesa.", "error");
         return;
       }
 
       const mesaOrders = allOrders.filter((o: any) => o.table === mesaActiva && o.status !== 'paid');
       if (mesaOrders.length === 0) {
-        alert("No hay pedido pendiente para esta mesa.");
+        showNotice("No hay pedido pendiente", "No hay pedido pendiente para esta mesa.", "error");
         return;
       }
 
@@ -608,11 +618,15 @@ function Home() {
 
       setCashPending(true);
       fetchOrderStatus();
-      alert("Avisa al camarero de que vas a pagar en efectivo.");
+      showNotice(
+        "Aviso enviado al camarero",
+        "Avisa al camarero de que vas a pagar en efectivo. Tu mesa queda pendiente de cobro.",
+        "success",
+      );
     } catch (err) {
       console.error("Cash payment error:", err);
       const msg = err instanceof Error ? err.message : String(err);
-      alert("No se pudo avisar del pago en efectivo.\n\nDetalle: " + msg);
+      showNotice("No se pudo avisar del pago en efectivo", "Detalle: " + msg, "error");
     }
   };
 
@@ -645,6 +659,9 @@ function Home() {
     cartCloseRef.current?.focus();
 
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Si hay un modal encima, él gestiona Esc y el foco; el carrito no reacciona.
+      if (document.querySelector('[data-modal-open="true"]')) return;
+
       if (event.key === 'Escape') {
         setCartOpen(false);
         return;
@@ -1099,6 +1116,15 @@ function Home() {
           </aside>
         </>
       )}
+
+      <NotificationModal
+        open={notice !== null}
+        onClose={() => setNotice(null)}
+        title={notice?.title ?? ''}
+        message={notice?.message}
+        variant={notice?.variant ?? 'info'}
+        autoCloseMs={3500}
+      />
     </div>
   );
 }
