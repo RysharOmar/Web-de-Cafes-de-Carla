@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { ArrowDown, ArrowRight, ArrowUpRight, Clock3, CreditCard, Instagram, MapPin, Menu as MenuIcon, Minus, Phone, Plus, ShoppingBag, X } from 'lucide-react';
+import { ArrowDown, ArrowRight, ArrowUpRight, Banknote, Clock3, CreditCard, Instagram, MapPin, Menu as MenuIcon, Minus, Phone, Plus, ShoppingBag, X } from 'lucide-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
@@ -236,29 +236,44 @@ function Home() {
   // Estado para rastrear el pedido de la mesa (modo local)
   const [orderStatus, setOrderStatus] = useState<'pending' | 'confirmed' | 'served' | 'paid' | null>(null);
   const [orderItemsFromStorage, setOrderItemsFromStorage] = useState<{ id: string; name: string; quantity: number; sizeLabel: string; variant?: string | null; priceCents: number }[]>([]);
+  const [cashPending, setCashPending] = useState(false);
 
   async function fetchOrderStatus() {
-    if (!mesaActiva) return;
+    if (!mesaActiva) {
+      setCashPending(false);
+      return;
+    }
     try {
       // Leer pedidos desde localStorage (compartido con la cocina)
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
+      if (!raw) {
+        setCashPending(false);
+        return;
+      }
       const allOrders = JSON.parse(raw);
-      if (!Array.isArray(allOrders) || allOrders.length === 0) return;
-
-      // Filtrar pedidos de esta mesa
-      const mesaOrders = allOrders.filter((o: any) => o.table === mesaActiva);
-      if (mesaOrders.length === 0) return;
-
-      // Tomar solo pedidos NO pagados para mostrar estado
-      const unpaidOrders = mesaOrders.filter((o: any) => o.status !== 'paid');
-      
-      if (unpaidOrders.length === 0) {
-        setOrderStatus('paid');
-        setOrderItemsFromStorage([]);
+      if (!Array.isArray(allOrders) || allOrders.length === 0) {
+        setCashPending(false);
         return;
       }
 
+      // Filtrar pedidos de esta mesa
+      const mesaOrders = allOrders.filter((o: any) => o.table === mesaActiva);
+      if (mesaOrders.length === 0) {
+        setCashPending(false);
+        return;
+      }
+
+      // Tomar solo pedidos NO pagados para mostrar estado
+      const unpaidOrders = mesaOrders.filter((o: any) => o.status !== 'paid');
+
+      if (unpaidOrders.length === 0) {
+        setOrderStatus('paid');
+        setOrderItemsFromStorage([]);
+        setCashPending(false);
+        return;
+      }
+
+      setCashPending(unpaidOrders.some((o: any) => o.pagoPendienteEfectivo === true));
       const latestOrder = unpaidOrders[unpaidOrders.length - 1];
       setOrderStatus(latestOrder.status as 'pending' | 'confirmed' | 'served');
       const unpaidItems = unpaidOrders.flatMap((o: any) => o.items || []);
@@ -275,34 +290,17 @@ function Home() {
     return total + priceForLine(item, line.sizeLabel) * line.quantity;
   }, 0);
 
-  // Subtotal total de la mesa: carrito local + items en cocina (no pagados)
-  const [tableTotalCents, setTableTotalCents] = useState(0);
-
-  useEffect(() => {
-    if (!mesaActiva) {
-      setTableTotalCents(cartSubtotal);
-      return;
-    }
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) {
-        setTableTotalCents(cartSubtotal);
-        return;
-      }
-      const allOrders = JSON.parse(raw);
-      if (!Array.isArray(allOrders)) {
-        setTableTotalCents(cartSubtotal);
-        return;
-      }
-      const mesaOrders = allOrders.filter((o: any) => o.table === mesaActiva && o.status !== 'paid');
-      const kitchenTotal = mesaOrders.reduce((sum: number, o: any) => {
-        return sum + (o.items || []).reduce((iSum: number, it: any) => iSum + it.priceCents * it.quantity, 0);
-      }, 0);
-      setTableTotalCents(cartSubtotal + kitchenTotal);
-    } catch {
-      setTableTotalCents(cartSubtotal);
-    }
-  }, [cartSubtotal, mesaActiva]);
+  // Total de la mesa: carrito local + items de pedidos no pagados.
+  // Se deriva del estado que ya refresca `fetchOrderStatus`, así al cobrar
+  // la mesa el subtotal vuelve a cero inmediatamente.
+  const tableTotalCents = useMemo(() => {
+    if (!mesaActiva) return cartSubtotal;
+    const kitchenTotal = orderItemsFromStorage.reduce(
+      (sum, item) => sum + item.priceCents * item.quantity,
+      0
+    );
+    return cartSubtotal + kitchenTotal;
+  }, [cartSubtotal, mesaActiva, orderItemsFromStorage]);
 
   const hasUnpricedLines = cartLines.some((line) => {
     const item = menuItemsById.get(line.itemId);
@@ -518,11 +516,19 @@ function Home() {
       // Marcar TODOS los pedidos de esta mesa como pagados en localStorage
       const updatedOrders = allOrders.map((o: any) => {
         if (o.table === mesaActiva && o.status !== 'paid') {
-          return { ...o, status: 'paid', paidAt: new Date().toISOString(), stripeUrl: data.url };
+          return {
+            ...o,
+            status: 'paid',
+            paidAt: new Date().toISOString(),
+            stripeUrl: data.url,
+            pagoPendienteEfectivo: false,
+            metodoPago: 'tarjeta',
+          };
         }
         return o;
       });
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedOrders));
+      setCashPending(false);
 
       // También actualizar la referencia de la mesa
       localStorage.setItem(`order_${mesaActiva}`, JSON.stringify({
@@ -543,11 +549,79 @@ function Home() {
     }
   };
 
+  const payWithCash = () => {
+    if (!mesaActiva) {
+      alert("No se ha detectado una mesa activa.");
+      return;
+    }
+
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) {
+        alert("No hay pedido pendiente para esta mesa.");
+        return;
+      }
+
+      const allOrders = JSON.parse(raw);
+      if (!Array.isArray(allOrders)) {
+        alert("No hay pedido pendiente para esta mesa.");
+        return;
+      }
+
+      const mesaOrders = allOrders.filter((o: any) => o.table === mesaActiva && o.status !== 'paid');
+      if (mesaOrders.length === 0) {
+        alert("No hay pedido pendiente para esta mesa.");
+        return;
+      }
+
+      const now = new Date().toISOString();
+      const updatedOrders = allOrders.map((o: any) => {
+        if (o.table === mesaActiva && o.status !== 'paid') {
+          return {
+            ...o,
+            pagoPendienteEfectivo: true,
+            pagoPendienteEfectivoAt: o.pagoPendienteEfectivoAt ?? now,
+            metodoPago: 'efectivo',
+          };
+        }
+        return o;
+      });
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedOrders));
+
+      // Actualizar también la referencia de la mesa para que cocina sepa
+      // que el cobro se hará en efectivo.
+      try {
+        const tableRef = localStorage.getItem(`order_${mesaActiva}`);
+        if (tableRef) {
+          const parsed = JSON.parse(tableRef);
+          localStorage.setItem(`order_${mesaActiva}`, JSON.stringify({
+            ...parsed,
+            pagoPendienteEfectivo: true,
+            pagoPendienteEfectivoAt: parsed.pagoPendienteEfectivoAt ?? now,
+            metodoPago: 'efectivo',
+          }));
+        }
+      } catch {
+        // La referencia de mesa es opcional; el pedido principal ya está guardado.
+      }
+
+      setCashPending(true);
+      fetchOrderStatus();
+      alert("Avisa al camarero de que vas a pagar en efectivo.");
+    } catch (err) {
+      console.error("Cash payment error:", err);
+      const msg = err instanceof Error ? err.message : String(err);
+      alert("No se pudo avisar del pago en efectivo.\n\nDetalle: " + msg);
+    }
+  };
+
   // Cargar estado del pedido cuando cambia la mesa activa, con polling cada 5s
   useEffect(() => {
     if (!mesaActiva) {
       setOrderStatus(null);
       setOrderItemsFromStorage([]);
+      setCashPending(false);
       return;
     }
 
@@ -599,6 +673,44 @@ function Home() {
       previousFocus?.focus();
     };
   }, [cartOpen]);
+
+  const cashPendingNotice = cashPending ? (
+    <div className="cart-cash-notice" role="status" data-testid="text-cash-pending">
+      <span className="cart-cash-notice-icon" aria-hidden="true">💶</span>
+      <div>
+        <strong>Pago en efectivo pendiente</strong>
+        <span>Avisa al camarero de que vas a pagar en efectivo.</span>
+        <span className="cart-cash-notice-help">El camarero marcará la mesa como cobrada desde el panel de cocina.</span>
+      </div>
+    </div>
+  ) : null;
+
+  const renderTablePaymentActions = () => {
+    if (orderStatus !== 'served' || cashPending) return null;
+
+    return (
+      <div className="cart-pay-actions">
+        <button
+          className="cart-checkout focus-ring stripe-btn"
+          type="button"
+          onClick={payTableBill}
+          data-testid="button-pay-table"
+        >
+          <CreditCard size={18} aria-hidden="true" />
+          <span>Pagar con tarjeta — {formatPrice(tableTotalCents)}</span>
+        </button>
+        <button
+          className="cart-checkout cart-checkout--cash focus-ring"
+          type="button"
+          onClick={payWithCash}
+          data-testid="button-pay-cash"
+        >
+          <Banknote size={18} aria-hidden="true" />
+          <span>Pagar en Efectivo — {formatPrice(tableTotalCents)}</span>
+        </button>
+      </div>
+    );
+  };
 
   if (menuLoading) {
     return <PageLoader />;
@@ -839,7 +951,7 @@ function Home() {
                 <div className="cart-empty cart-empty--order" data-testid="empty-cart">
                   <ShoppingBag size={28} aria-hidden="true" />
                   {orderStatus === 'served' ? (
-                    <p>Tu pedido está listo para pagar.</p>
+                    <p>{cashPending ? 'Pago en efectivo pendiente.' : 'Tu pedido está listo para pagar.'}</p>
                   ) : orderStatus === 'paid' ? (
                     <p>Tu pedido ya está pagado.</p>
                   ) : (
@@ -922,26 +1034,23 @@ function Home() {
               <div className="cart-total" data-testid="text-cart-total"><span>{hasUnpricedLines ? 'Subtotal parcial' : 'Subtotal'}</span><strong>{formatPrice(tableTotalCents)}</strong></div>
               {mesaActiva ? (
                 <>
+                  {cashPendingNotice}
                   {cartLines.length > 0 ? (
                     <>
-                      {orderStatus === 'served' ? (
-                        <>
-                          <p className="cart-preview-note" style={{ color: '#6b7d4c', fontWeight: 700, marginBottom: '12px' }}>
-                            Tu pedido anterior está servido · Puedes pagar o agregar más
-                          </p>
-                        </>
-                      ) : orderStatus === 'paid' ? (
-                        <>
-                          <p className="cart-preview-note" style={{ color: '#6b7d4c', fontWeight: 700, marginBottom: '12px' }}>
-                            Pedido anterior pagado ✓ · Puedes seguir pidiendo
-                          </p>
-                        </>
-                      ) : (
-                        <>
-                          <p className="cart-preview-note" style={{ color: '#7c6f5e', fontSize: '11px', marginBottom: '12px' }}>
-                            Tu pedido ya fue enviado a cocina. Puedes agregar más items.
-                          </p>
-                        </>
+                      {orderStatus === 'served' && !cashPending && (
+                        <p className="cart-preview-note" style={{ color: '#6b7d4c', fontWeight: 700, marginBottom: '12px' }}>
+                          Tu pedido anterior está servido · Puedes pagar o agregar más
+                        </p>
+                      )}
+                      {orderStatus === 'paid' && (
+                        <p className="cart-preview-note" style={{ color: '#6b7d4c', fontWeight: 700, marginBottom: '12px' }}>
+                          Pedido anterior pagado ✓ · Puedes seguir pidiendo
+                        </p>
+                      )}
+                      {orderStatus !== 'served' && orderStatus !== 'paid' && (
+                        <p className="cart-preview-note" style={{ color: '#7c6f5e', fontSize: '11px', marginBottom: '12px' }}>
+                          Tu pedido ya fue enviado a cocina. Puedes agregar más items.
+                        </p>
                       )}
                       <button
                         className="cart-checkout focus-ring stripe-btn" type="button" onClick={sendToKitchen} disabled={!allPriced} data-testid="button-add-more-kitchen"
@@ -950,33 +1059,17 @@ function Home() {
                         <span style={{ fontSize: '18px', marginRight: '6px' }}>🍽️</span>
                         <span>Agregar más a cocina — {formatPrice(tableTotalCents)}</span>
                       </button>
-                      {orderStatus === 'served' && (
-                        <button
-                          className="cart-checkout focus-ring stripe-btn" type="button" onClick={payTableBill} data-testid="button-pay-table"
-                          style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', marginTop: '10px' }}
-                        >
-                          <CreditCard size={18} aria-hidden="true" />
-                          <span>Pagar cuenta — {formatPrice(tableTotalCents)}</span>
-                        </button>
-                      )}
+                      {renderTablePaymentActions()}
                       <button className="cart-clear focus-ring" type="button" onClick={() => setCart({})} data-testid="button-clear-cart">Vaciar carrito</button>
                     </>
                   ) : (
                     <>
-                      {orderStatus === 'served' && (
-                        <>
-                          <p className="cart-preview-note" style={{ color: '#6b7d4c', fontWeight: 700, marginBottom: '12px' }}>
-                            Tu pedido está servido · Puedes pagar ahora
-                          </p>
-                          <button
-                            className="cart-checkout focus-ring stripe-btn" type="button" onClick={payTableBill} data-testid="button-pay-table"
-                            style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}
-                          >
-                            <CreditCard size={18} aria-hidden="true" />
-                            <span>Pagar cuenta</span>
-                          </button>
-                        </>
+                      {orderStatus === 'served' && !cashPending && (
+                        <p className="cart-preview-note" style={{ color: '#6b7d4c', fontWeight: 700, marginBottom: '12px' }}>
+                          Tu pedido está servido · Puedes pagar ahora
+                        </p>
                       )}
+                      {renderTablePaymentActions()}
                       {orderStatus === 'paid' && (
                         <p style={{ color: '#6b7d4c', fontWeight: 700, fontSize: '14px', textAlign: 'center' }}>
                           Pedido pagado ✓

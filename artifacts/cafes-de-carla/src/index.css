@@ -234,6 +234,14 @@
 .cart-checkout { width: 100%; min-height: 44px; border: none; border-radius: 99px; color: #ffffff; background: #81945b; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: background .2s, opacity .2s; letter-spacing: .05em; text-transform: uppercase; }
 .cart-checkout:not(:disabled):hover { background: #637746; }
 .cart-checkout:disabled { opacity: .5; cursor: not-allowed; }
+.cart-checkout--cash { background: transparent; border: 1.5px solid #6b7d4c; color: #4f6136; }
+.cart-checkout--cash:not(:disabled):hover { background: #e5ead7; color: #3e4d29; }
+.cart-pay-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.cart-cash-notice { display: flex; align-items: flex-start; gap: 10px; margin: 12px 0 4px; padding: 10px 12px; border: 1px solid #e0a29c; border-radius: 10px; background: #fde8e6; color: #8f1d16; font-size: 11px; line-height: 1.45; }
+.cart-cash-notice-icon { font-size: 20px; line-height: 1; }
+.cart-cash-notice strong { display: block; margin-bottom: 2px; font-size: 12px; }
+.cart-cash-notice span { display: block; }
+.cart-cash-notice-help { margin-top: 4px; color: #a33a30; font-size: 10px; }
 .cart-empty { flex: 1 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 30px; color: #83915f; text-align: center; }
 .cart-empty p { margin: 8px 0; color: #705d49; font-family: var(--app-font-serif); font-size: 20px; }
 .cart-empty .cart-empty-copy { margin: 0; color: #7c6f5e; font-family: inherit; font-size: 12px; line-height: 1.6; }
@@ -414,6 +422,101 @@
 .mesa-note {
   font-size: 12px;
   color: #7c6f5e;
+}
+
+/* Panel de cocina: tablero agrupado por mesa */
+.cocina-shell { min-height: 100dvh; display: flex; flex-direction: column; }
+.cocina-main { flex: 1; padding-block: 32px 56px; }
+.cocina-topbar { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; flex-wrap: wrap; margin-bottom: 20px; }
+.cocina-title { margin: 5px 0 0; color: #4a3322; font-size: clamp(28px, 3.2vw, 38px); font-weight: 400; line-height: 1.05; }
+.cocina-subtitle { max-width: 640px; margin: 8px 0 0; color: #7c6f5e; font-size: 11px; line-height: 1.55; }
+.cocina-topbar-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cocina-sound-toggle { display: inline-flex; align-items: center; gap: 7px; padding: 8px 14px; border: 1px solid #b9aa95; border-radius: 99px; background: #fffdf8; color: #604b36; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; transition: background .2s, color .2s, border-color .2s; }
+.cocina-sound-toggle:hover { background: #4a3020; border-color: #4a3020; color: #f5f0e5; }
+.cocina-sound-toggle.is-muted { background: #f3e6df; border-color: #c98b7a; color: #8c3f2b; }
+.cocina-sound-toggle.is-muted:hover { background: #8c3f2b; border-color: #8c3f2b; color: #fff; }
+.cocina-feedback { margin: 0 0 16px; padding: 10px 14px; border: 1px solid #b5c18f; border-radius: 10px; background: #e5ead7; color: #4e6032; font-size: 12px; font-weight: 700; }
+.cocina-summary { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+.cocina-summary-pill { display: inline-flex; align-items: baseline; gap: 6px; padding: 7px 13px; border: 1px solid #ddd1be; border-radius: 99px; background: #f0ebdd; color: #604b36; font-size: 11px; }
+.cocina-summary-pill strong { color: #4a3322; font-family: var(--app-font-serif); font-size: 16px; font-weight: 500; }
+.cocina-summary-pill--alert { border-color: #e0a29c; background: #fde8e6; color: #8f1d16; }
+.cocina-summary-pill--alert strong { color: #8f1d16; }
+.cocina-loader { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 70px 20px; color: #7c6f5e; }
+.cocina-loader p { margin: 0; font-size: 14px; }
+.cocina-empty { padding: 70px 20px; border: 1px dashed #c6b8a3; border-radius: 16px; background: #fbf8f0; color: #7c6f5e; text-align: center; }
+.cocina-empty h3 { margin: 0 0 6px; color: #4a3322; font-size: 24px; font-weight: 400; }
+.cocina-empty p { margin: 0; font-size: 13px; }
+
+.cocina-board { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 18px; align-items: start; }
+.cocina-table-card { display: flex; flex-direction: column; min-width: 0; overflow: hidden; border: 1px solid #ddd1bd; border-radius: 16px; background: #fffdf8; box-shadow: 0 6px 20px rgba(74, 51, 34, .08); }
+.cocina-table-card--cash { border-color: #c0392b; background: #fff8f6; box-shadow: 0 0 0 3px rgba(192, 57, 43, .14), 0 8px 24px rgba(74, 51, 34, .12); }
+.cocina-table-card--alarm { animation: cocina-card-alarm 1s ease-in-out 3; }
+@keyframes cocina-card-alarm {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(192, 57, 43, .14), 0 8px 24px rgba(74, 51, 34, .12); }
+  50% { box-shadow: 0 0 0 9px rgba(192, 57, 43, .34), 0 8px 30px rgba(192, 57, 43, .24); }
+}
+
+.cocina-table-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 15px 16px 12px; border-bottom: 1px solid #ece2d2; background: #f7f3e9; }
+.cocina-table-kicker { display: block; margin-bottom: 4px; color: #83915f; font-size: 9px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+.cocina-table-head h3 { margin: 0; color: #4a3322; font-size: 27px; font-weight: 500; line-height: 1; }
+.cocina-table-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; color: #8a7a66; font-size: 10px; line-height: 1.4; text-align: right; }
+.cocina-table-meta strong { color: #4a3322; font-size: 11px; }
+
+.cocina-cash-badge { display: flex; align-items: center; justify-content: center; gap: 7px; margin: 12px 16px 0; padding: 9px 12px; border: 2px solid #8e1b1b; border-radius: 9px; background: #c62828; color: #fff; box-shadow: 0 0 0 3px rgba(198, 40, 40, .16); font-size: 12px; font-weight: 800; letter-spacing: .05em; text-align: center; text-transform: uppercase; animation: cocina-cash-blink 1s steps(1, end) infinite; }
+@keyframes cocina-cash-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: .25; }
+}
+
+.cocina-table-statuses { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px 16px 0; }
+.cocina-status-chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 99px; font-size: 9px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+.cocina-status-chip--pending { background: #f6ecd2; color: #8a6517; }
+.cocina-status-chip--confirmed { background: #e5ead7; color: #506634; }
+.cocina-status-chip--served { background: #e6ddd2; color: #5b4532; }
+
+.cocina-order-list { display: flex; flex-direction: column; gap: 10px; max-height: 360px; overflow-y: auto; padding: 12px 16px; scrollbar-width: thin; scrollbar-color: #c6b8a3 transparent; }
+.cocina-order { padding: 10px 11px; border: 1px solid #e6dccb; border-radius: 10px; background: #fff; }
+.cocina-order--pending { border-color: #ead9a8; background: #fffbeb; }
+.cocina-order-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 7px; }
+.cocina-order-time { color: #9a8b75; font-size: 10px; font-weight: 600; }
+.cocina-status { padding: 3px 7px; border-radius: 5px; color: #fff; font-size: 9px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+.cocina-status--pending { background: #b9a06a; }
+.cocina-status--confirmed { background: #6b7d4c; }
+.cocina-status--served { background: #4a3322; }
+.cocina-status--paid { background: #81945b; }
+.cocina-order-items { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.cocina-order-items li { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; gap: 7px; align-items: baseline; color: #4a3322; font-size: 12px; line-height: 1.35; }
+.cocina-item-qty { color: #6b7d4c; font-weight: 700; }
+.cocina-item-name { min-width: 0; overflow-wrap: anywhere; }
+.cocina-item-name small { display: block; margin-top: 1px; color: #9a8b75; font-size: 10px; font-weight: 400; }
+.cocina-item-price { color: #604b36; font-weight: 700; white-space: nowrap; }
+.cocina-order-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px dashed #e6dccb; }
+.cocina-order-total { color: #604b36; font-size: 11px; font-weight: 700; }
+.cocina-order-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px; }
+.cocina-action { display: inline-flex; align-items: center; gap: 4px; padding: 6px 9px; border: 1px solid transparent; border-radius: 6px; font: inherit; font-size: 10px; font-weight: 700; cursor: pointer; }
+.cocina-action--confirm, .cocina-action--serve { background: #6b7d4c; color: #fff; }
+.cocina-action--confirm:hover, .cocina-action--serve:hover { background: #55663b; }
+.cocina-action--reset { border-color: #c6b8a3; background: transparent; color: #9a8b75; }
+.cocina-action--reset:hover { border-color: #4a3020; background: #4a3020; color: #fff; }
+.cocina-served-note { color: #7c6f5e; font-size: 10px; font-style: italic; }
+
+.cocina-table-foot { display: flex; flex-direction: column; gap: 10px; padding: 13px 16px 15px; border-top: 1px solid #ece2d2; background: #fbf8f0; }
+.cocina-table-total { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; color: #604b36; font-size: 12px; }
+.cocina-table-total strong { color: #4a3322; font-family: var(--app-font-serif); font-size: 23px; font-weight: 500; }
+.cocina-collect-btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; width: 100%; min-height: 38px; border: 1px solid #b9aa95; border-radius: 8px; background: #fff; color: #604b36; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; transition: background .2s, color .2s, border-color .2s; }
+.cocina-collect-btn:hover:not(:disabled) { border-color: #4a3020; background: #4a3020; color: #fff; }
+.cocina-collect-btn:disabled { opacity: .45; cursor: not-allowed; }
+.cocina-collect-btn--cash { border-color: #6b7d4c; background: #6b7d4c; color: #fff; }
+.cocina-collect-btn--cash:hover:not(:disabled) { border-color: #55663b; background: #55663b; }
+
+@media (max-width: 760px) {
+  .cocina-main { padding-block: 22px 40px; }
+  .cocina-header-role { display: none; }
+  .cocina-topbar { align-items: flex-start; }
+  .cocina-topbar-actions { width: 100%; }
+  .cocina-board { grid-template-columns: 1fr; }
+  .cocina-order-list { max-height: none; }
+  .cocina-table-head h3 { font-size: 24px; }
 }
 
 /* Carrito: ajustes en móvil y pantallas bajas */
