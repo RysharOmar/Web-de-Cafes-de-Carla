@@ -114,6 +114,7 @@ export default function Cocina() {
   const [feedback, setFeedback] = useState('');
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [confirmTable, setConfirmTable] = useState<string | null>(null);
+  const [closeTableTarget, setCloseTableTarget] = useState<string | null>(null);
 
   const soundEnabledRef = useRef(soundEnabled);
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -704,7 +705,7 @@ export default function Cocina() {
                       <button
                         type="button"
                         className="cocina-collect-btn cocina-collect-btn--close"
-                        onClick={() => closeTable(group.table)}
+                        onClick={() => setCloseTableTarget(group.table)}
                         data-testid={`button-close-table-${group.table}`}
                       >
                         <X size={15} aria-hidden="true" /> Cerrar Mesa
@@ -750,6 +751,22 @@ export default function Cocina() {
         hint="Esta acción eliminará la mesa del panel."
         confirmLabel="Sí, marcar como cobrado"
         cancelLabel="Cancelar"
+      />
+
+      <ConfirmModal
+        open={closeTableTarget !== null}
+        onClose={() => setCloseTableTarget(null)}
+        onConfirm={() => {
+          if (closeTableTarget) closeTable(closeTableTarget);
+          setCloseTableTarget(null);
+        }}
+        title={closeTableTarget ? `¿Cerrar Mesa ${closeTableTarget}?` : ''}
+        message={closeTableTarget
+          ? `¿Estás seguro de que los clientes han terminado y quieres eliminar la Mesa ${closeTableTarget} del panel?`
+          : ''}
+        confirmLabel="Sí, cerrar mesa"
+        cancelLabel="Cancelar"
+        icon={<X size={22} strokeWidth={1.8} aria-hidden="true" />}
       />
     </div>
   );

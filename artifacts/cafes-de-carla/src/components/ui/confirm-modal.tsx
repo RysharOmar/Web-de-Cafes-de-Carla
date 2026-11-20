@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Banknote, X } from 'lucide-react';
 import Modal from '@/components/ui/modal';
 
@@ -10,6 +11,7 @@ export type ConfirmModalProps = {
   hint?: string;
   confirmLabel?: string;
   cancelLabel?: string;
+  icon?: ReactNode;
 };
 
 /** Modal de confirmación con acciones Cancelar / Confirmar. */
@@ -22,12 +24,13 @@ export default function ConfirmModal({
   hint,
   confirmLabel = 'Confirmar',
   cancelLabel = 'Cancelar',
+  icon,
 }: ConfirmModalProps) {
   return (
     <Modal open={open} onClose={onClose} labelledBy="confirm-modal-title" showCloseButton={false}>
       <div className="flex items-start gap-4 pr-2">
         <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#f6ecd2] text-[#8a6517]">
-          <Banknote size={22} strokeWidth={1.8} aria-hidden="true" />
+          {icon ?? <Banknote size={22} strokeWidth={1.8} aria-hidden="true" />}
         </span>
         <div>
           <h2 id="confirm-modal-title" className="serif text-[24px] font-normal leading-tight text-[#4a3322]">
