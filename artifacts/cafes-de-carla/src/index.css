@@ -441,6 +441,9 @@
 .cocina-summary-pill strong { color: #4a3322; font-family: var(--app-font-serif); font-size: 16px; font-weight: 500; }
 .cocina-summary-pill--alert { border-color: #e0a29c; background: #fde8e6; color: #8f1d16; }
 .cocina-summary-pill--alert strong { color: #8f1d16; }
+.cocina-summary-pill--paid { border-color: #b9c99a; background: #eef3e4; color: #4b6130; }
+.cocina-summary-pill--paid strong { color: #405723; }
+.cocina-summary-pill--paid:not(.is-visible) { opacity: .55; }
 .cocina-loader { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 70px 20px; color: #7c6f5e; }
 .cocina-loader p { margin: 0; font-size: 14px; }
 .cocina-empty { padding: 70px 20px; border: 1px dashed #c6b8a3; border-radius: 16px; background: #fbf8f0; color: #7c6f5e; text-align: center; }
@@ -451,6 +454,9 @@
 .cocina-table-card { display: flex; flex-direction: column; min-width: 0; overflow: hidden; border: 1px solid #ddd1bd; border-radius: 16px; background: #fffdf8; box-shadow: 0 6px 20px rgba(74, 51, 34, .08); }
 .cocina-table-card--cash { border-color: #c0392b; background: #fff8f6; box-shadow: 0 0 0 3px rgba(192, 57, 43, .14), 0 8px 24px rgba(74, 51, 34, .12); }
 .cocina-table-card--alarm { animation: cocina-card-alarm 1s ease-in-out 3; }
+.cocina-table-card--paid { border-color: #6b7d4c; background: #f6f9ef; box-shadow: 0 0 0 3px rgba(107, 125, 76, .12), 0 8px 22px rgba(74, 51, 34, .08); }
+.cocina-table-card--paid .cocina-table-head { background: #eef3e4; }
+.cocina-table-card--paid .cocina-table-foot { background: #f1f5e9; }
 @keyframes cocina-card-alarm {
   0%, 100% { box-shadow: 0 0 0 3px rgba(192, 57, 43, .14), 0 8px 24px rgba(74, 51, 34, .12); }
   50% { box-shadow: 0 0 0 9px rgba(192, 57, 43, .34), 0 8px 30px rgba(192, 57, 43, .24); }
@@ -463,6 +469,7 @@
 .cocina-table-meta strong { color: #4a3322; font-size: 11px; }
 
 .cocina-cash-badge { display: flex; align-items: center; justify-content: center; gap: 7px; margin: 12px 16px 0; padding: 9px 12px; border: 2px solid #8e1b1b; border-radius: 9px; background: #c62828; color: #fff; box-shadow: 0 0 0 3px rgba(198, 40, 40, .16); font-size: 12px; font-weight: 800; letter-spacing: .05em; text-align: center; text-transform: uppercase; animation: cocina-cash-blink 1s steps(1, end) infinite; }
+.cocina-paid-badge { display: flex; align-items: center; justify-content: center; gap: 7px; margin: 12px 16px 0; padding: 9px 12px; border: 2px solid #4f6b31; border-radius: 9px; background: #6b7d4c; color: #fff; font-size: 12px; font-weight: 800; letter-spacing: .05em; text-align: center; text-transform: uppercase; }
 @keyframes cocina-cash-blink {
   0%, 49% { opacity: 1; }
   50%, 100% { opacity: .25; }
@@ -473,6 +480,7 @@
 .cocina-status-chip--pending { background: #f6ecd2; color: #8a6517; }
 .cocina-status-chip--confirmed { background: #e5ead7; color: #506634; }
 .cocina-status-chip--served { background: #e6ddd2; color: #5b4532; }
+.cocina-status-chip--paid { background: #dbe7c8; color: #3d5426; }
 
 .cocina-order-list { display: flex; flex-direction: column; gap: 10px; max-height: 360px; overflow-y: auto; padding: 12px 16px; scrollbar-width: thin; scrollbar-color: #c6b8a3 transparent; }
 .cocina-order { padding: 10px 11px; border: 1px solid #e6dccb; border-radius: 10px; background: #fff; }
@@ -508,6 +516,8 @@
 .cocina-collect-btn:disabled { opacity: .45; cursor: not-allowed; }
 .cocina-collect-btn--cash { border-color: #6b7d4c; background: #6b7d4c; color: #fff; }
 .cocina-collect-btn--cash:hover:not(:disabled) { border-color: #55663b; background: #55663b; }
+.cocina-collect-btn--close { border-color: #83915f; background: #fff; color: #4f6136; }
+.cocina-collect-btn--close:hover { border-color: #4a3020; background: #4a3020; color: #fff; }
 
 @media (max-width: 760px) {
   .cocina-main { padding-block: 22px 40px; }

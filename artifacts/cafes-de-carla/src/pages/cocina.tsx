@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, Banknote, Check, Clock, RotateCcw, Volume2, VolumeX } from 'lucide-react';
+import { ArrowLeft, Banknote, Check, Clock, RotateCcw, Volume2, VolumeX, X } from 'lucide-react';
 
 type OrderStatus = 'pending' | 'confirmed' | 'served' | 'paid';
 
@@ -26,6 +26,8 @@ type Order = {
   pagoPendienteEfectivoAt?: string;
   cobradoAt?: string;
   metodoPago?: 'efectivo' | 'tarjeta' | string;
+  cocinaCerrada?: boolean;
+  cocinaCerradaAt?: string;
 };
 
 type TableGroup = {
@@ -36,6 +38,7 @@ type TableGroup = {
   pendingCount: number;
   confirmedCount: number;
   servedCount: number;
+  paidCount: number;
   lastOrderAt: string;
 };
 
@@ -60,7 +63,24 @@ function orderTotal(order: Order) {
 }
 
 const STORAGE_KEY = 'cafes_de_carla_orders';
+const SOUND_STORAGE_KEY = 'cafes_de_carla_cocina_sound';
 const CASH_ALARM_INTERVAL_MS = 5 * 60 * 1000;
+
+function loadSoundEnabled(): boolean {
+  try {
+    return localStorage.getItem(SOUND_STORAGE_KEY) !== 'false';
+  } catch {
+    return true;
+  }
+}
+
+function saveSoundEnabled(enabled: boolean) {
+  try {
+    localStorage.setItem(SOUND_STORAGE_KEY, String(enabled));
+  } catch {
+    // El navegador puede bloquear localStorage en modo privado.
+  }
+}
 
 function loadOrdersFromStorage(): Order[] {
   try {
@@ -87,13 +107,13 @@ const statusLabel: Record<OrderStatus, string> = {
 export default function Cocina() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [soundEnabled, setSoundEnabled] = useState(loadSoundEnabled);
   const [audioUnlocked, setAudioUnlocked] = useState(false);
   const [alarmActive, setAlarmActive] = useState(false);
   const [feedback, setFeedback] = useState('');
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  const soundEnabledRef = useRef(true);
+  const soundEnabledRef = useRef(soundEnabled);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const activeOscillatorsRef = useRef<OscillatorNode[]>([]);
   const alarmTimeoutRef = useRef<number | null>(null);
@@ -312,21 +332,29 @@ export default function Cocina() {
   }
 
   function markTableAsCollected(table: string) {
+    const confirmed = window.confirm(
+      `¿Estás seguro de que la Mesa ${table} ha pagado? Esta acción eliminará la mesa del panel.`
+    );
+    if (!confirmed) return;
+
     const all = loadOrdersFromStorage();
     const now = new Date().toISOString();
     let changed = false;
 
     const updated = all.map((order) => {
-      if (String(order.table) !== table || order.status === 'paid') return order;
+      if (String(order.table) !== table) return order;
+      if (order.status === 'paid' && order.cocinaCerrada) return order;
 
       changed = true;
       return {
         ...order,
         status: 'paid' as OrderStatus,
-        paidAt: now,
+        paidAt: order.paidAt ?? now,
         cobradoAt: now,
         pagoPendienteEfectivo: false,
-        metodoPago: 'efectivo',
+        metodoPago: order.metodoPago === 'tarjeta' ? 'tarjeta' : 'efectivo',
+        cocinaCerrada: true,
+        cocinaCerradaAt: now,
       };
     });
 
@@ -357,14 +385,39 @@ export default function Cocina() {
     if (!stillCashPending) stopAlarmSound();
 
     refreshOrders();
-    showFeedback(`Mesa ${table} cobrada y liberada.`);
+    showFeedback(`Mesa ${table} cobrada y cerrada.`);
+  }
+
+  // Cierra una mesa ya pagada (por ejemplo con tarjeta) y la quita del tablero.
+  function closeTable(table: string) {
+    const all = loadOrdersFromStorage();
+    const now = new Date().toISOString();
+    let changed = false;
+
+    const updated = all.map((order) => {
+      if (String(order.table) !== table || order.cocinaCerrada) return order;
+
+      changed = true;
+      return {
+        ...order,
+        cocinaCerrada: true,
+        cocinaCerradaAt: now,
+      };
+    });
+
+    if (!changed) return;
+
+    saveOrdersToStorage(updated);
+    refreshOrders();
+    showFeedback(`Mesa ${table} cerrada y eliminada del panel.`);
   }
 
   const tableGroups = useMemo<TableGroup[]>(() => {
     const groupMap = new Map<string, TableGroup>();
 
     orders.forEach((order) => {
-      if (order.status === 'paid') return;
+      // Las mesas cerradas manualmente no vuelven a aparecer al recargar.
+      if (order.cocinaCerrada) return;
 
       const table = String(order.table ?? '');
       if (!table) return;
@@ -379,6 +432,7 @@ export default function Cocina() {
           pendingCount: 0,
           confirmedCount: 0,
           servedCount: 0,
+          paidCount: 0,
           lastOrderAt: order.createdAt,
         };
         groupMap.set(table, group);
@@ -391,6 +445,7 @@ export default function Cocina() {
       if (order.status === 'pending') group.pendingCount += 1;
       if (order.status === 'confirmed') group.confirmedCount += 1;
       if (order.status === 'served') group.servedCount += 1;
+      if (order.status === 'paid') group.paidCount += 1;
 
       if (new Date(order.createdAt).getTime() > new Date(group.lastOrderAt).getTime()) {
         group.lastOrderAt = order.createdAt;
@@ -404,24 +459,27 @@ export default function Cocina() {
           (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
         ),
       }))
-      .sort((a, b) => a.table.localeCompare(b.table, 'es', { numeric: true }));
+      .sort((a, b) => {
+        // Las mesas pagadas van al final, pero siguen visibles hasta cerrarlas.
+        const aPaid = a.paidCount === a.orders.length ? 1 : 0;
+        const bPaid = b.paidCount === b.orders.length ? 1 : 0;
+        if (aPaid !== bPaid) return aPaid - bPaid;
+        return a.table.localeCompare(b.table, 'es', { numeric: true });
+      });
   }, [orders]);
 
   const totalOrders = tableGroups.reduce((sum, group) => sum + group.orders.length, 0);
   const totalPending = tableGroups.reduce((sum, group) => sum + group.pendingCount, 0);
   const cashTables = tableGroups.filter((group) => group.cashPending).length;
+  const paidTables = tableGroups.filter(
+    (group) => group.paidCount > 0 && group.paidCount === group.orders.length
+  ).length;
 
   async function handleSoundToggle() {
     if (!soundEnabled) {
-      const unlocked = await unlockAudio();
-      if (!unlocked) return;
       soundEnabledRef.current = true;
       setSoundEnabled(true);
-      playCashAlarm(true);
-      return;
-    }
-
-    if (!audioUnlocked) {
+      saveSoundEnabled(true);
       const unlocked = await unlockAudio();
       if (unlocked) playCashAlarm(true);
       return;
@@ -429,6 +487,7 @@ export default function Cocina() {
 
     soundEnabledRef.current = false;
     setSoundEnabled(false);
+    saveSoundEnabled(false);
     stopAlarmSound();
   }
 
@@ -467,15 +526,16 @@ export default function Cocina() {
           <div className="cocina-topbar-actions">
             <button
               type="button"
-              className={`cocina-sound-toggle${soundEnabled && audioUnlocked ? '' : ' is-muted'}`}
+              className={`cocina-sound-toggle${soundEnabled ? '' : ' is-muted'}`}
               onClick={handleSoundToggle}
               data-sound-toggle
               data-testid="button-sound-toggle"
+              title={soundEnabled && !audioUnlocked ? 'Pulsa para permitir el audio del navegador' : undefined}
             >
-              {soundEnabled && audioUnlocked
+              {soundEnabled
                 ? <Volume2 size={15} aria-hidden="true" />
                 : <VolumeX size={15} aria-hidden="true" />}
-              {soundEnabled && audioUnlocked ? 'Silenciar alerta' : 'Activar sonido'}
+              {soundEnabled ? 'Silenciar alerta' : 'Activar sonido'}
             </button>
           </div>
         </div>
@@ -483,9 +543,12 @@ export default function Cocina() {
         {feedback && <p className="cocina-feedback" role="status">{feedback}</p>}
 
         <div className="cocina-summary" aria-label="Resumen del panel">
-          <span className="cocina-summary-pill"><strong>{tableGroups.length}</strong> {tableGroups.length === 1 ? 'mesa activa' : 'mesas activas'}</span>
+          <span className="cocina-summary-pill"><strong>{tableGroups.length}</strong> {tableGroups.length === 1 ? 'mesa en el panel' : 'mesas en el panel'}</span>
           <span className="cocina-summary-pill"><strong>{totalOrders}</strong> {totalOrders === 1 ? 'pedido' : 'pedidos'}</span>
           <span className="cocina-summary-pill"><strong>{totalPending}</strong> {totalPending === 1 ? 'pendiente' : 'pendientes'}</span>
+          <span className={`cocina-summary-pill cocina-summary-pill--paid${paidTables > 0 ? ' is-visible' : ''}`}>
+            <strong>{paidTables}</strong> {paidTables === 1 ? 'mesa pagada' : 'mesas pagadas'}
+          </span>
           <span className={`cocina-summary-pill${cashTables > 0 ? ' cocina-summary-pill--alert' : ''}`}>
             <strong>{cashTables}</strong> {cashTables === 1 ? 'cobro en efectivo' : 'cobros en efectivo'}
           </span>
@@ -505,11 +568,13 @@ export default function Cocina() {
           <div className="cocina-board">
             {tableGroups.map((group) => {
               const hasOrdersInProgress = group.pendingCount > 0 || group.confirmedCount > 0;
+              const tablePaid = group.paidCount > 0 && group.paidCount === group.orders.length;
+              const paidByCard = group.orders.some((order) => order.metodoPago === 'tarjeta');
 
               return (
                 <section
                   key={group.table}
-                  className={`cocina-table-card${group.cashPending ? ' cocina-table-card--cash' : ''}${alarmActive && group.cashPending ? ' cocina-table-card--alarm' : ''}`}
+                  className={`cocina-table-card${group.cashPending ? ' cocina-table-card--cash' : ''}${alarmActive && group.cashPending ? ' cocina-table-card--alarm' : ''}${tablePaid ? ' cocina-table-card--paid' : ''}`}
                   aria-label={`Mesa ${group.table}`}
                   data-testid={`card-table-${group.table}`}
                 >
@@ -536,6 +601,16 @@ export default function Cocina() {
                     </div>
                   )}
 
+                  {tablePaid && !group.cashPending && (
+                    <div
+                      className="cocina-paid-badge"
+                      role="status"
+                      data-testid={`badge-paid-table-${group.table}`}
+                    >
+                      PAGADO {paidByCard ? 'CON TARJETA' : ''} ✓
+                    </div>
+                  )}
+
                   <div className="cocina-table-statuses">
                     {group.pendingCount > 0 && (
                       <span className="cocina-status-chip cocina-status-chip--pending">Pendiente · {group.pendingCount}</span>
@@ -545,6 +620,9 @@ export default function Cocina() {
                     )}
                     {group.servedCount > 0 && (
                       <span className="cocina-status-chip cocina-status-chip--served">Servido · {group.servedCount}</span>
+                    )}
+                    {group.paidCount > 0 && (
+                      <span className="cocina-status-chip cocina-status-chip--paid">Pagado · {group.paidCount}</span>
                     )}
                   </div>
 
@@ -625,16 +703,27 @@ export default function Cocina() {
                       <span>Total mesa</span>
                       <strong>{formatPrice(group.totalCents)}</strong>
                     </div>
-                    <button
-                      type="button"
-                      className={`cocina-collect-btn${group.cashPending ? ' cocina-collect-btn--cash' : ''}`}
-                      onClick={() => markTableAsCollected(group.table)}
-                      disabled={hasOrdersInProgress && !group.cashPending}
-                      title={hasOrdersInProgress && !group.cashPending ? 'Sirve todos los pedidos antes de cobrar la mesa' : undefined}
-                      data-testid={`button-collect-table-${group.table}`}
-                    >
-                      <Banknote size={15} aria-hidden="true" /> Marcar como Cobrado
-                    </button>
+                    {tablePaid ? (
+                      <button
+                        type="button"
+                        className="cocina-collect-btn cocina-collect-btn--close"
+                        onClick={() => closeTable(group.table)}
+                        data-testid={`button-close-table-${group.table}`}
+                      >
+                        <X size={15} aria-hidden="true" /> Cerrar Mesa
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className={`cocina-collect-btn${group.cashPending ? ' cocina-collect-btn--cash' : ''}`}
+                        onClick={() => markTableAsCollected(group.table)}
+                        disabled={hasOrdersInProgress && !group.cashPending}
+                        title={hasOrdersInProgress && !group.cashPending ? 'Sirve todos los pedidos antes de cobrar la mesa' : undefined}
+                        data-testid={`button-collect-table-${group.table}`}
+                      >
+                        <Banknote size={15} aria-hidden="true" /> Marcar como Cobrado
+                      </button>
+                    )}
                   </footer>
                 </section>
               );
