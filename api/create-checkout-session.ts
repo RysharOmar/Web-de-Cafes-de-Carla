@@ -186,7 +186,17 @@ export default async function handler(req: any, res: any) {
       sessionParams.phone_number_collection = { enabled: true };
     }
 
+    console.log('[checkout] Creando sesión de Stripe', {
+      tipo: isDelivery ? 'delivery' : 'mesa',
+      items: items.length,
+      metadata: sessionParams.metadata,
+      recogeDireccion: isDelivery,
+      recogeTelefono: isDelivery,
+    });
+
     const session = await stripe.checkout.sessions.create(sessionParams);
+
+    console.log('[checkout] Sesión creada', { sessionId: session.id, tipo: isDelivery ? 'delivery' : 'mesa' });
 
     res.status(200).json({ url: session.url });
   } catch (err: any) {

@@ -25,6 +25,13 @@ const sql = neon(process.env.DATABASE_URL!);
 
 const stripe = STRIPE_SECRET_KEY ? new Stripe(STRIPE_SECRET_KEY) : null;
 
+console.log('[stripe-webhook] Módulo cargado', {
+  hasStripeSecretKey: Boolean(STRIPE_SECRET_KEY),
+  hasWebhookSecret: Boolean(STRIPE_WEBHOOK_SECRET),
+  hasDatabaseUrl: Boolean(process.env.DATABASE_URL),
+  bodyParser: 'desactivado (config.api.bodyParser = false)',
+});
+
 function joinAddress(address: Stripe.Address | null | undefined): string | null {
   if (!address) return null;
 
@@ -35,12 +42,22 @@ function joinAddress(address: Stripe.Address | null | undefined): string | null 
 }
 
 export default async function handler(req: any, res: any) {
+  console.log('[stripe-webhook] Petición recibida', {
+    method: req.method,
+    url: req.url,
+    hasSignature: Boolean(req.headers['stripe-signature']),
+  });
+
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Método no permitido' });
     return;
   }
 
   if (!stripe || !STRIPE_WEBHOOK_SECRET) {
+    console.error('[stripe-webhook] Faltan variables de entorno', {
+      hasStripeSecretKey: Boolean(STRIPE_SECRET_KEY),
+      hasWebhookSecret: Boolean(STRIPE_WEBHOOK_SECRET),
+    });
     process.stderr.write('Stripe webhook: faltan variables de entorno\n');
     res.status(500).json({ error: 'Webhook no configurado' });
     return;
@@ -59,7 +76,9 @@ export default async function handler(req: any, res: any) {
       chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
     }
     rawBody = Buffer.concat(chunks).toString('utf8');
-  } catch {
+    console.log('[stripe-webhook] Body raw leído', { bytes: Buffer.byteLength(rawBody, 'utf8') });
+  } catch (err: any) {
+    console.error('[stripe-webhook] Error leyendo el body raw', err?.message ?? err);
     res.status(400).json({ error: 'No se pudo leer el cuerpo del webhook' });
     return;
   }
@@ -67,21 +86,41 @@ export default async function handler(req: any, res: any) {
   let event: Stripe.Event;
   try {
     event = stripe.webhooks.constructEvent(rawBody, signature, STRIPE_WEBHOOK_SECRET);
+    console.log('[stripe-webhook] Firma validada correctamente', {
+      eventId: event.id,
+      type: event.type,
+    });
   } catch (err: any) {
+    console.error('[stripe-webhook] Firma inválida', {
+      message: err?.message ?? String(err),
+      signatureStart: signature.slice(0, 20),
+    });
     process.stderr.write(`Firma de webhook inválida: ${err?.message ?? err}\n`);
     res.status(400).json({ error: 'Firma de webhook inválida' });
     return;
   }
 
   if (event.type !== 'checkout.session.completed') {
+    console.log('[stripe-webhook] Evento ignorado por tipo', { type: event.type });
     res.status(200).json({ received: true, ignored: event.type });
     return;
   }
 
   const session = event.data.object as Stripe.Checkout.Session;
 
+  console.log('[stripe-webhook] Sesión de checkout recibida', {
+    sessionId: session.id,
+    paymentStatus: session.payment_status,
+    amountTotal: session.amount_total,
+    metadata: session.metadata ?? null,
+  });
+
   // Los pagos de mesa no se registran en Neon (usan localStorage).
   if (session.metadata?.tipo !== 'delivery') {
+    console.log('[stripe-webhook] Evento ignorado: no es pedido a domicilio', {
+      sessionId: session.id,
+      metadata: session.metadata ?? null,
+    });
     res.status(200).json({ received: true, ignored: 'not-delivery' });
     return;
   }
@@ -109,6 +148,22 @@ export default async function handler(req: any, res: any) {
 
     const customer = session.customer_details;
     const shipping = session.shipping_details;
+    const direccionEnvio = joinAddress(shipping?.address);
+    const total = session.amount_total != null ? session.amount_total / 100 : null;
+
+    const payload = {
+      stripe_session_id: session.id,
+      cliente_nombre: customer?.name ?? null,
+      cliente_email: customer?.email ?? null,
+      cliente_telefono: customer?.phone ?? null,
+      direccion_envio: direccionEnvio,
+      total,
+      items,
+      itemsCount: items.length,
+      estado: 'pendiente',
+    };
+
+    console.log('[stripe-webhook] Datos que se van a insertar en orders', JSON.stringify(payload));
 
     const inserted = await sql`
       INSERT INTO orders (
@@ -124,31 +179,42 @@ export default async function handler(req: any, res: any) {
         estado
       )
       VALUES (
-        ${session.id},
+        ${payload.stripe_session_id},
         'delivery',
         NULL,
-        ${customer?.name ?? null},
-        ${customer?.email ?? null},
-        ${customer?.phone ?? null},
-        ${joinAddress(shipping?.address)},
-        ${session.amount_total != null ? session.amount_total / 100 : null},
-        ${JSON.stringify(items)}::jsonb,
-        'pendiente'
+        ${payload.cliente_nombre},
+        ${payload.cliente_email},
+        ${payload.cliente_telefono},
+        ${payload.direccion_envio},
+        ${payload.total},
+        ${JSON.stringify(payload.items)}::jsonb,
+        ${payload.estado}
       )
       ON CONFLICT (stripe_session_id) DO NOTHING
       RETURNING id
     `;
 
-    const duplicated = !Array.isArray(inserted) || inserted.length === 0;
-    res.status(200).json({
-      received: true,
+    const insertedRows = Array.isArray(inserted) ? inserted : [];
+    const duplicated = insertedRows.length === 0;
+    const orderId = duplicated ? null : (insertedRows[0] as { id: number }).id;
+
+    console.log('[stripe-webhook] INSERT en orders terminado', {
+      orderId,
       duplicated,
-      orderId: duplicated ? null : (inserted[0] as { id: number }).id,
+      insertedRows: insertedRows.length,
     });
+
+    res.status(200).json({ received: true, duplicated, orderId });
   } catch (err: any) {
     const message = err?.message ? String(err.message) : String(err);
+    console.error('[stripe-webhook] Error insertando el pedido en orders', {
+      message,
+      sessionId: session.id,
+      stack: err?.stack ?? null,
+    });
     process.stderr.write(`Error guardando pedido delivery: ${message}\n`);
-    // Respondemos 200 para que Stripe no reintente indefinidamente un error de datos.
-    res.status(200).json({ received: true, error: 'No se pudo guardar el pedido' });
+    // 500 para que Stripe muestre el fallo y reintente; el UNIQUE(evitado con
+    // ON CONFLICT) impide duplicar pedidos si el reintento llega a insertar.
+    res.status(500).json({ error: 'No se pudo guardar el pedido', detail: message });
   }
 }
