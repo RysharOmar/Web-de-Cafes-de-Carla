@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, Banknote, Bike, Check, Clock, MapPin, Package, Phone, RotateCcw, User, Volume2, VolumeX, X } from 'lucide-react';
 import ConfirmModal from '@/components/ui/confirm-modal';
+import LegalLinks from '@/components/legal-links';
 
 type OrderStatus = 'pending' | 'confirmed' | 'served' | 'paid';
 
@@ -912,6 +913,7 @@ export default function Cocina() {
           <span style={{ fontSize: '10px', color: '#9a8b75' }}>
             Panel solo para personal del local · Datos en memoria local
           </span>
+          <LegalLinks />
         </div>
       </footer>
 

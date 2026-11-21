@@ -594,6 +594,59 @@
   .cart-empty { padding: 18px; }
 }
 
+/* Enlaces legales del pie de página */
+.footer-legal { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+.footer-legal a { color: #6f5c46; font-size: 10px; text-decoration: none; border-bottom: 1px solid transparent; transition: color .2s, border-color .2s; }
+.footer-legal a:hover { color: #4a3020; border-color: #6b7d4c; }
+
+/* Carrito: aceptación de términos */
+.cart-terms { display: flex; align-items: flex-start; gap: 9px; margin: 12px 0 2px; padding: 9px 11px; border: 1px solid #e6dccb; border-radius: 10px; background: #fbf8f0; }
+.cart-terms input { width: 16px; height: 16px; margin: 1px 0 0; accent-color: #6b7d4c; flex-shrink: 0; cursor: pointer; }
+.cart-terms label { color: #7c6f5e; font-size: 10px; line-height: 1.55; cursor: pointer; }
+.cart-terms a { color: #4f6136; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
+.cart-terms a:hover { color: #33421f; }
+
+/* Banner de cookies */
+.cookie-banner { position: fixed; left: 0; right: 0; bottom: 0; z-index: 55; border-top: 1px solid #d9cbb6; background: #fffdf8; box-shadow: 0 -10px 40px rgba(38, 25, 16, .16); animation: cookie-banner-in .35s cubic-bezier(.16, 1, .3, 1) both; }
+.cookie-banner-inner { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding-block: 16px; }
+.cookie-banner-copy { display: flex; align-items: flex-start; gap: 11px; max-width: 640px; }
+.cookie-banner-icon { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 10px; background: #eef3e4; color: #4f6136; }
+.cookie-banner-copy strong { display: block; color: #4a3322; font-size: 13px; }
+.cookie-banner-copy p { margin: 3px 0 0; color: #7c6f5e; font-size: 11px; line-height: 1.5; }
+.cookie-banner-actions { display: flex; flex-shrink: 0; gap: 8px; flex-wrap: wrap; }
+.cookie-banner-btn { min-height: 38px; padding: 0 15px; border-radius: 9px; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; transition: background .2s, color .2s, border-color .2s; }
+.cookie-banner-btn--ghost { border: 1px solid #c6b8a3; background: #fff; color: #604b36; }
+.cookie-banner-btn--ghost:hover { border-color: #4a3020; background: #f3eee4; }
+.cookie-banner-btn--primary { border: 1px solid #6b7d4c; background: #6b7d4c; color: #fff; }
+.cookie-banner-btn--primary:hover { background: #55663b; }
+@keyframes cookie-banner-in { from { opacity: 0; transform: translateY(100%); } to { opacity: 1; transform: translateY(0); } }
+
+/* Páginas legales */
+.legal-shell { min-height: 100dvh; display: flex; flex-direction: column; }
+.legal-main { flex: 1; padding-block: 40px 64px; max-width: 860px; }
+.legal-heading { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 24px; }
+.legal-icon { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 14px; background: #eef3e4; color: #4f6136; }
+.legal-title { margin: 5px 0 0; color: #4a3322; font-size: clamp(30px, 4vw, 42px); font-weight: 400; line-height: 1.1; }
+.legal-intro { max-width: 620px; margin: 10px 0 0; color: #7c6f5e; font-size: 13px; line-height: 1.6; }
+.legal-card { padding: 26px 28px; border: 1px solid #ddd1bd; border-radius: 18px; background: #fffdf8; box-shadow: 0 8px 26px rgba(74, 51, 34, .07); }
+.legal-section + .legal-section { margin-top: 24px; padding-top: 22px; border-top: 1px solid #ece2d2; }
+.legal-section h2 { margin: 0 0 9px; color: #4a3322; font-size: 21px; font-weight: 400; }
+.legal-section p, .legal-section li { color: #6b5b47; font-size: 13px; line-height: 1.7; }
+.legal-section p { margin: 0; }
+.legal-section ul { margin: 0; padding-left: 20px; }
+.legal-note { margin: 18px 0 0; color: #9a8b75; font-size: 11px; font-style: italic; line-height: 1.5; }
+.legal-reset-button { margin-top: 10px; padding: 9px 15px; border: 1px solid #6b7d4c; border-radius: 9px; background: #6b7d4c; color: #fff; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; }
+.legal-reset-button:hover { background: #55663b; }
+
+@media (max-width: 760px) {
+  .cookie-banner-inner { flex-direction: column; align-items: stretch; gap: 12px; padding-block: 14px; }
+  .cookie-banner-actions { width: 100%; }
+  .cookie-banner-btn { flex: 1; }
+  .footer-legal { order: 4; flex-basis: 100%; }
+  .legal-heading { gap: 12px; }
+  .legal-card { padding: 20px 18px; }
+}
+
 /* Modales: animaciones de entrada/salida */
 .modal-overlay--in { animation: modal-overlay-in .24s ease-out both; }
 .modal-overlay--out { animation: modal-overlay-out .22s ease-in both; }

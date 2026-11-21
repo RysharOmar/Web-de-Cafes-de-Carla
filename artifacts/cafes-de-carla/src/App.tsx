@@ -4,6 +4,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
 import NotificationModal, { type NotificationVariant } from '@/components/ui/notification-modal';
+import CookieBanner from '@/components/cookie-banner';
+import LegalLinks from '@/components/legal-links';
+import LegalPage from '@/pages/legal';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
 import Success from '@/pages/success';
@@ -239,6 +242,7 @@ function Home() {
   const [orderItemsFromStorage, setOrderItemsFromStorage] = useState<{ id: string; name: string; quantity: number; sizeLabel: string; variant?: string | null; priceCents: number }[]>([]);
   const [cashPending, setCashPending] = useState(false);
   const [notice, setNotice] = useState<{ title: string; message?: string; variant: NotificationVariant } | null>(null);
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   const showNotice = (title: string, message?: string, variant: NotificationVariant = 'info') => {
     setNotice({ title, message, variant });
@@ -711,7 +715,9 @@ function Home() {
           className="cart-checkout focus-ring stripe-btn"
           type="button"
           onClick={payTableBill}
+          disabled={!termsAccepted}
           data-testid="button-pay-table"
+          title={!termsAccepted ? 'Acepta los términos y la política de privacidad para pagar' : undefined}
         >
           <CreditCard size={18} aria-hidden="true" />
           <span>Pagar con tarjeta — {formatPrice(tableTotalCents)}</span>
@@ -720,7 +726,9 @@ function Home() {
           className="cart-checkout cart-checkout--cash focus-ring"
           type="button"
           onClick={payWithCash}
+          disabled={!termsAccepted}
           data-testid="button-pay-cash"
+          title={!termsAccepted ? 'Acepta los términos y la política de privacidad para pagar' : undefined}
         >
           <Banknote size={18} aria-hidden="true" />
           <span>Pagar en Efectivo — {formatPrice(tableTotalCents)}</span>
@@ -948,6 +956,7 @@ function Home() {
         <div className="footer-main section-wrap">
           <a href="#inicio" className="footer-brand focus-ring" aria-label="Volver al inicio" data-testid="link-footer-home"><img src={logo} alt="Logotipo de Cafés de Carla" width="1024" height="1024" loading="lazy" /><span className="serif">Cafés de Carla</span></a>
           <p className="footer-tagline serif">Huele, Saborea, Disfruta.</p>
+          <LegalLinks />
           <a className="back-top" href="#inicio" data-testid="link-back-to-top">Volver arriba <ArrowUpRight size={15} /></a>
         </div>
         <div className="footer-bottom section-wrap"><span>© Cafés de Carla</span><span>PREVISUALIZACIÓN DE PRUEBA · NO PUBLICAR</span><span>Hecho para disfrutar sin prisa.</span></div>
@@ -1049,6 +1058,21 @@ function Home() {
             <div className="cart-footer">
               {!allPriced && cartLines.length > 0 && <p className="cart-partial-note" role="note" data-testid="text-cart-partial-total">El total es parcial: hay productos sin precio indicado en la carta.</p>}
               <div className="cart-total" data-testid="text-cart-total"><span>{hasUnpricedLines ? 'Subtotal parcial' : 'Subtotal'}</span><strong>{formatPrice(tableTotalCents)}</strong></div>
+              <div className="cart-terms">
+                <input
+                  id="cart-terms-checkbox"
+                  type="checkbox"
+                  checked={termsAccepted}
+                  onChange={(event) => setTermsAccepted(event.target.checked)}
+                  data-testid="checkbox-cart-terms"
+                />
+                <label htmlFor="cart-terms-checkbox">
+                  He leído y acepto los{' '}
+                  <a href="/aviso-legal" onClick={(event) => event.stopPropagation()}>Términos y Condiciones</a>
+                  {' '}y la{' '}
+                  <a href="/politica-privacidad" onClick={(event) => event.stopPropagation()}>Política de Privacidad</a>
+                </label>
+              </div>
               {mesaActiva ? (
                 <>
                   {cashPendingNotice}
@@ -1103,7 +1127,7 @@ function Home() {
               ) : (
                 <>
                   <button
-                    className="cart-checkout focus-ring stripe-btn" type="button" onClick={checkout} disabled={!allPriced} data-testid="button-checkout"
+                    className="cart-checkout focus-ring stripe-btn" type="button" onClick={checkout} disabled={!allPriced || !termsAccepted} data-testid="button-checkout" title={!termsAccepted ? 'Acepta los términos y la política de privacidad para pagar' : undefined}
                     style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
                   >
                     <CreditCard size={18} aria-hidden="true" />
@@ -1130,7 +1154,20 @@ function Home() {
 }
 
 function Router() {
-  return <RoutedErrorBoundary><Switch><Route path="/" component={Home} /><Route path="/success" component={Success} /><Route path="/cocina" component={Cocina} /><Route path="/admin" component={Admin} /><Route component={NotFound} /></Switch></RoutedErrorBoundary>;
+  return (
+    <RoutedErrorBoundary>
+      <Switch>
+        <Route path="/" component={Home} />
+        <Route path="/success" component={Success} />
+        <Route path="/aviso-legal" component={() => <LegalPage kind="aviso-legal" />} />
+        <Route path="/politica-privacidad" component={() => <LegalPage kind="politica-privacidad" />} />
+        <Route path="/politica-cookies" component={() => <LegalPage kind="politica-cookies" />} />
+        <Route path="/cocina" component={Cocina} />
+        <Route path="/admin" component={Admin} />
+        <Route component={NotFound} />
+      </Switch>
+    </RoutedErrorBoundary>
+  );
 }
 
 function RoutedErrorBoundary({ children }: { children: ReactNode }) {
@@ -1140,7 +1177,13 @@ function RoutedErrorBoundary({ children }: { children: ReactNode }) {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}><TooltipProvider><Toaster /><WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}><Router /></WouterRouter></TooltipProvider></QueryClientProvider>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <CookieBanner />
+        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}><Router /></WouterRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
   );
 }
 

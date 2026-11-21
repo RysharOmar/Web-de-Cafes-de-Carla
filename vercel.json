@@ -5,7 +5,10 @@
   "rewrites": [
     { "source": "/success", "destination": "/index.html" },
     { "source": "/cocina", "destination": "/index.html" },
-    { "source": "/admin", "destination": "/index.html" }
+    { "source": "/admin", "destination": "/index.html" },
+    { "source": "/aviso-legal", "destination": "/index.html" },
+    { "source": "/politica-privacidad", "destination": "/index.html" },
+    { "source": "/politica-cookies", "destination": "/index.html" }
   ],
   "routes": [
     { "src": "/api/create-checkout-session", "dest": "/api/create-checkout-session", "methods": ["POST"] },
