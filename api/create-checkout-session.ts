@@ -112,7 +112,11 @@ export default async function handler(req: any, res: any) {
     const isDelivery = tipo === 'delivery';
 
     if (!Array.isArray(items) || items.length === 0) {
-      res.status(400).json({ error: 'Carrito vacío' });
+      // Diagnóstico sin crear sesión de Stripe: solo se expone el prefijo enmascarado.
+      res.status(400).json({
+        error: 'Carrito vacío',
+        stripeKeyPrefix: stripeSecret.slice(0, 8),
+      });
       return;
     }
 
