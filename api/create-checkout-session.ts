@@ -90,13 +90,18 @@ export default async function handler(req: any, res: any) {
   if (!stripeSecret) {
     // Nunca caemos a una clave de demo: las sesiones creadas con otra cuenta
     // no llegan al webhook del cliente.
+    const rawPrefix = rawEnvSecret?.trim().slice(0, 8) ?? null;
     console.error('[checkout] STRIPE_SECRET_KEY no válida', {
       configured: Boolean(rawEnvSecret),
-      rawPrefix: rawEnvSecret?.trim().slice(0, 12) ?? null,
+      rawPrefix,
       rawLength: rawEnvSecret?.length ?? 0,
     });
     res.status(500).json({
       error: 'STRIPE_SECRET_KEY no configurada o con formato inválido en Vercel',
+      rawPrefix,
+      hint: rawPrefix?.startsWith('whsec_')
+        ? 'Parece STRIPE_WEBHOOK_SECRET, no la clave secreta de API (sk_...)'
+        : 'Debe empezar por sk_ o rk_ (test/live), sin comillas ni espacios',
     });
     return;
   }
