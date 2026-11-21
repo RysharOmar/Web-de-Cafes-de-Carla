@@ -369,7 +369,7 @@ function Home() {
       const response = await fetch("/api/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items }),
+        body: JSON.stringify({ items, tipo: 'delivery' }),
       });
 
       const data = await response.json();
@@ -514,7 +514,7 @@ function Home() {
       const response = await fetch("/api/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items: checkoutItems }),
+        body: JSON.stringify({ items: checkoutItems, tipo: 'mesa' }),
       });
 
       const data = await response.json();

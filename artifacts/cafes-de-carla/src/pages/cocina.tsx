@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, Banknote, Check, Clock, RotateCcw, Volume2, VolumeX, X } from 'lucide-react';
+import { ArrowLeft, Banknote, Bike, Check, Clock, MapPin, Package, Phone, RotateCcw, User, Volume2, VolumeX, X } from 'lucide-react';
 import ConfirmModal from '@/components/ui/confirm-modal';
 
 type OrderStatus = 'pending' | 'confirmed' | 'served' | 'paid';
@@ -41,6 +41,37 @@ type TableGroup = {
   servedCount: number;
   paidCount: number;
   lastOrderAt: string;
+};
+
+type DeliveryItem = {
+  id?: string | null;
+  name?: string;
+  descripcion?: string | null;
+  quantity?: number;
+  unitAmountCents?: number | null;
+  amountTotalCents?: number;
+};
+
+type DeliveryState = 'pendiente' | 'preparando' | 'entregado';
+
+type DeliveryOrder = {
+  id: number;
+  tipo: string;
+  clienteNombre: string | null;
+  clienteEmail: string | null;
+  clienteTelefono: string | null;
+  direccionEnvio: string | null;
+  total: number;
+  totalCents: number;
+  items: DeliveryItem[];
+  estado: DeliveryState;
+  creadoEn: string;
+};
+
+const deliveryStateLabel: Record<DeliveryState, string> = {
+  pendiente: 'Pendiente',
+  preparando: 'Preparando',
+  entregado: 'Entregado',
 };
 
 function formatPrice(cents: number) {
@@ -115,6 +146,9 @@ export default function Cocina() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [confirmTable, setConfirmTable] = useState<string | null>(null);
   const [closeTableTarget, setCloseTableTarget] = useState<string | null>(null);
+  const [deliveryOrders, setDeliveryOrders] = useState<DeliveryOrder[]>([]);
+  const [deliveryLoading, setDeliveryLoading] = useState(true);
+  const [deliveryError, setDeliveryError] = useState('');
 
   const soundEnabledRef = useRef(soundEnabled);
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -225,6 +259,43 @@ export default function Cocina() {
     setLastUpdated(new Date());
     setLoading(false);
   }, []);
+
+  const fetchDeliveryOrders = useCallback(async () => {
+    try {
+      const response = await fetch('/api/orders?tipo=delivery', { cache: 'no-store' });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      setDeliveryOrders(Array.isArray(data.orders) ? data.orders : []);
+      setDeliveryError('');
+    } catch (err) {
+      console.error('Error cargando pedidos a domicilio:', err);
+      setDeliveryError('No se pudieron cargar los pedidos a domicilio.');
+    } finally {
+      setDeliveryLoading(false);
+    }
+  }, []);
+
+  const updateDeliveryOrder = async (id: number, estado: DeliveryState) => {
+    try {
+      const response = await fetch(`/api/orders/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tipo: 'delivery', estado }),
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      await fetchDeliveryOrders();
+    } catch (err) {
+      console.error('Error actualizando pedido a domicilio:', err);
+      showFeedback('No se pudo actualizar el pedido a domicilio.');
+    }
+  };
+
+  // Los pedidos a domicilio llegan de Stripe a Neon; se consultan cada 5 s.
+  useEffect(() => {
+    void fetchDeliveryOrders();
+    const interval = window.setInterval(() => void fetchDeliveryOrders(), 5000);
+    return () => window.clearInterval(interval);
+  }, [fetchDeliveryOrders]);
 
   // Refresco visual rápido del tablero. Es independiente de la alarma de 5 min.
   useEffect(() => {
@@ -550,7 +621,107 @@ export default function Cocina() {
           <span className={`cocina-summary-pill${cashTables > 0 ? ' cocina-summary-pill--alert' : ''}`}>
             <strong>{cashTables}</strong> {cashTables === 1 ? 'cobro en efectivo' : 'cobros en efectivo'}
           </span>
+          <span className={`cocina-summary-pill cocina-summary-pill--delivery${deliveryOrders.length > 0 ? ' is-visible' : ''}`}>
+            <strong>{deliveryOrders.length}</strong> {deliveryOrders.length === 1 ? 'pedido a domicilio' : 'pedidos a domicilio'}
+          </span>
         </div>
+
+        <section className="cocina-delivery" aria-labelledby="delivery-title">
+          <div className="cocina-delivery-head">
+            <div>
+              <span className="eyebrow">A DOMICILIO</span>
+              <h2 id="delivery-title" className="serif cocina-delivery-title">Pedidos a Domicilio</h2>
+            </div>
+            <span className="cocina-delivery-count">
+              <Bike size={15} aria-hidden="true" />
+              {deliveryOrders.length} {deliveryOrders.length === 1 ? 'pedido activo' : 'pedidos activos'}
+            </span>
+          </div>
+
+          {deliveryLoading ? (
+            <p className="cocina-delivery-placeholder">Cargando pedidos a domicilio…</p>
+          ) : deliveryError ? (
+            <p className="cocina-delivery-placeholder cocina-delivery-placeholder--error">{deliveryError}</p>
+          ) : deliveryOrders.length === 0 ? (
+            <p className="cocina-delivery-placeholder">No hay pedidos a domicilio pendientes.</p>
+          ) : (
+            <div className="cocina-delivery-grid">
+              {deliveryOrders.map((order) => (
+                <article
+                  key={order.id}
+                  className={`cocina-delivery-card${order.estado === 'preparando' ? ' cocina-delivery-card--preparing' : ''}`}
+                  data-testid={`card-delivery-${order.id}`}
+                >
+                  <header className="cocina-delivery-card-head">
+                    <span className="cocina-delivery-id">
+                      <Bike size={15} aria-hidden="true" /> Pedido #{order.id}
+                    </span>
+                    <span className={`cocina-delivery-state cocina-delivery-state--${order.estado}`}>
+                      {deliveryStateLabel[order.estado]}
+                    </span>
+                  </header>
+
+                  <ul className="cocina-delivery-customer">
+                    <li>
+                      <User size={14} aria-hidden="true" />
+                      <span>
+                        <strong>{order.clienteNombre || 'Cliente sin nombre'}</strong>
+                        {order.clienteEmail && <small>{order.clienteEmail}</small>}
+                      </span>
+                    </li>
+                    <li>
+                      <Phone size={14} aria-hidden="true" />
+                      <span>{order.clienteTelefono || 'Sin teléfono'}</span>
+                    </li>
+                    <li>
+                      <MapPin size={14} aria-hidden="true" />
+                      <span>{order.direccionEnvio || 'Sin dirección de envío'}</span>
+                    </li>
+                  </ul>
+
+                  <ul className="cocina-delivery-items">
+                    {order.items.map((item, index) => (
+                      <li key={`${order.id}-${item.id ?? index}`}>
+                        <span className="cocina-delivery-qty">{item.quantity ?? 1}×</span>
+                        <span className="cocina-delivery-item-name">
+                          {item.name || 'Producto'}
+                          {item.descripcion && <small>{item.descripcion}</small>}
+                        </span>
+                        <strong>{formatPrice(item.amountTotalCents ?? 0)}</strong>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <footer className="cocina-delivery-card-foot">
+                    <div className="cocina-delivery-total">
+                      <span>Total</span>
+                      <strong>{formatPrice(order.totalCents)}</strong>
+                    </div>
+                    <div className="cocina-delivery-actions">
+                      <button
+                        type="button"
+                        className="cocina-delivery-btn cocina-delivery-btn--preparing"
+                        onClick={() => void updateDeliveryOrder(order.id, 'preparando')}
+                        disabled={order.estado !== 'pendiente'}
+                        data-testid={`button-preparing-${order.id}`}
+                      >
+                        <Package size={14} aria-hidden="true" /> Preparando
+                      </button>
+                      <button
+                        type="button"
+                        className="cocina-delivery-btn cocina-delivery-btn--delivered"
+                        onClick={() => void updateDeliveryOrder(order.id, 'entregado')}
+                        data-testid={`button-delivered-${order.id}`}
+                      >
+                        <Check size={14} aria-hidden="true" /> Entregado
+                      </button>
+                    </div>
+                  </footer>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
 
         {loading ? (
           <div className="cocina-loader">

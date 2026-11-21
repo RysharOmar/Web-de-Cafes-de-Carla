@@ -1,15 +1,61 @@
 /**
  * Función serverless de Vercel: /api/orders
- * Gestiona pedidos de mesas para el modo "En el local".
  *
- * Endpoints:
- *   GET    /api/orders?status=pending   → lista pedidos (para cocina)
- *   POST   /api/orders                  → crea un pedido (desde mesa)
- *   PATCH  /api/orders/:id              → actualiza estado (cocina)
+ * Pedidos de mesa (modo "En el local") se guardan en memoria solo para demo:
+ *   GET    /api/orders?status=pending
+ *   POST   /api/orders
+ *   PATCH  /api/orders/:id
  *
- * Almacenamiento en memoria (solo para demo).
- * En producción reemplazar por base de datos real (Supabase, PostgreSQL, etc.).
+ * Pedidos a domicilio (creados por Stripe) se leen de la tabla `orders` de Neon:
+ *   GET    /api/orders?tipo=delivery
+ *   PATCH  /api/orders/:id  { estado: 'preparando' | 'entregado' }
  */
+import { neon } from '@neondatabase/serverless';
+
+const sql = neon(process.env.DATABASE_URL!);
+
+const DELIVERY_STATES = ['pendiente', 'preparando', 'entregado'] as const;
+type DeliveryState = (typeof DELIVERY_STATES)[number];
+
+function isDeliveryState(value: unknown): value is DeliveryState {
+  return typeof value === 'string' && (DELIVERY_STATES as readonly string[]).includes(value);
+}
+
+function toNumber(value: unknown): number {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : 0;
+}
+
+function parseItems(value: unknown): unknown[] {
+  if (Array.isArray(value)) return value;
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
+function mapDeliveryRow(row: any) {
+  const total = toNumber(row.total);
+  return {
+    id: Number(row.id),
+    tipo: row.tipo,
+    clienteNombre: row.cliente_nombre ?? null,
+    clienteEmail: row.cliente_email ?? null,
+    clienteTelefono: row.cliente_telefono ?? null,
+    direccionEnvio: row.direccion_envio ?? null,
+    total,
+    totalCents: Math.round(total * 100),
+    items: parseItems(row.items),
+    estado: row.estado,
+    creadoEn: row.creado_en,
+  };
+}
+
 
 type OrderItem = {
   id: string;
@@ -54,6 +100,34 @@ export default async function handler(req: any, res: any) {
   if (method === 'OPTIONS') {
     res.status(200).end();
     return;
+  }
+
+  // ---------- GET /api/orders?tipo=delivery (Neon) ----------
+  if (method === 'GET' && !orderId && url.searchParams.get('tipo') === 'delivery') {
+    try {
+      const estadoParam = url.searchParams.get('estado');
+      const rows = estadoParam && isDeliveryState(estadoParam)
+        ? await sql`
+            SELECT id, tipo, cliente_nombre, cliente_email, cliente_telefono,
+                   direccion_envio, total, items, estado, creado_en
+            FROM orders
+            WHERE tipo = 'delivery' AND estado = ${estadoParam}
+            ORDER BY creado_en ASC
+          `
+        : await sql`
+            SELECT id, tipo, cliente_nombre, cliente_email, cliente_telefono,
+                   direccion_envio, total, items, estado, creado_en
+            FROM orders
+            WHERE tipo = 'delivery' AND estado IN ('pendiente', 'preparando')
+            ORDER BY creado_en ASC
+          `;
+
+      const list = (rows as any[]).map(mapDeliveryRow);
+      return res.status(200).json({ orders: list, count: list.length });
+    } catch (err: any) {
+      process.stderr.write(`Error leyendo pedidos delivery: ${err?.message ?? err}\n`);
+      return res.status(500).json({ error: 'No se pudieron leer los pedidos a domicilio' });
+    }
   }
 
   // ---------- GET /api/orders ----------
@@ -102,6 +176,44 @@ export default async function handler(req: any, res: any) {
       return res.status(201).json({ ok: true, orderId: id, order: newOrder });
     } catch (err: any) {
       return res.status(500).json({ error: err.message || 'Error creando pedido' });
+    }
+  }
+
+  // ---------- PATCH pedido a domicilio (Neon) ----------
+  const body = req.body ?? {};
+  const wantsDelivery =
+    url.searchParams.get('tipo') === 'delivery' ||
+    body.tipo === 'delivery' ||
+    (orderId !== null && /^\d+$/.test(orderId));
+
+  if (method === 'PATCH' && wantsDelivery) {
+    const deliveryId = Number(orderId ?? body.id);
+    const estado = body.estado ?? body.status;
+
+    if (!Number.isInteger(deliveryId) || deliveryId <= 0) {
+      return res.status(400).json({ error: 'ID de pedido no válido' });
+    }
+    if (!isDeliveryState(estado)) {
+      return res.status(400).json({ error: 'Estado no válido' });
+    }
+
+    try {
+      const rows = await sql`
+        UPDATE orders
+        SET estado = ${estado}
+        WHERE id = ${deliveryId} AND tipo = 'delivery'
+        RETURNING id, tipo, cliente_nombre, cliente_email, cliente_telefono,
+                  direccion_envio, total, items, estado, creado_en
+      `;
+
+      if (!Array.isArray(rows) || rows.length === 0) {
+        return res.status(404).json({ error: 'Pedido a domicilio no encontrado' });
+      }
+
+      return res.status(200).json({ ok: true, order: mapDeliveryRow(rows[0]) });
+    } catch (err: any) {
+      process.stderr.write(`Error actualizando pedido delivery: ${err?.message ?? err}\n`);
+      return res.status(500).json({ error: 'No se pudo actualizar el pedido' });
     }
   }
 

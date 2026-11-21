@@ -444,6 +444,9 @@
 .cocina-summary-pill--paid { border-color: #b9c99a; background: #eef3e4; color: #4b6130; }
 .cocina-summary-pill--paid strong { color: #405723; }
 .cocina-summary-pill--paid:not(.is-visible) { opacity: .55; }
+.cocina-summary-pill--delivery { border-color: #b9c9c3; background: #eaf2ef; color: #3d5f56; }
+.cocina-summary-pill--delivery strong { color: #2f4d45; }
+.cocina-summary-pill--delivery:not(.is-visible) { opacity: .55; }
 .cocina-loader { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 70px 20px; color: #7c6f5e; }
 .cocina-loader p { margin: 0; font-size: 14px; }
 .cocina-empty { padding: 70px 20px; border: 1px dashed #c6b8a3; border-radius: 16px; background: #fbf8f0; color: #7c6f5e; text-align: center; }
@@ -518,6 +521,42 @@
 .cocina-collect-btn--cash:hover:not(:disabled) { border-color: #55663b; background: #55663b; }
 .cocina-collect-btn--close { border-color: #83915f; background: #fff; color: #4f6136; }
 .cocina-collect-btn--close:hover { border-color: #4a3020; background: #4a3020; color: #fff; }
+
+/* Panel de cocina: pedidos a domicilio (Stripe -> Neon) */
+.cocina-delivery { margin-bottom: 30px; padding: 20px; border: 1px solid #d7e2dd; border-radius: 18px; background: #f7faf8; box-shadow: 0 6px 20px rgba(47, 77, 69, .06); }
+.cocina-delivery-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+.cocina-delivery-title { margin: 4px 0 0; color: #2f4d45; font-size: clamp(22px, 2.4vw, 29px); font-weight: 400; }
+.cocina-delivery-count { display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px; border: 1px solid #b9c9c3; border-radius: 99px; background: #eaf2ef; color: #3d5f56; font-size: 11px; font-weight: 700; }
+.cocina-delivery-placeholder { margin: 0; padding: 22px; border: 1px dashed #b9c9c3; border-radius: 12px; background: #fff; color: #7c8d86; font-size: 12px; text-align: center; }
+.cocina-delivery-placeholder--error { border-color: #e0a29c; background: #fde8e6; color: #8f1d16; }
+.cocina-delivery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; align-items: start; }
+.cocina-delivery-card { display: flex; flex-direction: column; min-width: 0; overflow: hidden; border: 1px solid #cddcd6; border-radius: 14px; background: #fff; box-shadow: 0 4px 14px rgba(47, 77, 69, .07); }
+.cocina-delivery-card--preparing { border-color: #b9a06a; background: #fffdf6; }
+.cocina-delivery-card-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; border-bottom: 1px solid #e3ece8; background: #eef5f1; }
+.cocina-delivery-id { display: inline-flex; align-items: center; gap: 7px; color: #2f4d45; font-size: 12px; font-weight: 700; }
+.cocina-delivery-state { padding: 4px 9px; border-radius: 99px; font-size: 9px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+.cocina-delivery-state--pendiente { background: #f6ecd2; color: #8a6517; }
+.cocina-delivery-state--preparando { background: #e5ead7; color: #506634; }
+.cocina-delivery-state--entregado { background: #e6ddd2; color: #5b4532; }
+.cocina-delivery-customer { display: flex; flex-direction: column; gap: 7px; margin: 0; padding: 13px 14px; border-bottom: 1px solid #eef1ef; list-style: none; }
+.cocina-delivery-customer li { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 8px; align-items: start; color: #4a3322; font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; }
+.cocina-delivery-customer svg { margin-top: 1px; color: #6b8d80; }
+.cocina-delivery-customer small { display: block; color: #9a8b75; font-size: 10px; }
+.cocina-delivery-items { display: flex; flex-direction: column; gap: 5px; margin: 0; padding: 12px 14px; list-style: none; }
+.cocina-delivery-items li { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; gap: 7px; align-items: baseline; color: #4a3322; font-size: 12px; line-height: 1.35; }
+.cocina-delivery-qty { color: #6b8d80; font-weight: 700; }
+.cocina-delivery-item-name { min-width: 0; overflow-wrap: anywhere; }
+.cocina-delivery-item-name small { display: block; color: #9a8b75; font-size: 10px; }
+.cocina-delivery-card-foot { display: flex; flex-direction: column; gap: 10px; margin-top: auto; padding: 12px 14px 14px; border-top: 1px solid #e3ece8; background: #fbfdfb; }
+.cocina-delivery-total { display: flex; align-items: baseline; justify-content: space-between; color: #604b36; font-size: 12px; }
+.cocina-delivery-total strong { color: #2f4d45; font-family: var(--app-font-serif); font-size: 21px; font-weight: 500; }
+.cocina-delivery-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.cocina-delivery-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 38px; border: 1px solid transparent; border-radius: 8px; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; transition: background .2s, color .2s, border-color .2s; }
+.cocina-delivery-btn:disabled { opacity: .4; cursor: not-allowed; }
+.cocina-delivery-btn--preparing { border-color: #9aae8a; background: #eef3e4; color: #4f6136; }
+.cocina-delivery-btn--preparing:hover:not(:disabled) { background: #6b7d4c; border-color: #6b7d4c; color: #fff; }
+.cocina-delivery-btn--delivered { background: #2f4d45; color: #fff; }
+.cocina-delivery-btn--delivered:hover { background: #223a34; }
 
 @media (max-width: 760px) {
   .cocina-main { padding-block: 22px 40px; }

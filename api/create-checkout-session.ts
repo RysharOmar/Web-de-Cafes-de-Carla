@@ -31,6 +31,12 @@ type CartItem = {
   variant?: string;
 };
 
+type CheckoutBody = {
+  items?: CartItem[];
+  /** 'delivery' para pedidos de la carta; 'mesa' para pagos en el local. */
+  tipo?: 'delivery' | 'mesa';
+};
+
 type ProductoRow = {
   id: number;
   nombre: string;
@@ -95,7 +101,8 @@ export default async function handler(req: any, res: any) {
     }
 
     const stripe = new Stripe(stripeSecret);
-    const { items } = req.body as { items?: CartItem[] };
+    const { items, tipo } = (req.body ?? {}) as CheckoutBody;
+    const isDelivery = tipo === 'delivery';
 
     if (!Array.isArray(items) || items.length === 0) {
       res.status(400).json({ error: 'Carrito vacío' });
@@ -163,13 +170,23 @@ export default async function handler(req: any, res: any) {
     const origin = (req.headers.origin as string) ||
       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
 
-    const session = await stripe.checkout.sessions.create({
+    const sessionParams: Stripe.Checkout.SessionCreateParams = {
       payment_method_types: ['card'],
       line_items,
       mode: 'payment',
       success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/cancel`,
-    });
+      metadata: { tipo: isDelivery ? 'delivery' : 'mesa' },
+    };
+
+    // Solo los pedidos a domicilio piden dirección y teléfono. Los pagos de
+    // mesa no deben obligar al cliente a rellenar datos de envío.
+    if (isDelivery) {
+      sessionParams.shipping_address_collection = { allowed_countries: ['ES'] };
+      sessionParams.phone_number_collection = { enabled: true };
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
 
     res.status(200).json({ url: session.url });
   } catch (err: any) {
