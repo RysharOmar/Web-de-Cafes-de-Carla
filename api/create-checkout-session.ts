@@ -9,19 +9,6 @@
 import Stripe from 'stripe';
 import { neon } from '@neondatabase/serverless';
 
-// ============================================================================
-// TODO: REMOVER CLAVE HARDCODEADA ANTES DE ENTREGAR AL CLIENTE.
-// ----------------------------------------------------------------------------
-// Clave de Stripe en modo PRUEBA, solo para la demo temporal.
-// Cuando el cliente entregue su cuenta de Stripe:
-//   1. Configurar STRIPE_SECRET_KEY en Vercel.
-//   2. Eliminar las constantes DEMO_STRIPE_KEY_PART_* y este bloque completo.
-// La clave se parte en dos fragmentos para que GitHub no bloquee el push.
-// ============================================================================
-const DEMO_STRIPE_KEY_PART_1 = 'sk_test_51UVZfqRfNgxXGS18C15gKVOBsdMTrQl1ukO0gkgE9Q07Wc1ljxBO0LIuL';
-const DEMO_STRIPE_KEY_PART_2 = 'AgNbRDYiuAvjnwBYSuxyOzPPuNCE7Bo00mV4LIR3d';
-const DEMO_STRIPE_KEY = DEMO_STRIPE_KEY_PART_1 + DEMO_STRIPE_KEY_PART_2;
-
 const sql = neon(process.env.DATABASE_URL!);
 
 type CartItem = {
@@ -75,31 +62,46 @@ function priceForSize(producto: ProductoRow, size: SizeLabel): number | null {
 }
 
 function cleanStripeKey(value: string | undefined): string | null {
-  const trimmed = value?.trim();
+  let trimmed = value?.trim();
   if (!trimmed) return null;
+
+  // Vercel a veces guarda comillas literalmente en el valor del secreto.
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    trimmed = trimmed.slice(1, -1).trim();
+  }
+
   // Claves estándar (sk_) o restringidas (rk_), en modo test o live.
   if (!/^(sk|rk)_(test|live)_[A-Za-z0-9]+$/.test(trimmed)) return null;
   return trimmed;
 }
 
 export default async function handler(req: any, res: any) {
-  const rawEnvSecret = process.env.STRIPE_SECRET_KEY;
-  const envSecret = cleanStripeKey(rawEnvSecret);
-  const stripeSecret = envSecret || DEMO_STRIPE_KEY;
-
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Método no permitido' });
     return;
   }
 
-  try {
-    if (!envSecret) {
-      const reason = rawEnvSecret
-        ? 'STRIPE_SECRET_KEY existe pero tiene un formato inválido'
-        : 'STRIPE_SECRET_KEY no configurada';
-      process.stderr.write(`AVISO: ${reason}; usando clave de prueba temporal de la demo.\n`);
-    }
+  const rawEnvSecret = process.env.STRIPE_SECRET_KEY;
+  const stripeSecret = cleanStripeKey(rawEnvSecret);
 
+  if (!stripeSecret) {
+    // Nunca caemos a una clave de demo: las sesiones creadas con otra cuenta
+    // no llegan al webhook del cliente.
+    console.error('[checkout] STRIPE_SECRET_KEY no válida', {
+      configured: Boolean(rawEnvSecret),
+      rawPrefix: rawEnvSecret?.trim().slice(0, 12) ?? null,
+      rawLength: rawEnvSecret?.length ?? 0,
+    });
+    res.status(500).json({
+      error: 'STRIPE_SECRET_KEY no configurada o con formato inválido en Vercel',
+    });
+    return;
+  }
+
+  try {
     const stripe = new Stripe(stripeSecret);
     const { items, tipo } = (req.body ?? {}) as CheckoutBody;
     const isDelivery = tipo === 'delivery';

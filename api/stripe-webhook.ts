@@ -19,14 +19,41 @@ export const config = {
   },
 };
 
-const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || '';
-const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || '';
+const RAW_STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || '';
+const RAW_STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || '';
 const sql = neon(process.env.DATABASE_URL!);
 
+function cleanStripeKey(value: string): string | null {
+  let trimmed = value.trim();
+  if (!trimmed) return null;
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    trimmed = trimmed.slice(1, -1).trim();
+  }
+  return /^(sk|rk)_(test|live)_[A-Za-z0-9]+$/.test(trimmed) ? trimmed : null;
+}
+
+function cleanWebhookSecret(value: string): string | null {
+  let trimmed = value.trim();
+  if (!trimmed) return null;
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    trimmed = trimmed.slice(1, -1).trim();
+  }
+  return trimmed.startsWith('whsec_') ? trimmed : null;
+}
+
+const STRIPE_SECRET_KEY = cleanStripeKey(RAW_STRIPE_SECRET_KEY);
+const STRIPE_WEBHOOK_SECRET = cleanWebhookSecret(RAW_STRIPE_WEBHOOK_SECRET);
 const stripe = STRIPE_SECRET_KEY ? new Stripe(STRIPE_SECRET_KEY) : null;
 
 console.log('[stripe-webhook] Módulo cargado', {
   hasStripeSecretKey: Boolean(STRIPE_SECRET_KEY),
+  rawStripeKeyPrefix: RAW_STRIPE_SECRET_KEY.trim().slice(0, 12) || null,
   hasWebhookSecret: Boolean(STRIPE_WEBHOOK_SECRET),
   hasDatabaseUrl: Boolean(process.env.DATABASE_URL),
   bodyParser: 'desactivado (config.api.bodyParser = false)',
