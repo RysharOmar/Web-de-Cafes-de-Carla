@@ -175,7 +175,18 @@ export default async function handler(req: any, res: any) {
 
     const customer = session.customer_details;
     const shipping = session.shipping_details;
-    const direccionEnvio = joinAddress(shipping?.address);
+
+    // Checkout con shipping_address_collection rellena shipping_details, pero
+    // sesiones antiguas o pagos sin envío pueden traer solo customer_details.address.
+    const direccionEnvio = joinAddress(shipping?.address) ?? joinAddress(customer?.address);
+
+    console.log('[stripe-webhook] Dirección de envío resuelta', {
+      hasShippingDetails: Boolean(shipping),
+      hasShippingAddress: Boolean(shipping?.address),
+      hasCustomerAddress: Boolean(customer?.address),
+      direccionEnvio,
+    });
+
     const total = session.amount_total != null ? session.amount_total / 100 : null;
 
     const payload = {

@@ -74,6 +74,8 @@ const deliveryStateLabel: Record<DeliveryState, string> = {
   entregado: 'Entregado',
 };
 
+type DeliveryConfirmation = { id: number; estado: DeliveryState };
+
 function formatPrice(cents: number) {
   return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(cents / 100);
 }
@@ -149,6 +151,7 @@ export default function Cocina() {
   const [deliveryOrders, setDeliveryOrders] = useState<DeliveryOrder[]>([]);
   const [deliveryLoading, setDeliveryLoading] = useState(true);
   const [deliveryError, setDeliveryError] = useState('');
+  const [deliveryConfirm, setDeliveryConfirm] = useState<DeliveryConfirmation | null>(null);
 
   const soundEnabledRef = useRef(soundEnabled);
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -675,7 +678,9 @@ export default function Cocina() {
                     </li>
                     <li>
                       <MapPin size={14} aria-hidden="true" />
-                      <span>{order.direccionEnvio || 'Sin dirección de envío'}</span>
+                      <span data-testid={`text-delivery-address-${order.id}`}>
+                        {order.direccionEnvio || 'Sin dirección de envío'}
+                      </span>
                     </li>
                   </ul>
 
@@ -701,7 +706,7 @@ export default function Cocina() {
                       <button
                         type="button"
                         className="cocina-delivery-btn cocina-delivery-btn--preparing"
-                        onClick={() => void updateDeliveryOrder(order.id, 'preparando')}
+                        onClick={() => setDeliveryConfirm({ id: order.id, estado: 'preparando' })}
                         disabled={order.estado !== 'pendiente'}
                         data-testid={`button-preparing-${order.id}`}
                       >
@@ -710,7 +715,7 @@ export default function Cocina() {
                       <button
                         type="button"
                         className="cocina-delivery-btn cocina-delivery-btn--delivered"
-                        onClick={() => void updateDeliveryOrder(order.id, 'entregado')}
+                        onClick={() => setDeliveryConfirm({ id: order.id, estado: 'entregado' })}
                         data-testid={`button-delivered-${order.id}`}
                       >
                         <Check size={14} aria-hidden="true" /> Entregado
@@ -938,6 +943,31 @@ export default function Cocina() {
         confirmLabel="Sí, cerrar mesa"
         cancelLabel="Cancelar"
         icon={<X size={22} strokeWidth={1.8} aria-hidden="true" />}
+      />
+
+      <ConfirmModal
+        open={deliveryConfirm !== null}
+        onClose={() => setDeliveryConfirm(null)}
+        onConfirm={() => {
+          if (deliveryConfirm) void updateDeliveryOrder(deliveryConfirm.id, deliveryConfirm.estado);
+          setDeliveryConfirm(null);
+        }}
+        title={deliveryConfirm
+          ? `¿${deliveryConfirm.estado === 'entregado' ? 'Entregar' : 'Preparar'} pedido #${deliveryConfirm.id}?`
+          : ''}
+        message={deliveryConfirm
+          ? deliveryConfirm.estado === 'entregado'
+            ? `¿Confirmas que el pedido #${deliveryConfirm.id} ya se ha entregado al cliente?`
+            : `¿Confirmas que has empezado a preparar el pedido #${deliveryConfirm.id}?`
+          : ''}
+        hint={deliveryConfirm?.estado === 'entregado'
+          ? 'El pedido se marcará como entregado y desaparecerá del panel.'
+          : 'El pedido seguirá visible con el estado «Preparando».'}
+        confirmLabel={deliveryConfirm?.estado === 'entregado' ? 'Sí, entregado' : 'Sí, preparando'}
+        cancelLabel="Cancelar"
+        icon={deliveryConfirm?.estado === 'entregado'
+          ? <Check size={22} strokeWidth={1.8} aria-hidden="true" />
+          : <Package size={22} strokeWidth={1.8} aria-hidden="true" />}
       />
     </div>
   );
