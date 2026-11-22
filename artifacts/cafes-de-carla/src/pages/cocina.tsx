@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, Banknote, Bike, Check, Clock, MapPin, Package, Phone, RotateCcw, User, Volume2, VolumeX, X } from 'lucide-react';
 import ConfirmModal from '@/components/ui/confirm-modal';
 import LegalLinks from '@/components/legal-links';
+import { authFetch } from '@/lib/auth-fetch';
 
 type OrderStatus = 'pending' | 'confirmed' | 'served' | 'paid';
 
@@ -266,7 +267,7 @@ export default function Cocina() {
 
   const fetchDeliveryOrders = useCallback(async () => {
     try {
-      const response = await fetch('/api/orders?tipo=delivery', { cache: 'no-store' });
+      const response = await authFetch('/api/orders?tipo=delivery', { cache: 'no-store' });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
       setDeliveryOrders(Array.isArray(data.orders) ? data.orders : []);
@@ -281,7 +282,7 @@ export default function Cocina() {
 
   const updateDeliveryOrder = async (id: number, estado: DeliveryState) => {
     try {
-      const response = await fetch(`/api/orders/${id}`, {
+      const response = await authFetch(`/api/orders/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tipo: 'delivery', estado }),

@@ -11,6 +11,7 @@
  *   PATCH  /api/orders/:id  { estado: 'preparando' | 'entregado' }
  */
 import { neon } from '@neondatabase/serverless';
+import { requireStaffRole } from './_auth';
 
 const sql = neon(process.env.DATABASE_URL!);
 
@@ -95,12 +96,16 @@ export default async function handler(req: any, res: any) {
   // CORS para permitir llamadas desde el frontend
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (method === 'OPTIONS') {
     res.status(200).end();
     return;
   }
+
+  // Solo personal autenticado (admin o cocina) puede consultar/modificar pedidos.
+  const auth = await requireStaffRole(req, res, ['admin', 'cocina']);
+  if (!auth) return;
 
   // ---------- GET /api/orders?tipo=delivery (Neon) ----------
   if (method === 'GET' && !orderId && url.searchParams.get('tipo') === 'delivery') {

@@ -1,28 +1,13 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Check, X, Clock, RefreshCw, Lock, LogOut } from 'lucide-react';
+import { useLocation } from 'wouter';
+import { Check, X, Clock, Lock, RefreshCw, LogOut } from 'lucide-react';
 import type { ApiProducto } from '@/lib/products';
-
-const PASSWORD_STORAGE_KEY = 'cafes_de_carla_admin_password';
+import { useAuth } from '@/context/AuthContext';
+import { authFetch } from '@/lib/auth-fetch';
 
 function formatEuros(value: number | null | undefined) {
   if (value === null || value === undefined) return '—';
   return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value);
-}
-
-async function verifyPassword(candidate: string): Promise<{ ok: boolean; error?: string }> {
-  try {
-    const res = await fetch('/api/admin-auth', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password: candidate }),
-    });
-    const data = await res.json().catch(() => ({}));
-
-    if (res.ok) return { ok: true };
-    return { ok: false, error: data.error || 'Contraseña incorrecta' };
-  } catch {
-    return { ok: false, error: 'No se pudo conectar con el servidor' };
-  }
 }
 
 function Header({ onLogout }: { onLogout?: () => void }) {
@@ -63,10 +48,8 @@ function Header({ onLogout }: { onLogout?: () => void }) {
 }
 
 export default function Admin() {
-  const [password, setPassword] = useState('');
-  const [passwordInput, setPasswordInput] = useState('');
-  const [authLoading, setAuthLoading] = useState(true);
-  const [authError, setAuthError] = useState<string | null>(null);
+  const [, navigate] = useLocation();
+  const { signOut } = useAuth();
   const [productos, setProductos] = useState<ApiProducto[]>([]);
   const [loading, setLoading] = useState(false);
   const [updating, setUpdating] = useState<Set<number>>(new Set());
@@ -93,39 +76,10 @@ export default function Admin() {
   const [categorias, setCategorias] = useState<string[]>([]);
   const [nuevaCategoria, setNuevaCategoria] = useState('');
 
-  // Recuperar la sesión del panel al recargar la página.
-  useEffect(() => {
-    const saved = sessionStorage.getItem(PASSWORD_STORAGE_KEY);
-
-    if (!saved) {
-      setAuthLoading(false);
-      return;
-    }
-
-    let cancelled = false;
-
-    (async () => {
-      const result = await verifyPassword(saved);
-      if (cancelled) return;
-
-      if (result.ok) {
-        setPassword(saved);
-      } else {
-        sessionStorage.removeItem(PASSWORD_STORAGE_KEY);
-        setAuthError(result.error || null);
-      }
-      setAuthLoading(false);
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   async function fetchProductos() {
     try {
       setLoading(true);
-      const res = await fetch('/api/products', { cache: 'no-store' });
+      const res = await authFetch('/api/products', { cache: 'no-store' });
 
       if (!res.ok) {
         throw new Error(`Error ${res.status} al cargar productos`);
@@ -144,7 +98,7 @@ export default function Admin() {
 
   async function fetchCategorias() {
     try {
-      const res = await fetch('/api/categories', { cache: 'no-store' });
+      const res = await authFetch('/api/categories', { cache: 'no-store' });
       if (!res.ok) return;
       const data = await res.json();
       if (Array.isArray(data.categorias)) {
@@ -161,47 +115,20 @@ export default function Admin() {
   // Se pausa la recarga automática mientras se está editando un producto
   // para no sobrescribir cambios en curso.
   useEffect(() => {
-    if (!password || editingProduct) return;
+    if (editingProduct) return;
 
     fetchProductos();
     fetchCategorias();
     const interval = setInterval(fetchProductos, 5000);
     return () => clearInterval(interval);
-  }, [password, editingProduct]);
+  }, [editingProduct]);
 
-  async function handleLogin(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setAuthError(null);
-
-    if (!passwordInput.trim()) {
-      setAuthError('Introduce la contraseña');
-      return;
-    }
-
-    setAuthLoading(true);
-    const result = await verifyPassword(passwordInput);
-    setAuthLoading(false);
-
-    if (!result.ok) {
-      setAuthError(result.error || 'Contraseña incorrecta');
-      return;
-    }
-
-    sessionStorage.setItem(PASSWORD_STORAGE_KEY, passwordInput);
-    setPassword(passwordInput);
-    setPasswordInput('');
-    setProductos([]);
-    setError(null);
-    setLoading(true);
-  }
-
-  function logout() {
-    sessionStorage.removeItem(PASSWORD_STORAGE_KEY);
-    setPassword('');
+  async function logout() {
+    await signOut();
     setProductos([]);
     setError(null);
     setSuccess(null);
-    setAuthError(null);
+    navigate('/login');
   }
 
   async function toggleAgotado(producto: ApiProducto) {
@@ -211,20 +138,17 @@ export default function Admin() {
     setSuccess(null);
 
     try {
-      const res = await fetch(`/api/products/${producto.id}`, {
+      const res = await authFetch(`/api/products/${producto.id}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-password': password,
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ agotado: nuevoEstado }),
       });
 
       const data = await res.json().catch(() => ({}));
 
       if (res.status === 401) {
-        logout();
-        setAuthError(data.error || 'La sesión ha caducado. Vuelve a entrar.');
+        void logout();
+        setError(data.error || 'La sesión ha caducado. Vuelve a entrar.');
         return;
       }
 
@@ -265,16 +189,13 @@ export default function Admin() {
     setSuccess(null);
 
     try {
-      const res = await fetch(`/api/products/${producto.id}`, {
-        method: 'DELETE',
-        headers: { 'x-admin-password': password },
-      });
+      const res = await authFetch(`/api/products/${producto.id}`, { method: 'DELETE' });
 
       const data = await res.json().catch(() => ({}));
 
       if (res.status === 401) {
-        logout();
-        setAuthError(data.error || 'La sesión ha caducado. Vuelve a entrar.');
+        void logout();
+        setError(data.error || 'La sesión ha caducado. Vuelve a entrar.');
         return;
       }
 
@@ -338,9 +259,8 @@ export default function Admin() {
     formData.append('file', file);
 
     try {
-      const res = await fetch('/api/upload', {
+      const res = await authFetch('/api/upload', {
         method: 'POST',
-        headers: { 'x-admin-password': password },
         body: formData,
       });
 
@@ -449,20 +369,17 @@ export default function Admin() {
 
       const isCreating = isAdding;
 
-      const res = await fetch(isCreating ? '/api/products' : `/api/products/${editingProduct!.id}`, {
+      const res = await authFetch(isCreating ? '/api/products' : `/api/products/${editingProduct!.id}`, {
         method: isCreating ? 'POST' : 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-password': password,
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
 
       const data = await res.json().catch(() => ({}));
 
       if (res.status === 401) {
-        logout();
-        setAuthError(data.error || 'La sesión ha caducado. Vuelve a entrar.');
+        void logout();
+        setError(data.error || 'La sesión ha caducado. Vuelve a entrar.');
         setSaving(false);
         return;
       }
@@ -486,99 +403,6 @@ export default function Admin() {
       setSaving(false);
     }
   };
-
-  // Pantalla mientras se comprueba la sesión guardada.
-  if (authLoading && !password && !passwordInput) {
-    return (
-      <div className="site-shell grain min-h-[100dvh]">
-        <Header />
-        <main className="section-wrap" style={{ padding: '60px 20px', textAlign: 'center' }}>
-          <Clock size={48} style={{ animation: 'spin 2s linear infinite', display: 'block', margin: '0 auto 16px' }} />
-          <h2 className="serif" style={{ fontSize: '28px', margin: '0 0 16px' }}>Comprobando acceso...</h2>
-        </main>
-      </div>
-    );
-  }
-
-  // Formulario de contraseña.
-  if (!password) {
-    return (
-      <div className="site-shell grain min-h-[100dvh]">
-        <Header />
-        <main className="section-wrap" style={{ padding: '60px 20px', display: 'flex', justifyContent: 'center' }}>
-          <form
-            onSubmit={handleLogin}
-            style={{
-              width: '100%',
-              maxWidth: '430px',
-              padding: '34px',
-              background: '#fff',
-              border: '1px solid #ddd1bd',
-              borderRadius: '12px',
-              boxShadow: '0 4px 12px rgba(74, 51, 34, 0.08)',
-            }}
-          >
-            <Lock size={34} style={{ color: '#81945b', display: 'block', margin: '0 auto 14px' }} />
-            <h1 className="serif" style={{ fontSize: '28px', textAlign: 'center', margin: '0 0 8px' }}>
-              Panel de Administración
-            </h1>
-            <p style={{ color: '#7c6f5e', textAlign: 'center', margin: '0 0 24px', fontSize: '14px' }}>
-              Introduce la contraseña para gestionar la disponibilidad de los productos.
-            </p>
-
-            <label htmlFor="admin-password" style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#4a3322', marginBottom: '8px' }}>
-              Contraseña
-            </label>
-            <input
-              id="admin-password"
-              type="password"
-              autoComplete="current-password"
-              autoFocus
-              required
-              value={passwordInput}
-              onChange={(event) => setPasswordInput(event.target.value)}
-              style={{
-                width: '100%',
-                boxSizing: 'border-box',
-                padding: '11px 12px',
-                border: '1px solid #ddd1bd',
-                borderRadius: '8px',
-                fontSize: '15px',
-                marginBottom: '16px',
-                outlineColor: '#81945b',
-              }}
-            />
-
-            {authError && (
-              <p role="alert" style={{ color: '#a33a2b', fontSize: '13px', margin: '0 0 14px' }}>
-                {authError}
-              </p>
-            )}
-
-            <button
-              type="submit"
-              disabled={authLoading}
-              className="focus-ring"
-              style={{
-                width: '100%',
-                background: '#81945b',
-                color: '#fff',
-                border: 'none',
-                padding: '12px 20px',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontWeight: 600,
-                cursor: authLoading ? 'wait' : 'pointer',
-                opacity: authLoading ? 0.7 : 1,
-              }}
-            >
-              {authLoading ? 'Comprobando...' : 'Entrar'}
-            </button>
-          </form>
-        </main>
-      </div>
-    );
-  }
 
   // Pantalla de carga inicial de productos.
   if (loading && productos.length === 0 && !error) {

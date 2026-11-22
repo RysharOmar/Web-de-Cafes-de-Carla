@@ -3,7 +3,7 @@
  * Sube una imagen a Vercel Blob y devuelve la URL pública.
  *
  * Endpoint:
- *   POST /api/upload → sube archivo (requiere x-admin-password)
+ *   POST /api/upload → sube archivo (requiere Bearer token con rol admin)
  *
  * NOTA: Vercel no parsea multipart/form-data automáticamente en serverless
  * functions, así que desactivamos el bodyParser y usamos busboy para extraer
@@ -13,18 +13,13 @@
 import { put } from '@vercel/blob';
 import Busboy from 'busboy';
 import { PassThrough } from 'stream';
-
-function getAdminPassword(req: any): string | null {
-  const header = req.headers?.['x-admin-password'];
-  if (Array.isArray(header)) return header[0] ?? null;
-  return typeof header === 'string' ? header : null;
-}
+import { requireStaffRole } from './_auth';
 
 export default async function handler(req: any, res: any) {
   // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-admin-password');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.setHeader('Cache-Control', 'no-store');
 
   if (req.method === 'OPTIONS') {
@@ -36,16 +31,9 @@ export default async function handler(req: any, res: any) {
     return res.status(405).json({ error: 'Método no permitido' });
   }
 
-  // Autenticación
-  const adminPassword = process.env.ADMIN_PASSWORD;
-
-  if (!adminPassword) {
-    return res.status(500).json({ error: 'ADMIN_PASSWORD no está configurada en el servidor' });
-  }
-
-  if (getAdminPassword(req) !== adminPassword) {
-    return res.status(401).json({ error: 'No autorizado' });
-  }
+  // Autenticación con Supabase: solo administradores.
+  const auth = await requireStaffRole(req, res, ['admin']);
+  if (!auth) return;
 
   try {
     // Parsear multipart/form-data con busboy (Vercel no lo hace automáticamente)

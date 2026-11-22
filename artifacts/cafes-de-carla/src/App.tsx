@@ -7,6 +7,10 @@ import NotificationModal, { type NotificationVariant } from '@/components/ui/not
 import CookieBanner from '@/components/cookie-banner';
 import LegalLinks from '@/components/legal-links';
 import LegalPage from '@/pages/legal';
+import Login from '@/pages/Login';
+import AccessDenied from '@/pages/access-denied';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import { AuthProvider } from '@/context/AuthContext';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
 import Success from '@/pages/success';
@@ -1162,8 +1166,10 @@ function Router() {
         <Route path="/aviso-legal" component={() => <LegalPage kind="aviso-legal" />} />
         <Route path="/politica-privacidad" component={() => <LegalPage kind="politica-privacidad" />} />
         <Route path="/politica-cookies" component={() => <LegalPage kind="politica-cookies" />} />
-        <Route path="/cocina" component={Cocina} />
-        <Route path="/admin" component={Admin} />
+        <Route path="/login" component={Login} />
+        <Route path="/acceso-denegado" component={AccessDenied} />
+        <Route path="/cocina" component={() => <ProtectedRoute requiredRole="cocina"><Cocina /></ProtectedRoute>} />
+        <Route path="/admin" component={() => <ProtectedRoute requiredRole="admin"><Admin /></ProtectedRoute>} />
         <Route component={NotFound} />
       </Switch>
     </RoutedErrorBoundary>
@@ -1181,7 +1187,9 @@ function App() {
       <TooltipProvider>
         <Toaster />
         <CookieBanner />
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}><Router /></WouterRouter>
+        <AuthProvider>
+          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}><Router /></WouterRouter>
+        </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );

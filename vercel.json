@@ -8,7 +8,9 @@
     { "source": "/admin", "destination": "/index.html" },
     { "source": "/aviso-legal", "destination": "/index.html" },
     { "source": "/politica-privacidad", "destination": "/index.html" },
-    { "source": "/politica-cookies", "destination": "/index.html" }
+    { "source": "/politica-cookies", "destination": "/index.html" },
+    { "source": "/login", "destination": "/index.html" },
+    { "source": "/acceso-denegado", "destination": "/index.html" }
   ],
   "routes": [
     { "src": "/api/create-checkout-session", "dest": "/api/create-checkout-session", "methods": ["POST"] },
@@ -16,7 +18,6 @@
     { "src": "/api/stripe-webhook", "dest": "/api/stripe-webhook", "methods": ["POST"] },
     { "src": "/api/orders", "dest": "/api/orders", "methods": ["GET", "POST", "PATCH", "OPTIONS"] },
     { "src": "/api/orders/(.*)", "dest": "/api/orders", "methods": ["GET", "POST", "PATCH", "OPTIONS"] },
-    { "src": "/api/admin-auth", "dest": "/api/admin-auth", "methods": ["POST", "OPTIONS"] },
     { "src": "/api/products", "dest": "/api/products", "methods": ["GET", "POST", "PATCH", "DELETE", "OPTIONS"] },
     { "src": "/api/products/(.*)", "dest": "/api/products", "methods": ["GET", "POST", "PATCH", "DELETE", "OPTIONS"] },
     { "src": "/api/categories", "dest": "/api/categories", "methods": ["GET", "OPTIONS"] },

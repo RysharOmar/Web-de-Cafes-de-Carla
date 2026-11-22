@@ -4,10 +4,10 @@
  *
  * Endpoints:
  *   GET    /api/products     → lista todos los productos (público, para la Carta)
- *   POST   /api/products     → crea un nuevo producto (requiere x-admin-password)
- *   PATCH  /api/products/:id → actualiza uno o más campos del producto (requiere x-admin-password)
+ *   POST   /api/products     → crea un nuevo producto (requiere Bearer token con rol admin)
+ *   PATCH  /api/products/:id → actualiza uno o más campos del producto (requiere Bearer token con rol admin)
  *     Campos aceptados: nombre, precio, precio_mini, precio_grande, categoria, descripcion, imagen_url, agotado
- *   DELETE /api/products/:id → elimina el producto (requiere x-admin-password)
+ *   DELETE /api/products/:id → elimina el producto (requiere Bearer token con rol admin)
  *
  * La tabla `products` de Neon usa precios en euros con tipo NUMERIC(10,2).
  * La API devuelve esos valores en euros y también en céntimos para el carrito.
@@ -15,6 +15,7 @@
 
 import { neon } from '@neondatabase/serverless';
 import { Pool } from 'pg';
+import { requireStaffRole } from './_auth';
 
 const sql = neon(process.env.DATABASE_URL!);
 
@@ -65,12 +66,6 @@ function mapProducto(row: ProductoRow) {
   };
 }
 
-function getAdminPassword(req: any): string | null {
-  const header = req.headers?.['x-admin-password'];
-  if (Array.isArray(header)) return header[0] ?? null;
-  return typeof header === 'string' ? header : null;
-}
-
 export default async function handler(req: any, res: any) {
   const { method } = req;
   const url = new URL(req.url || '', `http://${req.headers.host}`);
@@ -84,7 +79,7 @@ export default async function handler(req: any, res: any) {
   // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-admin-password');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.setHeader('Cache-Control', 'no-store');
 
   if (method === 'OPTIONS') {
@@ -107,15 +102,8 @@ export default async function handler(req: any, res: any) {
 
     // ---------- PATCH /api/products/:id ----------
     if (method === 'PATCH' && rawId != null) {
-      const adminPassword = process.env.ADMIN_PASSWORD;
-
-      if (!adminPassword) {
-        return res.status(500).json({ error: 'ADMIN_PASSWORD no está configurada en el servidor' });
-      }
-
-      if (getAdminPassword(req) !== adminPassword) {
-        return res.status(401).json({ error: 'No autorizado' });
-      }
+      const auth = await requireStaffRole(req, res, ['admin']);
+      if (!auth) return;
 
       const id = Number(rawId);
       if (!Number.isInteger(id) || id <= 0) {
@@ -278,15 +266,8 @@ export default async function handler(req: any, res: any) {
 
     // ---------- DELETE /api/products/:id ----------
     if (method === 'DELETE' && rawId != null) {
-      const adminPassword = process.env.ADMIN_PASSWORD;
-
-      if (!adminPassword) {
-        return res.status(500).json({ error: 'ADMIN_PASSWORD no está configurada en el servidor' });
-      }
-
-      if (getAdminPassword(req) !== adminPassword) {
-        return res.status(401).json({ error: 'No autorizado' });
-      }
+      const auth = await requireStaffRole(req, res, ['admin']);
+      if (!auth) return;
 
       const id = Number(rawId);
       if (!Number.isInteger(id) || id <= 0) {
@@ -304,15 +285,8 @@ export default async function handler(req: any, res: any) {
 
     // ---------- POST /api/products ----------
     if (method === 'POST' && rawId == null) {
-      const adminPassword = process.env.ADMIN_PASSWORD;
-
-      if (!adminPassword) {
-        return res.status(500).json({ error: 'ADMIN_PASSWORD no está configurada en el servidor' });
-      }
-
-      if (getAdminPassword(req) !== adminPassword) {
-        return res.status(401).json({ error: 'No autorizado' });
-      }
+      const auth = await requireStaffRole(req, res, ['admin']);
+      if (!auth) return;
 
       const {
         nombre,

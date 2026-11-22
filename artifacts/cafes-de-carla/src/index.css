@@ -594,6 +594,24 @@
   .cart-empty { padding: 18px; }
 }
 
+/* Login y rutas protegidas */
+.login-shell { min-height: 100dvh; display: flex; flex-direction: column; }
+.login-main { flex: 1; display: flex; justify-content: center; align-items: flex-start; padding-block: 60px 80px; }
+.login-card { width: 100%; max-width: 430px; padding: 34px; border: 1px solid #ddd1bd; border-radius: 18px; background: #fffdf8; box-shadow: 0 12px 36px rgba(74, 51, 34, .10); }
+.login-title { margin: 6px 0 0; color: #4a3322; font-size: 32px; font-weight: 400; }
+.login-subtitle { margin: 10px 0 24px; color: #7c6f5e; font-size: 13px; line-height: 1.6; }
+.login-form { display: flex; flex-direction: column; gap: 8px; }
+.login-form label { display: inline-flex; align-items: center; gap: 7px; margin-top: 8px; color: #4a3322; font-size: 12px; font-weight: 700; }
+.login-form input { width: 100%; box-sizing: border-box; padding: 11px 12px; border: 1px solid #ddd1bd; border-radius: 9px; background: #fff; color: #4a3322; font: inherit; font-size: 14px; outline-color: #81945b; }
+.login-error { margin: 6px 0 0; padding: 9px 11px; border: 1px solid #e0a29c; border-radius: 8px; background: #fde8e6; color: #8f1d16; font-size: 12px; }
+.login-submit { margin-top: 16px; min-height: 46px; border: 0; border-radius: 9px; background: #6b7d4c; color: #fff; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; transition: background .2s; }
+.login-submit:hover:not(:disabled) { background: #55663b; }
+.login-submit:disabled { opacity: .6; cursor: wait; }
+.login-card-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.protected-loading { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; background: #f5f0e5; color: #7c6f5e; }
+.protected-loading .serif { color: #4a3322; font-size: 26px; }
+.protected-loading p { margin: 0; font-size: 13px; }
+
 /* Enlaces legales del pie de página */
 .footer-legal { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
 .footer-legal a { color: #6f5c46; font-size: 10px; text-decoration: none; border-bottom: 1px solid transparent; transition: color .2s, border-color .2s; }
