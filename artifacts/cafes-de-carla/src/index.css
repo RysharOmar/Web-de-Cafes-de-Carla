@@ -596,6 +596,30 @@
   .cart-empty { padding: 18px; }
 }
 
+/* Página 404 personalizada */
+.notfound-shell { min-height: 100dvh; display: flex; flex-direction: column; }
+.notfound-main { flex: 1; display: flex; align-items: center; justify-content: center; padding-block: 60px 80px; }
+.notfound-card { width: 100%; max-width: 640px; padding: 44px 34px 40px; border: 1px solid #ddd1bd; border-radius: 22px; background: #fffdf8; box-shadow: 0 14px 44px rgba(74, 51, 34, .10); text-align: center; }
+.notfound-illustration { position: relative; display: flex; align-items: center; justify-content: center; height: 150px; margin-bottom: 10px; }
+.notfound-number { position: absolute; z-index: 0; color: #e8dfd0; font-size: clamp(96px, 16vw, 140px); font-weight: 400; letter-spacing: -.06em; line-height: 1; }
+.notfound-cup { position: relative; z-index: 1; display: inline-flex; align-items: center; justify-content: center; width: 96px; height: 96px; border: 1px solid #d4dfc2; border-radius: 50%; background: #eef3e4; color: #4f6136; box-shadow: 0 8px 22px rgba(107, 125, 76, .16); }
+.notfound-steam { position: absolute; z-index: 1; top: 18px; width: 8px; height: 22px; border-left: 2px solid #b9c9a3; border-radius: 50%; animation: notfound-steam 2.4s ease-in-out infinite; }
+.notfound-steam--one { left: calc(50% - 24px); }
+.notfound-steam--two { left: calc(50% + 20px); animation-delay: .5s; }
+@keyframes notfound-steam {
+  0%, 100% { opacity: .2; transform: translateY(6px) scaleY(.8); }
+  50% { opacity: .8; transform: translateY(-4px) scaleY(1.1); }
+}
+.notfound-title { margin: 10px 0 0; color: #4a3322; font-size: clamp(30px, 5vw, 46px); font-weight: 400; line-height: 1.1; }
+.notfound-title em { color: #6b7d4c; font-style: italic; }
+.notfound-copy { max-width: 440px; margin: 16px auto 0; color: #7c6f5e; font-size: 13px; line-height: 1.7; }
+.notfound-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
+.notfound-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 18px; border-radius: 10px; font: inherit; font-size: 12px; font-weight: 700; text-decoration: none; transition: background .2s, color .2s, border-color .2s; }
+.notfound-btn--primary { border: 1px solid #6b7d4c; background: #6b7d4c; color: #fff; }
+.notfound-btn--primary:hover { background: #55663b; }
+.notfound-btn--ghost { border: 1px solid #c6b8a3; background: #fff; color: #604b36; }
+.notfound-btn--ghost:hover { border-color: #4a3020; background: #f3eee4; }
+
 /* Login y rutas protegidas */
 .login-shell { min-height: 100dvh; display: flex; flex-direction: column; }
 .login-main { flex: 1; display: flex; justify-content: center; align-items: flex-start; padding-block: 60px 80px; }

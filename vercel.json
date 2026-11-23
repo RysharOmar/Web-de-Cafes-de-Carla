@@ -10,7 +10,8 @@
     { "source": "/politica-privacidad", "destination": "/index.html" },
     { "source": "/politica-cookies", "destination": "/index.html" },
     { "source": "/login", "destination": "/index.html" },
-    { "source": "/acceso-denegado", "destination": "/index.html" }
+    { "source": "/acceso-denegado", "destination": "/index.html" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ],
   "routes": [
     { "src": "/api/create-checkout-session", "dest": "/api/create-checkout-session", "methods": ["POST"] },
