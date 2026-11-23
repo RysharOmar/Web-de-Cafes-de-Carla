@@ -519,6 +519,10 @@ function Home() {
         variant,
       }));
 
+      // Evita que /success muestre un carrito de domicilio ajeno si alguien
+      // visita esa ruta manualmente tras un pago de mesa.
+      localStorage.removeItem('cart_success');
+
       const response = await fetch("/api/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

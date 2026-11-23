@@ -183,12 +183,20 @@ export default async function handler(req: any, res: any) {
     const origin = (req.headers.origin as string) ||
       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
 
+    const mesaReturnPath = mesa
+      ? `/?mesa=${encodeURIComponent(String(mesa))}`
+      : '/';
+
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       payment_method_types: ['card'],
       line_items,
       mode: 'payment',
-      success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/cancel`,
+      // El pago en mesa NO debe acabar en /success (esa pantalla es solo de
+      // domicilio y mostraba un carrito ajeno). Vuelve siempre a su mesa.
+      success_url: isDelivery
+        ? `${origin}/success?session_id={CHECKOUT_SESSION_ID}`
+        : `${origin}${mesaReturnPath}`,
+      cancel_url: isDelivery ? `${origin}/cancel` : `${origin}${mesaReturnPath}`,
       metadata: isDelivery
         ? { tipo: 'delivery' }
         : { tipo: 'mesa', mesa: String(mesa ?? '') },
