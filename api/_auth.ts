@@ -6,8 +6,23 @@ import { createClient } from '@supabase/supabase-js';
 
 export type StaffRole = 'admin' | 'cocina';
 
-const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
-const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+/** Acepta tanto la URL base como una URL copiada con /rest/v1 al final. */
+function normalizeSupabaseUrl(raw: string): string {
+  const value = raw.trim();
+  if (!value) return '';
+  try {
+    return new URL(value).origin;
+  } catch {
+    return value.replace(/\/+$/, '');
+  }
+}
+
+const SUPABASE_URL = normalizeSupabaseUrl(
+  process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '',
+);
+const SERVICE_ROLE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
+
+if (SUPABASE_URL) console.log('[auth] URL base de Supabase:', SUPABASE_URL);
 
 function getBearerToken(req: any): string | null {
   const header = req.headers?.authorization;
