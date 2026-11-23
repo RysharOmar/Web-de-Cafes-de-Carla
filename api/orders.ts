@@ -107,6 +107,34 @@ export default async function handler(req: any, res: any) {
   const auth = await requireStaffRole(req, res, ['admin', 'cocina']);
   if (!auth) return;
 
+  // ---------- GET /api/orders?tipo=mesa (pagos con tarjeta confirmados) ----------
+  if (method === 'GET' && !orderId && url.searchParams.get('tipo') === 'mesa') {
+    try {
+      const rows = await sql`
+        SELECT stripe_session_id, mesa, total, items, estado, creado_en
+        FROM orders
+        WHERE tipo = 'mesa' AND estado = 'pagado'
+          AND creado_en > NOW() - INTERVAL '48 hours'
+        ORDER BY creado_en ASC
+      `;
+
+      const list = (rows as any[]).map((row) => ({
+        stripeSessionId: row.stripe_session_id,
+        stripe_session_id: row.stripe_session_id,
+        mesa: row.mesa == null ? null : String(row.mesa),
+        total: toNumber(row.total),
+        items: parseItems(row.items),
+        estado: row.estado,
+        creadoEn: row.creado_en,
+      }));
+
+      return res.status(200).json({ orders: list, count: list.length });
+    } catch (err: any) {
+      process.stderr.write(`Error leyendo pagos de mesa: ${err?.message ?? err}\n`);
+      return res.status(500).json({ error: 'No se pudieron leer los pagos de mesa' });
+    }
+  }
+
   // ---------- GET /api/orders?tipo=delivery (Neon) ----------
   if (method === 'GET' && !orderId && url.searchParams.get('tipo') === 'delivery') {
     try {

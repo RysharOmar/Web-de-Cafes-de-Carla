@@ -68,6 +68,23 @@ function joinAddress(address: Stripe.Address | null | undefined): string | null 
     .join(', ') || null;
 }
 
+function mapStripeLineItems(lineItems: any) {
+  return (lineItems?.data ?? []).map((line: any) => {
+    const product = line.price?.product as Stripe.Product | string | null | undefined;
+    const productObject = product && typeof product === 'object' ? product : null;
+    const productId = productObject?.id ?? (typeof product === 'string' ? product : null);
+
+    return {
+      id: productId,
+      name: productObject?.name || line.description || 'Producto',
+      descripcion: line.description ?? null,
+      quantity: line.quantity ?? 1,
+      unitAmountCents: line.price?.unit_amount ?? null,
+      amountTotalCents: line.amount_total ?? 0,
+    };
+  });
+}
+
 export default async function handler(req: any, res: any) {
   console.log('[stripe-webhook] Petición recibida', {
     method: req.method,
@@ -142,13 +159,81 @@ export default async function handler(req: any, res: any) {
     metadata: session.metadata ?? null,
   });
 
-  // Los pagos de mesa no se registran en Neon (usan localStorage).
-  if (session.metadata?.tipo !== 'delivery') {
-    console.log('[stripe-webhook] Evento ignorado: no es pedido a domicilio', {
+  const sessionType = session.metadata?.tipo;
+
+  // Pago de mesa: Stripe confirma el cobro y lo registramos en Neon. La cocina
+  // consultará este registro para marcar la mesa como PAGADA en su localStorage.
+  if (sessionType === 'mesa') {
+    try {
+      const lineItems = await stripe.checkout.sessions.listLineItems(session.id, {
+        limit: 100,
+        expand: ['data.price.product'],
+      });
+      const items = mapStripeLineItems(lineItems);
+      const mesa = session.metadata?.mesa ?? null;
+      const total = session.amount_total != null ? session.amount_total / 100 : null;
+
+      console.log('[stripe-webhook] Confirmación de pago de mesa recibida', {
+        sessionId: session.id,
+        mesa,
+        total,
+        itemsCount: items.length,
+      });
+
+      const inserted = await sql`
+        INSERT INTO orders (
+          stripe_session_id,
+          tipo,
+          mesa,
+          cliente_nombre,
+          cliente_email,
+          cliente_telefono,
+          direccion_envio,
+          total,
+          items,
+          estado
+        )
+        VALUES (
+          ${session.id},
+          'mesa',
+          ${mesa},
+          NULL,
+          NULL,
+          NULL,
+          NULL,
+          ${total},
+          ${JSON.stringify(items)}::jsonb,
+          'pagado'
+        )
+        ON CONFLICT (stripe_session_id) DO NOTHING
+        RETURNING id
+      `;
+
+      const insertedRows = Array.isArray(inserted) ? inserted : [];
+      console.log('[stripe-webhook] Pago de mesa guardado en Neon', {
+        orderId: insertedRows.length ? (insertedRows[0] as { id: number }).id : null,
+        duplicated: insertedRows.length === 0,
+      });
+
+      res.status(200).json({ received: true, tipo: 'mesa', mesa });
+    } catch (err: any) {
+      const message = err?.message ? String(err.message) : String(err);
+      console.error('[stripe-webhook] Error guardando pago de mesa', {
+        message,
+        sessionId: session.id,
+        stack: err?.stack ?? null,
+      });
+      res.status(500).json({ error: 'No se pudo registrar el pago de la mesa', detail: message });
+    }
+    return;
+  }
+
+  if (sessionType !== 'delivery') {
+    console.log('[stripe-webhook] Evento ignorado: metadata sin tipo reconocido', {
       sessionId: session.id,
       metadata: session.metadata ?? null,
     });
-    res.status(200).json({ received: true, ignored: 'not-delivery' });
+    res.status(200).json({ received: true, ignored: 'unknown-type' });
     return;
   }
 
@@ -158,20 +243,7 @@ export default async function handler(req: any, res: any) {
       expand: ['data.price.product'],
     });
 
-    const items = lineItems.data.map((line) => {
-      const product = line.price?.product as Stripe.Product | string | null | undefined;
-      const productObject = product && typeof product === 'object' ? product : null;
-      const productId = productObject?.id ?? (typeof product === 'string' ? product : null);
-
-      return {
-        id: productId,
-        name: productObject?.name || line.description || 'Producto',
-        descripcion: line.description ?? null,
-        quantity: line.quantity ?? 1,
-        unitAmountCents: line.price?.unit_amount ?? null,
-        amountTotalCents: line.amount_total ?? 0,
-      };
-    });
+    const items = mapStripeLineItems(lineItems);
 
     const customer = session.customer_details;
     const shipping = session.shipping_details;

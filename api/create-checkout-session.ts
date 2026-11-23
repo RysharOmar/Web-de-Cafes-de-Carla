@@ -22,6 +22,8 @@ type CheckoutBody = {
   items?: CartItem[];
   /** 'delivery' para pedidos de la carta; 'mesa' para pagos en el local. */
   tipo?: 'delivery' | 'mesa';
+  /** Número de mesa cuando tipo === 'mesa'. */
+  mesa?: string | number;
 };
 
 type ProductoRow = {
@@ -108,7 +110,7 @@ export default async function handler(req: any, res: any) {
 
   try {
     const stripe = new Stripe(stripeSecret);
-    const { items, tipo } = (req.body ?? {}) as CheckoutBody;
+    const { items, tipo, mesa } = (req.body ?? {}) as CheckoutBody;
     const isDelivery = tipo === 'delivery';
 
     if (!Array.isArray(items) || items.length === 0) {
@@ -187,7 +189,9 @@ export default async function handler(req: any, res: any) {
       mode: 'payment',
       success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/cancel`,
-      metadata: { tipo: isDelivery ? 'delivery' : 'mesa' },
+      metadata: isDelivery
+        ? { tipo: 'delivery' }
+        : { tipo: 'mesa', mesa: String(mesa ?? '') },
     };
 
     // Solo los pedidos a domicilio piden dirección y teléfono. Los pagos de
@@ -209,7 +213,7 @@ export default async function handler(req: any, res: any) {
 
     console.log('[checkout] Sesión creada', { sessionId: session.id, tipo: isDelivery ? 'delivery' : 'mesa' });
 
-    res.status(200).json({ url: session.url });
+    res.status(200).json({ url: session.url, sessionId: session.id });
   } catch (err: any) {
     const msg = err && err.message ? err.message : String(err);
     process.stderr.write('Stripe checkout error: ' + msg + '\n');

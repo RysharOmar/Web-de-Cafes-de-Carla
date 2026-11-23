@@ -522,7 +522,7 @@ function Home() {
       const response = await fetch("/api/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items: checkoutItems, tipo: 'mesa' }),
+        body: JSON.stringify({ items: checkoutItems, tipo: 'mesa', mesa: mesaActiva }),
       });
 
       const data = await response.json();
@@ -531,13 +531,18 @@ function Home() {
         throw new Error(data.error || "Error al crear la sesión de pago");
       }
 
-      // Marcar TODOS los pedidos de esta mesa como pagados en localStorage
+      // El pago NO está confirmado todavía: el cliente va a la pasarela de Stripe.
+      // Marcamos los pedidos como "pago con tarjeta en curso" y guardamos el
+      // sessionId. El webhook confirmará el cobro y la cocina lo verá sola.
+      const now = new Date().toISOString();
       const updatedOrders = allOrders.map((o: any) => {
         if (o.table === mesaActiva && o.status !== 'paid') {
           return {
             ...o,
-            status: 'paid',
-            paidAt: new Date().toISOString(),
+            status: o.status,
+            pagoPendienteTarjeta: true,
+            pagoPendienteTarjetaAt: o.pagoPendienteTarjetaAt ?? now,
+            stripeSessionId: data.sessionId,
             stripeUrl: data.url,
             pagoPendienteEfectivo: false,
             metodoPago: 'tarjeta',
@@ -548,15 +553,16 @@ function Home() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedOrders));
       setCashPending(false);
 
-      // También actualizar la referencia de la mesa
+      // Referencia de la mesa: todavía NO está pagada.
       localStorage.setItem(`order_${mesaActiva}`, JSON.stringify({
         orderId: mesaOrders[mesaOrders.length - 1]?.id,
         table: mesaActiva,
         totalCents,
         items: allItems,
-        paid: true,
-        paidAt: new Date().toISOString(),
+        paid: false,
+        stripeSessionId: data.sessionId,
         stripeUrl: data.url,
+        pagoPendienteTarjeta: true,
       }));
 
       window.location.href = data.url;

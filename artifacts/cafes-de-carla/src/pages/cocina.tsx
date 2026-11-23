@@ -27,6 +27,10 @@ type Order = {
   paidAt?: string;
   pagoPendienteEfectivo?: boolean;
   pagoPendienteEfectivoAt?: string;
+  pagoPendienteTarjeta?: boolean;
+  pagoPendienteTarjetaAt?: string;
+  stripeSessionId?: string;
+  stripeConfirmadoAt?: string;
   cobradoAt?: string;
   metodoPago?: 'efectivo' | 'tarjeta' | string;
   cocinaCerrada?: boolean;
@@ -38,6 +42,7 @@ type TableGroup = {
   orders: Order[];
   totalCents: number;
   cashPending: boolean;
+  cardPendingCount: number;
   pendingCount: number;
   confirmedCount: number;
   servedCount: number;
@@ -154,6 +159,7 @@ export default function Cocina() {
   const [deliveryLoading, setDeliveryLoading] = useState(true);
   const [deliveryError, setDeliveryError] = useState('');
   const [deliveryConfirm, setDeliveryConfirm] = useState<DeliveryConfirmation | null>(null);
+  const [paidCardSessions, setPaidCardSessions] = useState<Set<string>>(new Set());
 
   const soundEnabledRef = useRef(soundEnabled);
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -268,17 +274,93 @@ export default function Cocina() {
   const fetchDeliveryOrders = useCallback(async () => {
     try {
       const response = await authFetch('/api/orders?tipo=delivery', { cache: 'no-store' });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      if (!response.ok) {
+        const detail = await response.text().catch(() => '');
+        throw new Error(`HTTP ${response.status}${detail ? ` · ${detail.slice(0, 160)}` : ''}`);
+      }
       const data = await response.json();
       setDeliveryOrders(Array.isArray(data.orders) ? data.orders : []);
       setDeliveryError('');
     } catch (err) {
       console.error('Error cargando pedidos a domicilio:', err);
-      setDeliveryError('No se pudieron cargar los pedidos a domicilio.');
+      setDeliveryError(`No se pudieron cargar los pedidos a domicilio. ${err instanceof Error ? err.message : ''}`);
     } finally {
       setDeliveryLoading(false);
     }
   }, []);
+
+  // Stripe confirma los pagos de mesa en Neon; la cocina consulta qué sesiones
+  // ya están pagadas y marca esos pedidos en su localStorage cada 3 s.
+  const fetchPaidCardSessions = useCallback(async () => {
+    try {
+      const response = await authFetch('/api/orders?tipo=mesa', { cache: 'no-store' });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      const ids = new Set<string>();
+      (Array.isArray(data.orders) ? data.orders : []).forEach((order: any) => {
+        const id = order.stripeSessionId ?? order.stripe_session_id;
+        if (typeof id === 'string' && id) ids.add(id);
+      });
+      setPaidCardSessions(ids);
+    } catch (err) {
+      console.error('Error cargando pagos de mesa confirmados:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    void fetchPaidCardSessions();
+    const interval = window.setInterval(() => void fetchPaidCardSessions(), 3000);
+    return () => window.clearInterval(interval);
+  }, [fetchPaidCardSessions]);
+
+  useEffect(() => {
+    if (paidCardSessions.size === 0) return;
+
+    const all = loadOrdersFromStorage();
+    const now = new Date().toISOString();
+    const confirmedMesas = new Set<string>();
+    let changed = false;
+
+    const updated = all.map((order) => {
+      if (order.status === 'paid' || !order.pagoPendienteTarjeta) return order;
+      if (!order.stripeSessionId || !paidCardSessions.has(order.stripeSessionId)) return order;
+
+      changed = true;
+      confirmedMesas.add(String(order.table));
+      return {
+        ...order,
+        status: 'paid' as OrderStatus,
+        paidAt: now,
+        stripeConfirmadoAt: now,
+        pagoPendienteTarjeta: false,
+        metodoPago: 'tarjeta',
+      };
+    });
+
+    if (!changed) return;
+
+    saveOrdersToStorage(updated);
+    confirmedMesas.forEach((mesa) => {
+      try {
+        const refRaw = localStorage.getItem(`order_${mesa}`);
+        if (refRaw) {
+          localStorage.setItem(`order_${mesa}`, JSON.stringify({
+            ...JSON.parse(refRaw),
+            paid: true,
+            paidAt: now,
+            stripeConfirmadoAt: now,
+            pagoPendienteTarjeta: false,
+            metodoPago: 'tarjeta',
+          }));
+        }
+      } catch {
+        // La referencia de mesa es opcional.
+      }
+    });
+
+    setOrders(updated);
+    showFeedback(`Pago con tarjeta confirmado: ${[...confirmedMesas].map((m) => `Mesa ${m}`).join(', ')}.`);
+  }, [paidCardSessions]);
 
   const updateDeliveryOrder = async (id: number, estado: DeliveryState) => {
     try {
@@ -503,6 +585,7 @@ export default function Cocina() {
           orders: [],
           totalCents: 0,
           cashPending: false,
+          cardPendingCount: 0,
           pendingCount: 0,
           confirmedCount: 0,
           servedCount: 0,
@@ -516,6 +599,7 @@ export default function Cocina() {
       group.totalCents += orderTotal(order);
 
       if (order.pagoPendienteEfectivo) group.cashPending = true;
+      if (order.pagoPendienteTarjeta && order.status !== 'paid') group.cardPendingCount += 1;
       if (order.status === 'pending') group.pendingCount += 1;
       if (order.status === 'confirmed') group.confirmedCount += 1;
       if (order.status === 'served') group.servedCount += 1;
@@ -743,7 +827,7 @@ export default function Cocina() {
         ) : (
           <div className="cocina-board">
             {tableGroups.map((group) => {
-              const hasOrdersInProgress = group.pendingCount > 0 || group.confirmedCount > 0;
+              const hasOrdersInProgress = group.pendingCount > 0 || group.confirmedCount > 0 || group.cardPendingCount > 0;
               const tablePaid = group.paidCount > 0 && group.paidCount === group.orders.length;
               const paidByCard = group.orders.some((order) => order.metodoPago === 'tarjeta');
 
@@ -787,6 +871,16 @@ export default function Cocina() {
                     </div>
                   )}
 
+                  {group.cardPendingCount > 0 && !tablePaid && (
+                    <div
+                      className="cocina-card-pending-badge"
+                      role="status"
+                      data-testid={`badge-card-pending-table-${group.table}`}
+                    >
+                      PAGO CON TARJETA EN CURSO 💳
+                    </div>
+                  )}
+
                   <div className="cocina-table-statuses">
                     {group.pendingCount > 0 && (
                       <span className="cocina-status-chip cocina-status-chip--pending">Pendiente · {group.pendingCount}</span>
@@ -796,6 +890,9 @@ export default function Cocina() {
                     )}
                     {group.servedCount > 0 && (
                       <span className="cocina-status-chip cocina-status-chip--served">Servido · {group.servedCount}</span>
+                    )}
+                    {group.cardPendingCount > 0 && (
+                      <span className="cocina-status-chip cocina-status-chip--card-pending">Pago en curso · {group.cardPendingCount}</span>
                     )}
                     {group.paidCount > 0 && (
                       <span className="cocina-status-chip cocina-status-chip--paid">Pagado · {group.paidCount}</span>
@@ -894,7 +991,11 @@ export default function Cocina() {
                         className={`cocina-collect-btn${group.cashPending ? ' cocina-collect-btn--cash' : ''}`}
                         onClick={() => setConfirmTable(group.table)}
                         disabled={hasOrdersInProgress && !group.cashPending}
-                        title={hasOrdersInProgress && !group.cashPending ? 'Sirve todos los pedidos antes de cobrar la mesa' : undefined}
+                        title={hasOrdersInProgress && !group.cashPending
+                          ? group.cardPendingCount > 0
+                            ? 'El pago con tarjeta todavía no se ha confirmado en Stripe'
+                            : 'Sirve todos los pedidos antes de cobrar la mesa'
+                          : undefined}
                         data-testid={`button-collect-table-${group.table}`}
                       >
                         <Banknote size={15} aria-hidden="true" /> Marcar como Cobrado
