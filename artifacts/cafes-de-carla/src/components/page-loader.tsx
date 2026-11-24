@@ -175,7 +175,7 @@ const FADE_START = 4600;
 const FADE_DURATION = 650;
 const EXIT_AT = 5350;
 
-const FILL = 'hsl(var(--foreground))';
+const FILL = 'hsl(var(--accent))';
 
 const clamp01 = (value: number) => (value < 0 ? 0 : value > 1 ? 1 : value);
 const smoothstep = (t: number) => {
@@ -241,14 +241,16 @@ function PageLoader({ error, onRetry, onFinished }: PageLoaderProps) {
         el.style.strokeDasharray = `${length} ${length}`;
         el.style.strokeDashoffset = '0';
         el.style.fill = FILL;
-        el.style.stroke = FILL;
+        el.style.stroke = 'hsl(var(--foreground))';
+        el.style.strokeWidth = '18';
       });
       elementsRef.current.wordmark.forEach((el, i) => {
         const length = lengthsRef.current.wordmark[i];
         el.style.strokeDasharray = `${length} ${length}`;
         el.style.strokeDashoffset = '0';
         el.style.fill = FILL;
-        el.style.stroke = FILL;
+        el.style.stroke = 'hsl(var(--foreground))';
+        el.style.strokeWidth = '6';
       });
       if (container) container.style.opacity = '1';
     };
@@ -274,6 +276,7 @@ function PageLoader({ error, onRetry, onFinished }: PageLoaderProps) {
         const filled = progress > 0.92;
         el.style.fill = filled ? FILL : 'none';
         el.style.stroke = 'hsl(var(--foreground))';
+        el.style.strokeWidth = filled ? '18' : '2.5';
       });
 
       elementsRef.current.wordmark.forEach((el, i) => {
@@ -285,6 +288,7 @@ function PageLoader({ error, onRetry, onFinished }: PageLoaderProps) {
         const filled = progress > 0.92;
         el.style.fill = filled ? FILL : 'none';
         el.style.stroke = 'hsl(var(--foreground))';
+        el.style.strokeWidth = filled ? '6' : '2.5';
       });
 
       if (t < EXIT_AT) {
