@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import CafesDeCarlaPreloader from '@/components/page-loader';
 import { ArrowDown, ArrowRight, ArrowUpRight, Banknote, Clock3, CreditCard, Instagram, MapPin, Menu as MenuIcon, Minus, Phone, Plus, ShoppingBag, X } from 'lucide-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/components/error-boundary';
@@ -721,6 +722,10 @@ function Home() {
       </div>
     );
   };
+
+  if (menuLoading) {
+    return <CafesDeCarlaPreloader />;
+  }
 
   if (menuError && productos.length === 0) {
     return (
