@@ -22,6 +22,7 @@ import { displaySizeLabel, groupProductos, priceForLine, type ApiProducto, type 
 
 const queryClient = new QueryClient();
 const logo = '/cafes-de-carla-logo.jpg';
+let initialPreloaderDone = false;
 
 // Global types
 declare global {
@@ -125,6 +126,8 @@ function Home() {
   const [productos, setProductos] = useState<ApiProducto[]>([]);
   const [menuLoading, setMenuLoading] = useState(true);
   const [menuError, setMenuError] = useState<string | null>(null);
+  const [preloaderVisible, setPreloaderVisible] = useState(!initialPreloaderDone);
+  const [preloaderFading, setPreloaderFading] = useState(false);
   const lastMenuFetchRef = useRef(0);
   const hasLoadedMenuRef = useRef(false);
 
@@ -156,6 +159,8 @@ function Home() {
     }
 
     lastMenuFetchRef.current = Date.now();
+    const isInitialPreload = !silent && !initialPreloaderDone;
+    const startedAt = Date.now();
 
     if (!silent) {
       setMenuLoading(true);
@@ -177,7 +182,18 @@ function Home() {
         setMenuError(err instanceof Error ? err.message : 'No se pudo cargar la carta');
       }
     } finally {
-      if (!silent) {
+      if (isInitialPreload) {
+        const remaining = Math.max(0, 1500 - (Date.now() - startedAt));
+        if (remaining > 0) {
+          await new Promise((resolve) => setTimeout(resolve, remaining));
+        }
+        initialPreloaderDone = true;
+        setMenuLoading(false);
+        setPreloaderFading(true);
+        window.setTimeout(() => {
+          setPreloaderVisible(false);
+        }, 500);
+      } else if (!silent) {
         setMenuLoading(false);
       }
     }
@@ -723,19 +739,27 @@ function Home() {
     );
   };
 
-  if (menuLoading) {
-    return <CafesDeCarlaPreloader />;
-  }
+  const preloaderOverlay = preloaderVisible ? (
+    <div
+      className={`fixed inset-0 z-[10000] transition-opacity duration-500 ${preloaderFading ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+      aria-hidden={preloaderFading ? 'true' : undefined}
+    >
+      <CafesDeCarlaPreloader />
+    </div>
+  ) : null;
 
-  if (menuError && productos.length === 0) {
+  if (menuError && productos.length === 0 && !menuLoading) {
     return (
-      <div className="min-h-[100dvh] flex flex-col items-center justify-center gap-4 p-6 text-center" style={{ background: '#f5f0e5', color: '#4a3322' }}>
-        <h1 className="serif" style={{ margin: 0, fontSize: 'clamp(24px,4vw,34px)', fontWeight: 400 }}>No pudimos cargar la carta</h1>
-        <p style={{ margin: 0, maxWidth: 420, color: '#7c6f5e', fontSize: 13, lineHeight: 1.6 }}>{menuError}</p>
-        <button type="button" className="text-cta focus-ring" onClick={() => loadMenu()}>
-          Reintentar
-        </button>
-      </div>
+      <>
+        <div className="min-h-[100dvh] flex flex-col items-center justify-center gap-4 p-6 text-center" style={{ background: '#f5f0e5', color: '#4a3322' }}>
+          <h1 className="serif" style={{ margin: 0, fontSize: 'clamp(24px,4vw,34px)', fontWeight: 400 }}>No pudimos cargar la carta</h1>
+          <p style={{ margin: 0, maxWidth: 420, color: '#7c6f5e', fontSize: 13, lineHeight: 1.6 }}>{menuError}</p>
+          <button type="button" className="text-cta focus-ring" onClick={() => loadMenu()}>
+            Reintentar
+          </button>
+        </div>
+        {preloaderOverlay}
+      </>
     );
   }
 
@@ -1143,6 +1167,7 @@ function Home() {
         variant={notice?.variant ?? 'info'}
         autoCloseMs={3500}
       />
+      {preloaderOverlay}
     </div>
   );
 }
