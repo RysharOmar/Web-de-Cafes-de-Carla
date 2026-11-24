@@ -3,7 +3,6 @@ import { ArrowDown, ArrowRight, ArrowUpRight, Banknote, Clock3, CreditCard, Inst
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
-import PageLoader from '@/components/page-loader';
 import NotificationModal, { type NotificationVariant } from '@/components/ui/notification-modal';
 import CookieBanner from '@/components/cookie-banner';
 import LegalLinks from '@/components/legal-links';
@@ -177,9 +176,7 @@ function Home() {
         setMenuError(err instanceof Error ? err.message : 'No se pudo cargar la carta');
       }
     } finally {
-      // Si la carga fallo, cerramos la pantalla de carga para mostrar el error.
-      // Si fue exitosa, el preloader decide cuando termina la animacion y cierra la pantalla.
-      if (!silent && !hasLoadedMenuRef.current) {
+      if (!silent) {
         setMenuLoading(false);
       }
     }
@@ -725,12 +722,16 @@ function Home() {
     );
   };
 
-  if (menuLoading) {
-    return <PageLoader onFinished={() => setMenuLoading(false)} />;
-  }
-
   if (menuError && productos.length === 0) {
-    return <PageLoader error={menuError} onRetry={() => loadMenu()} />;
+    return (
+      <div className="min-h-[100dvh] flex flex-col items-center justify-center gap-4 p-6 text-center" style={{ background: '#f5f0e5', color: '#4a3322' }}>
+        <h1 className="serif" style={{ margin: 0, fontSize: 'clamp(24px,4vw,34px)', fontWeight: 400 }}>No pudimos cargar la carta</h1>
+        <p style={{ margin: 0, maxWidth: 420, color: '#7c6f5e', fontSize: 13, lineHeight: 1.6 }}>{menuError}</p>
+        <button type="button" className="text-cta focus-ring" onClick={() => loadMenu()}>
+          Reintentar
+        </button>
+      </div>
+    );
   }
 
   return (
