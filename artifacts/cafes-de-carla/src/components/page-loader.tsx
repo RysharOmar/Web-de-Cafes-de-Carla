@@ -10,46 +10,52 @@ const ICON_PATHS = [
   "M4070 3307 c-14 -6 -37 -23 -52 -36 -24 -21 -27 -29 -22 -65 3 -23 9 -50 14 -61 5 -11 11 -54 14 -95 7 -89 35 -444 35 -447 1 -2 6 -3 11 -3 13 0 13 157 0 280 -5 52 -16 157 -24 233 -9 76 -13 144 -9 152 8 23 91 19 132 -6 44 -27 66 -52 96 -113 49 -98 57 -261 18 -380 -19 -56 -91 -137 -162 -181 -42 -26 -44 -28 -26 -41 10 -8 23 -14 28 -14 5 0 37 29 70 64 34 35 73 67 86 71 15 5 20 10 12 14 -15 10 6 61 25 61 27 0 30 316 4 386 -6 14 -10 42 -11 62 0 36 -1 36 -11 12 l-11 -25 -6 30 c-4 19 -13 31 -26 34 -11 2 -37 19 -58 37 -20 19 -43 34 -50 34 -6 0 -21 2 -32 5 -11 2 -31 -1 -45 -8z",
 ];
 
-const CYCLE = 5600;
+const DURATION = 5600;
 const DRAW_END = 2650;
 const FILL_START = 3100;
 const FILL_END = 3800;
 const HOLD_END = 5000;
 const FADE_END = 5600;
 
-function clamp01(v: number) {
-  return Math.max(0, Math.min(1, v));
+function clamp(v: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, v));
 }
 function ease(v: number) {
-  const x = clamp01(v);
+  const x = clamp(v, 0, 1);
   return 0.5 - 0.5 * Math.cos(Math.PI * x);
 }
 
-interface Props {
+interface PageLoaderProps {
   error?: string | null;
   onRetry?: () => void;
   onFinished?: () => void;
 }
 
-export default function PageLoader({ error, onRetry, onFinished }: Props) {
-  const containerRef = useRef<HTMLDivElement>(null);
+export default function PageLoader({ error, onRetry, onFinished }: PageLoaderProps) {
+  const preloaderRef = useRef<HTMLDivElement>(null);
   const outlineGroupRef = useRef<SVGGElement>(null);
   const filledGroupRef = useRef<SVGGElement>(null);
   const logoGroupRef = useRef<SVGGElement>(null);
+  const toggleBtnRef = useRef<HTMLButtonElement>(null);
+  const replayBtnRef = useRef<HTMLButtonElement>(null);
+  const statusRef = useRef<HTMLDivElement>(null);
+
   const iconPathsRef = useRef<SVGPathElement[]>([]);
-  const textRefs = useRef<SVGTextElement[]>([]);
-  const lengthsRef = useRef<number[]>([]);
-  const textLengthsRef = useRef<number[]>([]);
+  const textElsRef = useRef<SVGTextElement[]>([]);
+
+  type DrawItem = { el: SVGElement; delay: number; length: number; type: 'icon' | 'text' };
+  const drawItemsRef = useRef<DrawItem[]>([]);
 
   const rafRef = useRef<number>(0);
-  const startRef = useRef(0);
+  const startTimeRef = useRef<number | null>(null);
   const elapsedOffsetRef = useRef(0);
   const pausedRef = useRef(false);
   const pausedAtRef = useRef(0);
   const visibleRef = useRef(true);
   const inViewportRef = useRef(true);
-  const finishedRef = useRef(false);
+  const reducedAppliedRef = useRef(false);
   const onFinishedRef = useRef(onFinished);
+  const finishedRef = useRef(false);
 
   useEffect(() => {
     onFinishedRef.current = onFinished;
@@ -57,83 +63,111 @@ export default function PageLoader({ error, onRetry, onFinished }: Props) {
 
   useEffect(() => {
     if (error) return;
-    const container = containerRef.current;
+    const preloader = preloaderRef.current;
     const outlineGroup = outlineGroupRef.current;
     const filledGroup = filledGroupRef.current;
     const logoGroup = logoGroupRef.current;
-    if (!container || !outlineGroup || !filledGroup || !logoGroup) return;
+    const toggleBtn = toggleBtnRef.current;
+    const replayBtn = replayBtnRef.current;
+    const status = statusRef.current;
+    if (!preloader || !outlineGroup || !filledGroup || !logoGroup || !toggleBtn || !replayBtn || !status) return;
 
-    const iconPaths = Array.from(container.querySelectorAll<SVGPathElement>('[data-draw="icon"]'));
-    const textEls = Array.from(container.querySelectorAll<SVGTextElement>('[data-draw="text"]'));
-    iconPathsRef.current = iconPaths;
-    textRefs.current = textEls;
+    const reduceMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let prefersReducedMotion = reduceMotionQuery.matches;
 
-    const prepare = () => {
-      lengthsRef.current = iconPaths.map((p) => {
-        try {
-          const l = p.getTotalLength();
-          return isFinite(l) && l > 0 ? l : 1000;
-        } catch {
-          return 1000;
-        }
+    iconPathsRef.current = Array.from(preloader.querySelectorAll<SVGPathElement>('[data-draw="icon"]'));
+    textElsRef.current = Array.from(preloader.querySelectorAll<SVGTextElement>('[data-draw="text"]'));
+
+    const buildDrawItems = (): DrawItem[] => {
+      const items: DrawItem[] = [];
+      iconPathsRef.current.forEach((el, i) => {
+        items.push({ el, delay: i * 90, length: 1000, type: 'icon' });
       });
-      iconPaths.forEach((p, i) => {
-        const l = lengthsRef.current[i];
-        p.style.strokeDasharray = String(l);
-        p.style.strokeDashoffset = String(l);
+      textElsRef.current.forEach((el, i) => {
+        items.push({ el, delay: 220 + i * 180, length: 800, type: 'text' });
       });
-      textLengthsRef.current = textEls.map((t) => {
-        try {
-          const b = t.getBBox();
-          const l = (b.width + b.height) * 5.2;
-          return isFinite(l) && l > 0 ? l : 800;
-        } catch {
-          return 800;
-        }
-      });
-      textEls.forEach((t, i) => {
-        const l = textLengthsRef.current[i];
-        t.style.strokeDasharray = String(l);
-        t.style.strokeDashoffset = String(l);
-      });
+      return items;
     };
 
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduced) {
-      prepare();
-      iconPaths.forEach((p, i) => { p.style.strokeDashoffset = '0'; });
-      textEls.forEach((t) => { t.style.strokeDashoffset = '0'; });
-      outlineGroup.style.opacity = '0';
-      filledGroup.style.opacity = '1';
-      logoGroup.style.opacity = '1';
-      if (!finishedRef.current) {
-        finishedRef.current = true;
-        onFinishedRef.current?.();
-      }
-      return;
-    }
-
-    prepare();
-
-    const render = (now: number) => {
-      const elapsed = (now - startRef.current + elapsedOffsetRef.current) % CYCLE;
-
-      iconPaths.forEach((p, i) => {
-        const delay = i * 90;
-        const pDraw = ease((elapsed - delay) / DRAW_END);
-        const l = lengthsRef.current[i] || 1000;
-        p.style.strokeDashoffset = String(l * (1 - pDraw));
+    const prepareDrawables = () => {
+      const items = buildDrawItems();
+      items.forEach((item) => {
+        const el = item.el;
+        let length = 1000;
+        try {
+          if (item.type === 'text') {
+            const bbox = (el as SVGGraphicsElement).getBBox();
+            length = (bbox.width + bbox.height) * 5;
+          } else if (typeof (el as unknown as SVGPathElement).getTotalLength === 'function') {
+            length = (el as unknown as SVGPathElement).getTotalLength();
+          } else {
+            const bbox = (el as SVGGraphicsElement).getBBox();
+            length = (bbox.width + bbox.height) * 3.2;
+          }
+        } catch {
+          try {
+            const bbox = (el as SVGGraphicsElement).getBBox();
+            length = (bbox.width + bbox.height) * 3;
+          } catch {
+            length = 1000;
+          }
+        }
+        if (!isFinite(length) || length <= 0) length = 1000;
+        item.length = length;
+        (el as unknown as SVGGraphicsElement).style.strokeDasharray = String(length);
+        (el as unknown as SVGGraphicsElement).style.strokeDashoffset = String(length);
       });
+      drawItemsRef.current = items;
+    };
 
-      textEls.forEach((t, i) => {
-        const delay = 220 + i * 180;
-        const pDraw = ease((elapsed - delay) / DRAW_END);
-        const l = textLengthsRef.current[i] || 800;
-        t.style.strokeDashoffset = String(l * (1 - pDraw));
+    const setReducedState = (on: boolean) => {
+      toggleBtn.disabled = on;
+      replayBtn.disabled = on;
+      if (on) {
+        toggleBtn.textContent = 'Pausar';
+        toggleBtn.setAttribute('aria-pressed', 'false');
+        outlineGroup.style.opacity = '0';
+        filledGroup.style.opacity = '1';
+        logoGroup.style.opacity = '1';
+        drawItemsRef.current.forEach((item) => {
+          (item.el as unknown as SVGGraphicsElement).style.strokeDashoffset = '0';
+        });
+        status.textContent = 'Animacion reducida: logo mostrado en estado final.';
+      } else {
+        status.textContent = '';
+      }
+    };
+
+    const finishOnce = () => {
+      if (finishedRef.current) return;
+      finishedRef.current = true;
+      onFinishedRef.current?.();
+    };
+
+    const renderFrame = (now: number) => {
+      if (prefersReducedMotion) {
+        if (!reducedAppliedRef.current) {
+          setReducedState(true);
+          reducedAppliedRef.current = true;
+          finishOnce();
+        }
+        return;
+      }
+      reducedAppliedRef.current = false;
+
+      const elapsed = ((now - (startTimeRef.current ?? now) + elapsedOffsetRef.current) % DURATION + DURATION) % DURATION;
+
+      drawItemsRef.current.forEach((item) => {
+        const local = elapsed - item.delay;
+        const p = ease(local / DRAW_END);
+        const offset = item.length * (1 - p);
+        (item.el as unknown as SVGGraphicsElement).style.strokeDashoffset = String(offset);
       });
 
       let fillP = 0;
-      if (elapsed >= FILL_START) fillP = ease((elapsed - FILL_START) / (FILL_END - FILL_START));
+      if (elapsed >= FILL_START) {
+        fillP = ease((elapsed - FILL_START) / (FILL_END - FILL_START));
+      }
       filledGroup.style.opacity = String(fillP);
       outlineGroup.style.opacity = String(1 - fillP);
 
@@ -144,103 +178,198 @@ export default function PageLoader({ error, onRetry, onFinished }: Props) {
       }
       logoGroup.style.opacity = String(logoOpacity);
 
-      if (elapsed >= FADE_END - 30 && !finishedRef.current) {
-        finishedRef.current = true;
-        onFinishedRef.current?.();
+      if (elapsed >= FADE_END - 40) {
+        finishOnce();
       }
     };
 
-    const shouldRun = () => !pausedRef.current && visibleRef.current && inViewportRef.current && !finishedRef.current;
-
     const tick = (now: number) => {
-      if (!shouldRun()) { rafRef.current = 0; return; }
-      render(now);
+      if (pausedRef.current || !visibleRef.current || !inViewportRef.current || prefersReducedMotion) {
+        rafRef.current = 0;
+        return;
+      }
+      renderFrame(now);
       if (finishedRef.current) { rafRef.current = 0; return; }
       rafRef.current = requestAnimationFrame(tick);
     };
 
-    const start = () => {
+    const ensureRunning = () => {
+      if (prefersReducedMotion) return;
+      if (pausedRef.current || !visibleRef.current || !inViewportRef.current) return;
       if (rafRef.current) return;
-      if (!shouldRun()) return;
-      startRef.current = performance.now();
+      startTimeRef.current = performance.now();
       rafRef.current = requestAnimationFrame(tick);
     };
 
-    startRef.current = performance.now();
-    render(startRef.current);
-    rafRef.current = requestAnimationFrame(tick);
+    const stopLoop = () => {
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = 0;
+      }
+    };
+
+    const pause = () => {
+      if (pausedRef.current || prefersReducedMotion) return;
+      pausedRef.current = true;
+      pausedAtRef.current = performance.now();
+      toggleBtn.textContent = 'Reproducir';
+      toggleBtn.setAttribute('aria-pressed', 'true');
+      stopLoop();
+    };
+
+    const play = () => {
+      if (!pausedRef.current || prefersReducedMotion) return;
+      const now = performance.now();
+      elapsedOffsetRef.current += pausedAtRef.current - now;
+      pausedRef.current = false;
+      toggleBtn.textContent = 'Pausar';
+      toggleBtn.setAttribute('aria-pressed', 'false');
+      ensureRunning();
+    };
+
+    const replay = () => {
+      if (prefersReducedMotion) return;
+      elapsedOffsetRef.current = 0;
+      startTimeRef.current = performance.now();
+      pausedRef.current = false;
+      finishedRef.current = false;
+      toggleBtn.textContent = 'Pausar';
+      toggleBtn.setAttribute('aria-pressed', 'false');
+      renderFrame(startTimeRef.current);
+      ensureRunning();
+    };
+
+    const onToggle = () => { if (pausedRef.current) play(); else pause(); };
+    const onReplay = () => replay();
+    toggleBtn.addEventListener('click', onToggle);
+    replayBtn.addEventListener('click', onReplay);
 
     const onVisibility = () => {
       const now = performance.now();
       if (document.hidden) {
-        if (!pausedRef.current) pausedAtRef.current = now;
+        if (!pausedRef.current && visibleRef.current) pausedAtRef.current = now;
         visibleRef.current = false;
-        if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = 0; }
+        stopLoop();
       } else {
         visibleRef.current = true;
         if (!pausedRef.current) elapsedOffsetRef.current -= (now - (pausedAtRef.current || now));
-        start();
+        ensureRunning();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+
+    let io: IntersectionObserver | null = null;
+    if ('IntersectionObserver' in window) {
+      io = new IntersectionObserver((entries) => {
+        const entry = entries[0];
+        const now = performance.now();
+        if (entry.isIntersecting) {
+          inViewportRef.current = true;
+          if (!pausedRef.current) elapsedOffsetRef.current -= (now - (pausedAtRef.current || now));
+          ensureRunning();
+        } else {
+          if (!pausedRef.current && inViewportRef.current) pausedAtRef.current = now;
+          inViewportRef.current = false;
+          stopLoop();
+        }
+      }, { threshold: 0.01 });
+      io.observe(preloader);
+    }
+
+    const onMotionChange = (e: MediaQueryListEvent) => {
+      const now = performance.now();
+      prefersReducedMotion = e.matches;
+      if (prefersReducedMotion) {
+        stopLoop();
+        setReducedState(true);
+        reducedAppliedRef.current = true;
+      } else {
+        setReducedState(false);
+        reducedAppliedRef.current = false;
+        elapsedOffsetRef.current = 0;
+        startTimeRef.current = now;
+        pausedRef.current = false;
+        finishedRef.current = false;
+        toggleBtn.textContent = 'Pausar';
+        toggleBtn.setAttribute('aria-pressed', 'false');
+        prepareDrawables();
+        ensureRunning();
       }
     };
 
-    const io = new IntersectionObserver((entries) => {
-      const entry = entries[0];
-      const now = performance.now();
-      if (entry.isIntersecting) {
-        inViewportRef.current = true;
-        if (!pausedRef.current) elapsedOffsetRef.current -= (now - (pausedAtRef.current || now));
-        start();
-      } else {
-        if (!pausedRef.current && inViewportRef.current) pausedAtRef.current = now;
-        inViewportRef.current = false;
-        if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = 0; }
-      }
-    }, { threshold: 0.01 });
-    io.observe(container);
+    if (reduceMotionQuery.addEventListener) reduceMotionQuery.addEventListener('change', onMotionChange);
+    else reduceMotionQuery.addListener(onMotionChange);
 
-    document.addEventListener('visibilitychange', onVisibility);
-
-    const onResize = () => { prepare(); };
+    let resizeTimer: ReturnType<typeof setTimeout> | undefined;
+    const onResize = () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        if (!prefersReducedMotion) prepareDrawables();
+      }, 150);
+    };
     window.addEventListener('resize', onResize);
 
+    const init = async () => {
+      if (document.fonts && document.fonts.ready) {
+        try { await document.fonts.ready; } catch { /* ignore */ }
+      }
+      prepareDrawables();
+      if (prefersReducedMotion) {
+        setReducedState(true);
+        reducedAppliedRef.current = true;
+        finishOnce();
+      } else {
+        startTimeRef.current = performance.now();
+        renderFrame(startTimeRef.current);
+        ensureRunning();
+      }
+    };
+    void init();
+
     return () => {
-      if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = 0; }
+      stopLoop();
+      toggleBtn.removeEventListener('click', onToggle);
+      replayBtn.removeEventListener('click', onReplay);
       document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('resize', onResize);
-      io.disconnect();
+      if (reduceMotionQuery.removeEventListener) reduceMotionQuery.removeEventListener('change', onMotionChange);
+      else reduceMotionQuery.removeListener(onMotionChange);
+      io?.disconnect();
+      if (resizeTimer) clearTimeout(resizeTimer);
     };
   }, [error]);
 
   if (error) {
     return (
-      <div className="page-loader" role="alert" aria-live="polite" data-testid="page-load-error">
-        <h1 className="serif">No pudimos cargar la carta</h1>
-        <p>{error}</p>
-        {onRetry && (
-          <button type="button" className="text-cta focus-ring" onClick={onRetry}>
-            Reintentar
-          </button>
-        )}
+      <div className="preloader preloader-error" role="alert" aria-live="polite" data-testid="page-load-error">
+        <div className="preloader-error-card">
+          <h1 className="serif">No pudimos cargar la carta</h1>
+          <p>{error}</p>
+          {onRetry && (
+            <button type="button" className="text-cta focus-ring" onClick={onRetry}>
+              Reintentar
+            </button>
+          )}
+        </div>
       </div>
     );
   }
 
   return (
-    <div ref={containerRef} className="page-loader" role="status" aria-live="polite" data-testid="page-loading">
-      <span className="sr-only">Cargando la carta de Cafés de Carla</span>
-      <div className="page-loader-stage">
+    <div className="preloader" id="preloader" ref={preloaderRef} data-testid="page-loading">
+      <div className="stage">
         <svg
-          className="page-loader-logo"
+          className="logo"
           viewBox="0 0 860 320"
           role="img"
           aria-labelledby="logoTitle logoDesc"
           xmlns="http://www.w3.org/2000/svg"
         >
           <title id="logoTitle">Cafés de Carla</title>
-          <desc id="logoDesc">Logotipo de Cafés de Carla con su icono y nombre.</desc>
+          <desc id="logoDesc">Logotipo de Cafés de Carla con un perro y una taza de café.</desc>
 
           <defs>
-            <g id="pl-icon-shape">
+            <g id="icon-shape">
               <g transform="translate(0,236) scale(0.0230769,-0.0230769)">
                 {ICON_PATHS.map((d, i) => (
                   <path key={i} d={d} />
@@ -249,38 +378,40 @@ export default function PageLoader({ error, onRetry, onFinished }: Props) {
             </g>
           </defs>
 
-          <g ref={logoGroupRef} className="logo-group">
-            <g ref={outlineGroupRef} className="outline-group">
-              <g transform="translate(44,42)">
+          <g id="logoGroup" className="logo-group" ref={logoGroupRef}>
+            <g id="outlineGroup" className="outline-group" ref={outlineGroupRef}>
+              <g id="iconOutline" transform="translate(44,42)">
                 <g transform="translate(0,236) scale(0.0230769,-0.0230769)">
                   {ICON_PATHS.map((d, i) => (
-                    <path
-                      key={i}
-                      data-draw="icon"
-                      className="draw-path draw-icon"
-                      d={d}
-                    />
+                    <path key={i} data-draw="icon" className="draw-path draw-icon" d={d} />
                   ))}
                 </g>
               </g>
-              <g>
-                <text className="draw-text draw-text-main" x="320" y="148" data-draw="text">Cafés de</text>
-                <text className="draw-text draw-text-main" x="320" y="248" data-draw="text">Carla</text>
+              <g id="textOutline">
+                <text className="draw-text draw-text-cafe" x="320" y="148" data-draw="text">Cafés de</text>
+                <text className="draw-text draw-text-carla" x="320" y="248" data-draw="text">Carla</text>
               </g>
             </g>
 
-            <g ref={filledGroupRef} className="filled-group" opacity="0">
-              <g transform="translate(44,42)" className="fill-icon">
-                <use href="#pl-icon-shape" fill="hsl(var(--accent))" stroke="none" />
+            <g id="filledGroup" className="filled-group" opacity="0" ref={filledGroupRef}>
+              <g id="iconFilled" transform="translate(44,42)" className="fill-icon">
+                <use href="#icon-shape" />
               </g>
-              <g>
-                <text className="fill-text fill-text-main" x="320" y="148">Cafés de</text>
-                <text className="fill-text fill-text-main" x="320" y="248">Carla</text>
+              <g id="textFilled">
+                <text className="fill-text fill-text-cafe" x="320" y="148">Cafés de</text>
+                <text className="fill-text fill-text-carla" x="320" y="248">Carla</text>
               </g>
             </g>
           </g>
         </svg>
       </div>
+
+      <div className="controls" aria-label="Controles del preloader">
+        <button className="control-btn" ref={toggleBtnRef} type="button" aria-pressed="false">Pausar</button>
+        <button className="control-btn" ref={replayBtnRef} type="button">Repetir</button>
+      </div>
+
+      <div className="sr-only" ref={statusRef} aria-live="polite"></div>
     </div>
   );
 }
