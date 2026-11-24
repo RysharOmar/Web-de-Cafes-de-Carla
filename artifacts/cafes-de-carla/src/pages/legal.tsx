@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { ArrowLeft, Cookie, FileText, ShieldCheck } from 'lucide-react';
 import LegalLinks from '@/components/legal-links';
+import ThemeToggle from '@/components/theme-toggle';
 import { resetCookieConsent } from '@/lib/cookie-consent';
 
 export type LegalPageKind = 'aviso-legal' | 'politica-privacidad' | 'politica-cookies';
@@ -119,7 +120,10 @@ export default function LegalPage({ kind }: { kind: LegalPageKind }) {
           <div style={{ flex: 1 }} />
           <span className="serif" style={{ fontSize: '20px', color: '#4a3322' }}>Cafés de Carla</span>
           <div style={{ flex: 1 }} />
-          <span className="eyebrow" style={{ color: '#83915f' }}>Información</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <ThemeToggle />
+            <span className="eyebrow" style={{ color: '#83915f' }}>Información</span>
+          </div>
         </div>
       </header>
 

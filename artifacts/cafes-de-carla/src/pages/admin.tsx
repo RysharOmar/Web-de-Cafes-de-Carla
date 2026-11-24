@@ -3,6 +3,7 @@ import { useLocation } from 'wouter';
 import { Check, X, Clock, Lock, RefreshCw, LogOut } from 'lucide-react';
 import type { ApiProducto } from '@/lib/products';
 import { useAuth } from '@/context/AuthContext';
+import ThemeToggle from '@/components/theme-toggle';
 import { authFetch } from '@/lib/auth-fetch';
 
 function formatEuros(value: number | null | undefined) {
@@ -18,6 +19,7 @@ function Header({ onLogout }: { onLogout?: () => void }) {
           <span className="serif">Cafés de Carla</span>
         </a>
         <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+          <ThemeToggle />
           <a href="/" className="text-cta focus-ring">Volver a la carta</a>
           {onLogout && (
             <button

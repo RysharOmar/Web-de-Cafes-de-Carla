@@ -1,5 +1,6 @@
 import { ArrowLeft, ArrowRight, Coffee, MapPin } from 'lucide-react';
 import LegalLinks from '@/components/legal-links';
+import ThemeToggle from '@/components/theme-toggle';
 
 export default function NotFound() {
   return (
@@ -12,7 +13,10 @@ export default function NotFound() {
           <div style={{ flex: 1 }} />
           <span className="serif" style={{ fontSize: '20px', color: '#4a3322' }}>Cafés de Carla</span>
           <div style={{ flex: 1 }} />
-          <span className="eyebrow" style={{ color: '#83915f' }}>Ups…</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <ThemeToggle />
+            <span className="eyebrow" style={{ color: '#83915f' }}>Ups…</span>
+          </div>
         </div>
       </header>
 

@@ -3,6 +3,7 @@ import { useLocation } from 'wouter';
 import { ArrowLeft, LockKeyhole, Mail } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import LegalLinks from '@/components/legal-links';
+import ThemeToggle from '@/components/theme-toggle';
 
 export default function Login() {
   const [, navigate] = useLocation();
@@ -45,7 +46,10 @@ export default function Login() {
           <div style={{ flex: 1 }} />
           <span className="serif" style={{ fontSize: '20px', color: '#4a3322' }}>Cafés de Carla</span>
           <div style={{ flex: 1 }} />
-          <span className="eyebrow" style={{ color: '#83915f' }}>Acceso de personal</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <ThemeToggle />
+            <span className="eyebrow" style={{ color: '#83915f' }}>Acceso de personal</span>
+          </div>
         </div>
       </header>
 

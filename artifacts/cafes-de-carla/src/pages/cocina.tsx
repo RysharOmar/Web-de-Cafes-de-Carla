@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, Banknote, Bike, Check, Clock, MapPin, Package, Phone, RotateCcw, User, Volume2, VolumeX, X } from 'lucide-react';
 import ConfirmModal from '@/components/ui/confirm-modal';
 import LegalLinks from '@/components/legal-links';
+import ThemeToggle from '@/components/theme-toggle';
 import { authFetch } from '@/lib/auth-fetch';
 
 type OrderStatus = 'pending' | 'confirmed' | 'served' | 'paid';
@@ -665,7 +666,10 @@ export default function Cocina() {
             🍽️ Cocina — Pedidos de Mesa
           </span>
           <div style={{ flex: 1 }} />
-          <span className="eyebrow cocina-header-role" style={{ color: '#83915f' }}>Panel de personal</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <ThemeToggle />
+            <span className="eyebrow cocina-header-role" style={{ color: '#83915f' }}>Panel de personal</span>
+          </div>
         </div>
       </header>
 

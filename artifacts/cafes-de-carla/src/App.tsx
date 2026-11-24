@@ -6,6 +6,7 @@ import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
 import NotificationModal, { type NotificationVariant } from '@/components/ui/notification-modal';
 import CookieBanner from '@/components/cookie-banner';
+import ThemeToggle from '@/components/theme-toggle';
 import LegalLinks from '@/components/legal-links';
 import LegalPage from '@/pages/legal';
 import Login from '@/pages/Login';
@@ -780,12 +781,15 @@ function Home() {
             <a href="#visitanos" className="nav-link" onClick={closeNav} data-testid="link-nav-visit">Visítanos</a>
             <a href="#contacto" className="nav-contact" onClick={closeNav} data-testid="link-nav-contact">Hablemos <ArrowUpRight size={14} aria-hidden="true" /></a>
           </nav>
-          <button ref={cartTriggerRef} className="cart-trigger focus-ring" type="button" aria-label={`Abrir carrito, ${cartCount} artículos`} aria-haspopup="dialog" aria-expanded={cartOpen} onClick={() => setCartOpen(true)} data-testid="button-open-cart">
-            <ShoppingBag size={17} aria-hidden="true" /><span>Carrito</span><span className="cart-count" data-testid="text-cart-count">{cartCount}</span>
-          </button>
-          <button className="mobile-toggle focus-ring" type="button" aria-label={mobileOpen ? 'Cerrar navegación' : 'Abrir navegación'} aria-expanded={mobileOpen} onClick={() => setMobileOpen((open) => !open)} data-testid="button-mobile-navigation">
-            {mobileOpen ? <X size={21} /> : <MenuIcon size={21} />}
-          </button>
+          <div className="header-actions">
+            <ThemeToggle />
+            <button ref={cartTriggerRef} className="cart-trigger focus-ring" type="button" aria-label={`Abrir carrito, ${cartCount} artículos`} aria-haspopup="dialog" aria-expanded={cartOpen} onClick={() => setCartOpen(true)} data-testid="button-open-cart">
+              <ShoppingBag size={17} aria-hidden="true" /><span>Carrito</span><span className="cart-count" data-testid="text-cart-count">{cartCount}</span>
+            </button>
+            <button className="mobile-toggle focus-ring" type="button" aria-label={mobileOpen ? 'Cerrar navegación' : 'Abrir navegación'} aria-expanded={mobileOpen} onClick={() => setMobileOpen((open) => !open)} data-testid="button-mobile-navigation">
+              {mobileOpen ? <X size={21} /> : <MenuIcon size={21} />}
+            </button>
+          </div>
         </div>
       </header>
       <span className="sr-only" role="status" aria-live="polite" data-testid="status-cart-count">
