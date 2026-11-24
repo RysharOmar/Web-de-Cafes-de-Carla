@@ -194,12 +194,16 @@
 .menu-status p { margin: 0; }
 .menu-status .text-cta { justify-content: center; }
 .page-loader { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; min-height: 100dvh; padding: 32px 24px; background: hsl(var(--background)); color: hsl(var(--foreground)); text-align: center; }
-.page-loader-stage { display: flex; align-items: center; justify-content: center; gap: clamp(14px, 3.5vw, 42px); }
-.page-loader-svg { display: block; max-width: 100%; }
-.page-loader-dog { width: clamp(160px, 28vh, 280px); height: auto; }
-.page-loader-wordmark { width: min(720px, 60vw); height: auto; }
-.page-loader-path { fill: none; stroke: hsl(var(--foreground)); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; paint-order: fill stroke; }
-@media (max-width: 620px) { .page-loader-stage { flex-direction: column; gap: 16px; } }
+.page-loader-stage { width: min(760px, 92vw); display: grid; place-items: center; }
+.page-loader-logo { width: 100%; height: auto; display: block; overflow: visible; }
+.page-loader .draw-path { fill: none; stroke: hsl(var(--foreground)); stroke-linecap: round; stroke-linejoin: round; }
+.page-loader .draw-icon { stroke-width: 55; }
+.page-loader .draw-text { font-family: 'Fraunces', Georgia, serif; font-weight: 600; fill: none; stroke: hsl(var(--foreground)); stroke-linecap: round; stroke-linejoin: round; paint-order: stroke fill; }
+.page-loader .draw-text-main { font-size: 118px; letter-spacing: 0.01em; stroke-width: 1.6; }
+.page-loader .fill-icon, .page-loader .fill-icon use { fill: hsl(var(--accent)); stroke: none; }
+.page-loader .fill-text { font-family: 'Fraunces', Georgia, serif; font-weight: 600; fill: hsl(var(--foreground)); stroke: none; }
+.page-loader .fill-text-main { font-size: 118px; letter-spacing: 0.01em; }
+.page-loader .outline-group, .page-loader .filled-group, .page-loader .logo-group { will-change: opacity; }
 .page-loader h1 { margin: 2px 0 0; font-size: clamp(24px, 4vw, 34px); font-weight: 400; }
 .page-loader p { margin: 0; max-width: 420px; color: hsl(var(--muted-foreground)); font-size: 13px; line-height: 1.6; }
 .page-loader .text-cta { justify-content: center; }
