@@ -3,6 +3,7 @@ import { ArrowDown, ArrowRight, ArrowUpRight, Banknote, Clock3, CreditCard, Inst
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
+import PageLoader from '@/components/page-loader';
 import NotificationModal, { type NotificationVariant } from '@/components/ui/notification-modal';
 import CookieBanner from '@/components/cookie-banner';
 import LegalLinks from '@/components/legal-links';
@@ -116,35 +117,6 @@ function ProductCard({ item, onAdd }: { item: MenuItem; onAdd: (size: string, va
   );
 }
 
-function PageLoader({ error, onRetry }: { error?: string | null; onRetry?: () => void }) {
-  return (
-    <div
-      className="page-loader"
-      role={error ? 'alert' : 'status'}
-      aria-live="polite"
-      data-testid={error ? 'page-load-error' : 'page-loading'}
-    >
-      <img className="page-loader-logo" src={logo} alt="Cafés de Carla" width="1024" height="1024" />
-      {error ? (
-        <>
-          <h1 className="serif">No pudimos cargar la carta</h1>
-          <p>{error}</p>
-          {onRetry && (
-            <button type="button" className="text-cta focus-ring" onClick={onRetry}>
-              Reintentar
-            </button>
-          )}
-        </>
-      ) : (
-        <>
-          <span className="page-loader-spinner" aria-hidden="true" />
-          <p>Cargando carta...</p>
-        </>
-      )}
-    </div>
-  );
-}
-
 function Home() {
   const [activeCategory, setActiveCategory] = useState('');
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -205,7 +177,9 @@ function Home() {
         setMenuError(err instanceof Error ? err.message : 'No se pudo cargar la carta');
       }
     } finally {
-      if (!silent) {
+      // Si la carga fallo, cerramos la pantalla de carga para mostrar el error.
+      // Si fue exitosa, el preloader decide cuando termina la animacion y cierra la pantalla.
+      if (!silent && !hasLoadedMenuRef.current) {
         setMenuLoading(false);
       }
     }
@@ -752,7 +726,7 @@ function Home() {
   };
 
   if (menuLoading) {
-    return <PageLoader />;
+    return <PageLoader onFinished={() => setMenuLoading(false)} />;
   }
 
   if (menuError && productos.length === 0) {
