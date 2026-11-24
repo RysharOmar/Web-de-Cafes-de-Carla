@@ -183,7 +183,7 @@ function Home() {
       }
     } finally {
       if (isInitialPreload) {
-        const remaining = Math.max(0, 1500 - (Date.now() - startedAt));
+        const remaining = Math.max(0, 5500 - (Date.now() - startedAt));
         if (remaining > 0) {
           await new Promise((resolve) => setTimeout(resolve, remaining));
         }
