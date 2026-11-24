@@ -241,12 +241,14 @@ function PageLoader({ error, onRetry, onFinished }: PageLoaderProps) {
         el.style.strokeDasharray = `${length} ${length}`;
         el.style.strokeDashoffset = '0';
         el.style.fill = ACCENT;
+        el.style.stroke = ACCENT;
       });
       elementsRef.current.wordmark.forEach((el, i) => {
         const length = lengthsRef.current.wordmark[i];
         el.style.strokeDasharray = `${length} ${length}`;
         el.style.strokeDashoffset = '0';
         el.style.fill = ACCENT;
+        el.style.stroke = ACCENT;
       });
       if (container) container.style.opacity = '1';
     };
@@ -269,7 +271,9 @@ function PageLoader({ error, onRetry, onFinished }: PageLoaderProps) {
         const length = lengthsRef.current.dog[i];
         el.style.strokeDasharray = `${length} ${length}`;
         el.style.strokeDashoffset = String(length * (1 - progress));
-        el.style.fill = progress > 0.92 ? ACCENT : 'none';
+        const filled = progress > 0.92;
+        el.style.fill = filled ? ACCENT : 'none';
+        el.style.stroke = filled ? ACCENT : 'hsl(var(--foreground))';
       });
 
       elementsRef.current.wordmark.forEach((el, i) => {
@@ -278,7 +282,9 @@ function PageLoader({ error, onRetry, onFinished }: PageLoaderProps) {
         const length = lengthsRef.current.wordmark[i];
         el.style.strokeDasharray = `${length} ${length}`;
         el.style.strokeDashoffset = String(length * (1 - progress));
-        el.style.fill = progress > 0.92 ? ACCENT : 'none';
+        const filled = progress > 0.92;
+        el.style.fill = filled ? ACCENT : 'none';
+        el.style.stroke = filled ? ACCENT : 'hsl(var(--foreground))';
       });
 
       if (t < EXIT_AT) {
