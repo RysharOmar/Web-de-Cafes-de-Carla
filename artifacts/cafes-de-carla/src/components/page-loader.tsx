@@ -448,45 +448,6 @@ const CSS = `@import url("https://fonts.googleapis.com/css2?family=Cormorant+Gar
       will-change: opacity;
     }
 
-    /* Controls */
-    .cc-preloader .controls {
-      position: absolute;
-      right: 20px;
-      bottom: 20px;
-      display: flex;
-      gap: 10px;
-      z-index: 2;
-    }
-
-    .cc-preloader .control-btn {
-      appearance: none;
-      border: 1px solid rgba(97, 60, 42, 0.28);
-      background: rgba(97, 60, 42, 0.04);
-      color: var(--ink);
-      font: 500 13px/1 "Manrope", system-ui, sans-serif;
-      padding: 10px 14px;
-      border-radius: 999px;
-      cursor: pointer;
-      transition: background 180ms ease, border-color 180ms ease, color 180ms ease;
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-    }
-
-    .cc-preloader .control-btn:hover {
-      background: rgba(97, 60, 42, 0.08);
-      border-color: rgba(97, 60, 42, 0.45);
-    }
-
-    .cc-preloader .control-btn:focus-visible {
-      outline: 2px solid var(--ink);
-      outline-offset: 2px;
-    }
-
-    .cc-preloader .control-btn[disabled] {
-      opacity: 0.45;
-      cursor: not-allowed;
-    }
-
     .cc-preloader .sr-only {
       position: absolute !important;
       width: 1px;
@@ -501,18 +462,6 @@ const CSS = `@import url("https://fonts.googleapis.com/css2?family=Cormorant+Gar
 
     @media (max-width: 640px) {
       .stage { width: min(560px, 94vw); }
-      .controls {
-        right: 14px;
-        bottom: 14px;
-      }
-      .control-btn {
-        padding: 9px 12px;
-        font-size: 12px;
-      }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      .control-btn { transition: none; }
     }`;
 
 
@@ -544,11 +493,8 @@ export default function CafesDeCarlaPreloader() {
   const iconOutlineRef = useRef<SVGGElement>(null);
   const textOutlineRef = useRef<SVGGElement>(null);
   const preloaderRef = useRef<HTMLDivElement>(null);
-  const toggleBtnRef = useRef<HTMLButtonElement>(null);
-  const replayBtnRef = useRef<HTMLButtonElement>(null);
   const statusRef = useRef<HTMLDivElement>(null);
 
-  const [paused, setPaused] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(() =>
     typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches
   );
@@ -557,7 +503,6 @@ export default function CafesDeCarlaPreloader() {
     rafId: null as number | null,
     startTime: 0,
     elapsedOffset: 0,
-    paused: false,
     pausedAt: 0,
     visible: true,
     inViewport: true,
@@ -605,12 +550,6 @@ export default function CafesDeCarlaPreloader() {
   }
 
   function setReducedState(on: boolean) {
-    if (toggleBtnRef.current) {
-      toggleBtnRef.current.disabled = on;
-      toggleBtnRef.current.textContent = "Pausar";
-      toggleBtnRef.current.setAttribute("aria-pressed", "false");
-    }
-    if (replayBtnRef.current) replayBtnRef.current.disabled = on;
     if (outlineRef.current) outlineRef.current.style.opacity = on ? "0" : "";
     if (filledRef.current) filledRef.current.style.opacity = on ? "1" : "";
     if (logoRef.current) logoRef.current.style.opacity = "1";
@@ -651,7 +590,7 @@ export default function CafesDeCarlaPreloader() {
   }
 
   function tick(now: number) {
-    if (s.paused || !s.visible || !s.inViewport || s.prefersReducedMotion) {
+    if (!s.visible || !s.inViewport || s.prefersReducedMotion) {
       s.rafId = null;
       return;
     }
@@ -660,49 +599,11 @@ export default function CafesDeCarlaPreloader() {
   }
 
   function ensureRunning() {
-    if (s.prefersReducedMotion || s.paused || !s.visible || !s.inViewport || s.rafId != null) return;
+    if (s.prefersReducedMotion || !s.visible || !s.inViewport || s.rafId != null) return;
     s.startTime = performance.now();
     s.rafId = requestAnimationFrame(tick);
   }
 
-  function pause() {
-    if (s.paused || s.prefersReducedMotion) return;
-    s.paused = true;
-    s.pausedAt = performance.now();
-    setPaused(true);
-    if (toggleBtnRef.current) {
-      toggleBtnRef.current.textContent = "Reproducir";
-      toggleBtnRef.current.setAttribute("aria-pressed", "true");
-    }
-    stopLoop();
-  }
-
-  function play() {
-    if (!s.paused || s.prefersReducedMotion) return;
-    const now = performance.now();
-    s.elapsedOffset += s.pausedAt - now;
-    s.paused = false;
-    setPaused(false);
-    if (toggleBtnRef.current) {
-      toggleBtnRef.current.textContent = "Pausar";
-      toggleBtnRef.current.setAttribute("aria-pressed", "false");
-    }
-    ensureRunning();
-  }
-
-  function replay() {
-    if (s.prefersReducedMotion) return;
-    s.elapsedOffset = 0;
-    s.startTime = performance.now();
-    s.paused = false;
-    setPaused(false);
-    if (toggleBtnRef.current) {
-      toggleBtnRef.current.textContent = "Pausar";
-      toggleBtnRef.current.setAttribute("aria-pressed", "false");
-    }
-    render(s.startTime);
-    ensureRunning();
-  }
 
   useEffect(() => {
     let cancelled = false;
@@ -721,12 +622,6 @@ export default function CafesDeCarlaPreloader() {
         s.reducedApplied = false;
         s.elapsedOffset = 0;
         s.startTime = now;
-        s.paused = false;
-        setPaused(false);
-        if (toggleBtnRef.current) {
-          toggleBtnRef.current.textContent = "Pausar";
-          toggleBtnRef.current.setAttribute("aria-pressed", "false");
-        }
         prepareDrawables();
         ensureRunning();
       }
@@ -735,12 +630,12 @@ export default function CafesDeCarlaPreloader() {
     function onVisibility() {
       const now = performance.now();
       if (document.hidden) {
-        if (!s.paused && s.visible) s.pausedAt = now;
+        if (s.visible) s.pausedAt = now;
         s.visible = false;
         stopLoop();
       } else {
         s.visible = true;
-        if (!s.paused) s.elapsedOffset -= now - (s.pausedAt || now);
+        s.elapsedOffset -= now - (s.pausedAt || now);
         ensureRunning();
       }
     }
@@ -752,10 +647,10 @@ export default function CafesDeCarlaPreloader() {
         const now = performance.now();
         if (entry.isIntersecting) {
           s.inViewport = true;
-          if (!s.paused) s.elapsedOffset -= now - (s.pausedAt || now);
+          s.elapsedOffset -= now - (s.pausedAt || now);
           ensureRunning();
         } else {
-          if (!s.paused && s.inViewport) s.pausedAt = now;
+          if (s.inViewport) s.pausedAt = now;
           s.inViewport = false;
           stopLoop();
         }
@@ -849,28 +744,6 @@ export default function CafesDeCarlaPreloader() {
             </g>
           </g>
         </svg>
-      </div>
-
-      <div className="controls" aria-label="Controles del preloader">
-        <button
-          className="control-btn"
-          ref={toggleBtnRef}
-          type="button"
-          aria-pressed={false}
-          onClick={() => (paused ? play() : pause())}
-          disabled={prefersReducedMotion}
-        >
-          Pausar
-        </button>
-        <button
-          className="control-btn"
-          ref={replayBtnRef}
-          type="button"
-          onClick={replay}
-          disabled={prefersReducedMotion}
-        >
-          Repetir
-        </button>
       </div>
 
       <div className="sr-only" ref={statusRef} aria-live="polite" />
