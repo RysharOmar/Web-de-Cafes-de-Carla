@@ -275,10 +275,15 @@ const DICTIONARY: Record<string, Record<Lang, string>> = {
   'Sí, cerrar mesa': { es: 'Sí, cerrar mesa', en: 'Yes, close table' },
 };
 
+const PRELOADER_DURATION_MS = 5600;
+const PRELOADER_FADE_MS = 500;
+
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [lang, setLang] = useState<Lang>('es');
   const [isLangSwitching, setIsLangSwitching] = useState(false);
+  const [langPreloaderFading, setLangPreloaderFading] = useState(false);
   const switchTimerRef = useRef<number | null>(null);
+  const fadeTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     const stored = localStorage.getItem('cafes_de_carla_lang') as Lang | null;
@@ -290,21 +295,31 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     return () => {
       if (switchTimerRef.current) window.clearTimeout(switchTimerRef.current);
+      if (fadeTimerRef.current) window.clearTimeout(fadeTimerRef.current);
     };
   }, []);
 
   const toggleLanguage = useCallback(() => {
+    if (switchTimerRef.current) window.clearTimeout(switchTimerRef.current);
+    if (fadeTimerRef.current) window.clearTimeout(fadeTimerRef.current);
+
+    setLangPreloaderFading(false);
     setIsLangSwitching(true);
     setLang((prev) => {
       const next: Lang = prev === 'es' ? 'en' : 'es';
       localStorage.setItem('cafes_de_carla_lang', next);
       return next;
     });
-    if (switchTimerRef.current) window.clearTimeout(switchTimerRef.current);
+
     switchTimerRef.current = window.setTimeout(() => {
-      setIsLangSwitching(false);
+      setLangPreloaderFading(true);
+      fadeTimerRef.current = window.setTimeout(() => {
+        setIsLangSwitching(false);
+        setLangPreloaderFading(false);
+        fadeTimerRef.current = null;
+      }, PRELOADER_FADE_MS);
       switchTimerRef.current = null;
-    }, 1500);
+    }, PRELOADER_DURATION_MS);
   }, []);
 
   const t = useCallback(
@@ -318,7 +333,10 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     <LanguageContext.Provider value={{ lang, toggleLanguage, t, isLangSwitching }}>
       {children}
       {isLangSwitching && (
-        <div className="fixed inset-0 z-[10000]" aria-hidden="true">
+        <div
+          className={`fixed inset-0 z-[10000] transition-opacity duration-500 ${langPreloaderFading ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+          aria-hidden="true"
+        >
           <CafesDeCarlaPreloader />
         </div>
       )}
