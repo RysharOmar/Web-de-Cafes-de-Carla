@@ -8,13 +8,16 @@ import { z } from "zod/v4";
 export const productosTable = pgTable("products", {
   id: serial("id").primaryKey(),
   nombre: text("nombre").notNull(),
+  nombre_en: text("nombre_en"),
   precio: numeric("precio", { precision: 10, scale: 2 }).notNull(), // euros, tamaño Normal
   precio_mini: numeric("precio_mini", { precision: 10, scale: 2 }), // euros, NULL si no tiene Mini
   precio_grande: numeric("precio_grande", { precision: 10, scale: 2 }), // euros, NULL si no tiene Grande
   categoria: text("categoria").notNull(),
+  categoria_en: text("categoria_en"),
   agotado: boolean("agotado").notNull().default(false),
   imagen_url: text("imagen_url"),
   descripcion: text("descripcion"),
+  descripcion_en: text("descripcion_en"),
 });
 
 export const insertProductoSchema = createInsertSchema(productosTable).omit({

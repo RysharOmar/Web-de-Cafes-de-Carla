@@ -3,6 +3,8 @@ import { ArrowLeft, Banknote, Bike, Check, Clock, MapPin, Package, Phone, Rotate
 import ConfirmModal from '@/components/ui/confirm-modal';
 import LegalLinks from '@/components/legal-links';
 import ThemeToggle from '@/components/theme-toggle';
+import LangToggle from '@/components/lang-toggle';
+import { useLanguage } from '@/context/LanguageContext';
 import { authFetch } from '@/lib/auth-fetch';
 
 type OrderStatus = 'pending' | 'confirmed' | 'served' | 'paid';
@@ -161,6 +163,7 @@ export default function Cocina() {
   const [deliveryError, setDeliveryError] = useState('');
   const [deliveryConfirm, setDeliveryConfirm] = useState<DeliveryConfirmation | null>(null);
   const [paidCardSessions, setPaidCardSessions] = useState<Set<string>>(new Set());
+  const { t } = useLanguage();
 
   const soundEnabledRef = useRef(soundEnabled);
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -659,16 +662,19 @@ export default function Cocina() {
             onClick={() => (window.location.href = '/')}
             data-testid="button-back-home"
           >
-            <ArrowLeft size={15} aria-hidden="true" /> Volver a la carta
+            <ArrowLeft size={15} aria-hidden="true" /> {t('Volver a la carta')}
           </button>
           <div style={{ flex: 1 }} />
           <span className="serif" style={{ fontSize: '20px', color: '#4a3322' }}>
-            🍽️ Cocina — Pedidos de Mesa
+            🍽️ {t('Panel de personal')}
           </span>
           <div style={{ flex: 1 }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <ThemeToggle />
-            <span className="eyebrow cocina-header-role" style={{ color: '#83915f' }}>Panel de personal</span>
+            <LangToggle />
+            <span className="eyebrow cocina-header-role" style={{ color: '#83915f' }}>
+              {t('Panel de personal')}
+            </span>
           </div>
         </div>
       </header>

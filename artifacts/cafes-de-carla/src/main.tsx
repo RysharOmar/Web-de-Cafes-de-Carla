@@ -1,5 +1,6 @@
 import { createRoot } from 'react-dom/client';
 import { ThemeProvider } from 'next-themes';
+import { LanguageProvider } from '@/context/LanguageContext';
 
 import App from './App';
 import { ErrorBoundary } from '@/components/error-boundary';
@@ -14,7 +15,9 @@ createRoot(document.getElementById('root')!, {
 }).render(
   <ErrorBoundary>
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange={false}>
-      <App />
+      <LanguageProvider>
+        <App />
+      </LanguageProvider>
     </ThemeProvider>
   </ErrorBoundary>,
 );

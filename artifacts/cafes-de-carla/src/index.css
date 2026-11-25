@@ -857,3 +857,10 @@
 .dark .admin-main button { border-color: #4a3c30; }
 .dark .cocina-shell .site-header span[style*="color"] { color: #d8ccb9 !important; }
 .dark .cocina-main { color: #e6e2d3; }
+
+
+/* Language toggle */
+.lang-toggle{font:500 12px/1 "Manrope",system-ui,sans-serif;letter-spacing:.04em;padding:8px 10px;border-radius:999px;border:1px solid rgba(97,60,42,.28);background:rgba(97,60,42,.04);color:inherit;cursor:pointer;transition:background 180ms ease,border-color 180ms ease}
+.lang-toggle:hover{background:rgba(97,60,42,.08);border-color:rgba(97,60,42,.45)}
+.dark .lang-toggle{border-color:rgba(245,240,229,.22);background:rgba(245,240,229,.04)}
+.dark .lang-toggle:hover{background:rgba(245,240,229,.1);border-color:rgba(245,240,229,.4)}

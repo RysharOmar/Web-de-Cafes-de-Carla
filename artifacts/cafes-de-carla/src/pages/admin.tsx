@@ -4,6 +4,8 @@ import { Check, X, Clock, Lock, RefreshCw, LogOut } from 'lucide-react';
 import type { ApiProducto } from '@/lib/products';
 import { useAuth } from '@/context/AuthContext';
 import ThemeToggle from '@/components/theme-toggle';
+import LangToggle from '@/components/lang-toggle';
+import { useLanguage } from '@/context/LanguageContext';
 import { authFetch } from '@/lib/auth-fetch';
 
 function formatEuros(value: number | null | undefined) {
@@ -12,15 +14,17 @@ function formatEuros(value: number | null | undefined) {
 }
 
 function Header({ onLogout }: { onLogout?: () => void }) {
+  const { t } = useLanguage();
   return (
     <header className="site-header">
       <div className="header-inner section-wrap">
         <a href="/" className="brand-link focus-ring">
           <span className="serif">Cafés de Carla</span>
         </a>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <ThemeToggle />
-          <a href="/" className="text-cta focus-ring">Volver a la carta</a>
+          <LangToggle />
+          <a href="/" className="text-cta focus-ring">{t('Volver a la carta')}</a>
           {onLogout && (
             <button
               type="button"
@@ -52,6 +56,7 @@ function Header({ onLogout }: { onLogout?: () => void }) {
 export default function Admin() {
   const [, navigate] = useLocation();
   const { signOut } = useAuth();
+  const { t } = useLanguage();
   const [productos, setProductos] = useState<ApiProducto[]>([]);
   const [loading, setLoading] = useState(false);
   const [updating, setUpdating] = useState<Set<number>>(new Set());
@@ -60,11 +65,14 @@ export default function Admin() {
   const [editingProduct, setEditingProduct] = useState<ApiProducto | null>(null);
   const [editForm, setEditForm] = useState<{
     nombre: string;
+    nombre_en: string | null;
     precio: string;
     precio_mini: string | null;
     precio_grande: string | null;
     categoria: string;
+    categoria_en: string | null;
     descripcion: string | null;
+    descripcion_en: string | null;
     imagen_url: string | null;
     agotado: boolean;
   } | null>(null);
@@ -227,11 +235,14 @@ export default function Admin() {
     setEditingProduct(producto);
     setEditForm({
       nombre: producto.nombre,
+      nombre_en: producto.nombre_en ?? '',
       precio: String(producto.precio ?? ''),
       precio_mini: producto.precio_mini !== null ? String(producto.precio_mini) : '',
       precio_grande: producto.precio_grande !== null ? String(producto.precio_grande) : '',
       categoria: producto.categoria,
+      categoria_en: producto.categoria_en ?? '',
       descripcion: producto.descripcion ?? '',
+      descripcion_en: producto.descripcion_en ?? '',
       imagen_url: producto.imagen_url ?? '',
       agotado: Boolean(producto.agotado),
     });
@@ -281,11 +292,14 @@ export default function Admin() {
   const openAdd = () => {
     setEditForm({
       nombre: '',
+      nombre_en: '',
       precio: '',
       precio_mini: null,
       precio_grande: null,
       categoria: '',
+      categoria_en: '',
       descripcion: null,
+      descripcion_en: '',
       imagen_url: null,
       agotado: false,
     });
@@ -365,6 +379,9 @@ export default function Admin() {
         return;
       }
       body.categoria = categoriaFinal;
+      body.nombre_en = editForm.nombre_en?.trim() || null;
+      body.descripcion_en = editForm.descripcion_en?.trim() || null;
+      body.categoria_en = editForm.categoria_en?.trim() || null;
       body.descripcion = editForm.descripcion ?? null;
       body.imagen_url = editForm.imagen_url ?? null;
       body.agotado = Boolean(editForm.agotado);
@@ -819,28 +836,23 @@ export default function Admin() {
                 }}
               >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <label
-                    style={{
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      color: '#4a3322',
-                    }}
-                  >
-                    Nombre
-                  </label>
+                  <label style={{ fontSize: '12px', fontWeight: 600, color: '#4a3322' }}>Nombre</label>
                   <input
                     type="text"
                     value={editForm.nombre}
                     onChange={(e) => handleEditChange('nombre', e.target.value)}
-                    style={{
-                      width: '100%',
-                      boxSizing: 'border-box',
-                      padding: '10px 12px',
-                      border: '1px solid #ddd1bd',
-                      borderRadius: '8px',
-                      fontSize: '14px',
-                    }}
+                    style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', border: '1px solid #ddd1bd', borderRadius: '8px', fontSize: '14px' }}
                     required
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <label style={{ fontSize: '12px', fontWeight: 600, color: '#4a3322' }}>{t('Nombre (EN)')}</label>
+                  <input
+                    type="text"
+                    value={editForm.nombre_en ?? ''}
+                    onChange={(e) => handleEditChange('nombre_en', e.target.value || null)}
+                    style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', border: '1px solid #ddd1bd', borderRadius: '8px', fontSize: '14px' }}
+                    placeholder="English name (optional)"
                   />
                 </div>
 
@@ -893,16 +905,19 @@ export default function Admin() {
                       placeholder="Nombre de la nueva categoría"
                       value={nuevaCategoria}
                       onChange={(e) => setNuevaCategoria(e.target.value)}
-                      style={{
-                        width: '100%',
-                        boxSizing: 'border-box',
-                        padding: '10px 12px',
-                        border: '1px solid #ddd1bd',
-                        borderRadius: '8px',
-                        fontSize: '14px',
-                      }}
+                      style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', border: '1px solid #ddd1bd', borderRadius: '8px', fontSize: '14px' }}
                     />
                   )}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <label style={{ fontSize: '12px', fontWeight: 600, color: '#4a3322' }}>{t('Categoría (EN)')}</label>
+                  <input
+                    type="text"
+                    value={editForm.categoria_en ?? ''}
+                    onChange={(e) => handleEditChange('categoria_en', e.target.value || null)}
+                    style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', border: '1px solid #ddd1bd', borderRadius: '8px', fontSize: '14px' }}
+                    placeholder="English category (optional)"
+                  />
                 </div>
 
                 <div
@@ -994,29 +1009,22 @@ export default function Admin() {
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <label
-                    style={{
-                      fontSize: '12px',
-                      fontWeight: 600,
-                      color: '#4a3322',
-                    }}
-                  >
-                    Descripción
-                  </label>
+                  <label style={{ fontSize: '12px', fontWeight: 600, color: '#4a3322' }}>Descripción</label>
                   <textarea
                     value={editForm.descripcion ?? ''}
-                    onChange={(e) =>
-                      handleEditChange('descripcion', e.target.value || null)
-                    }
+                    onChange={(e) => handleEditChange('descripcion', e.target.value || null)}
                     rows={2}
-                    style={{
-                      width: '100%',
-                      boxSizing: 'border-box',
-                      padding: '10px 12px',
-                      border: '1px solid #ddd1bd',
-                      borderRadius: '8px',
-                      fontSize: '14px',
-                    }}
+                    style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', border: '1px solid #ddd1bd', borderRadius: '8px', fontSize: '14px' }}
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <label style={{ fontSize: '12px', fontWeight: 600, color: '#4a3322' }}>{t('Descripción (EN)')}</label>
+                  <textarea
+                    value={editForm.descripcion_en ?? ''}
+                    onChange={(e) => handleEditChange('descripcion_en', e.target.value || null)}
+                    rows={2}
+                    style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', border: '1px solid #ddd1bd', borderRadius: '8px', fontSize: '14px' }}
+                    placeholder="English description (optional)"
                   />
                 </div>
 

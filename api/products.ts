@@ -26,13 +26,16 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 type ProductoRow = {
   id: number;
   nombre: string;
+  nombre_en: string | null;
+  descripcion: string | null;
+  descripcion_en: string | null;
+  categoria: string;
+  categoria_en: string | null;
   precio: string | number;
   precio_mini: string | number | null;
   precio_grande: string | number | null;
-  categoria: string;
   agotado: boolean;
   imagen_url: string | null;
-  descripcion: string | null;
 };
 
 function toNumber(value: string | number | null | undefined): number | null {
@@ -53,6 +56,7 @@ function mapProducto(row: ProductoRow) {
   return {
     id: Number(row.id),
     nombre: row.nombre,
+    nombre_en: row.nombre_en ?? null,
     precio,
     precioCents: Math.round(precio * 100),
     precio_mini: precioMini,
@@ -60,9 +64,11 @@ function mapProducto(row: ProductoRow) {
     precio_grande: precioGrande,
     precioGrandeCents: toCents(precioGrande),
     categoria: row.categoria,
+    categoria_en: row.categoria_en ?? null,
     agotado: Boolean(row.agotado),
     imagen_url: row.imagen_url ?? null,
     descripcion: row.descripcion ?? null,
+    descripcion_en: row.descripcion_en ?? null,
   };
 }
 
@@ -91,7 +97,7 @@ export default async function handler(req: any, res: any) {
     // ---------- GET /api/products ----------
     if (method === 'GET' && rawId == null) {
       const result = await sql`
-        SELECT id, nombre, precio, precio_mini, precio_grande, categoria, agotado, imagen_url, descripcion
+        SELECT id, nombre, nombre_en, descripcion, descripcion_en, categoria, categoria_en, agotado, imagen_url, precio, precio_mini, precio_grande
         FROM products
         ORDER BY categoria ASC, nombre ASC
       `;
@@ -112,11 +118,14 @@ export default async function handler(req: any, res: any) {
 
       const {
         nombre,
+        nombre_en,
         precio,
         precio_mini,
         precio_grande,
         categoria,
+        categoria_en,
         descripcion,
+        descripcion_en,
         imagen_url,
         agotado,
       } = body;
@@ -124,11 +133,14 @@ export default async function handler(req: any, res: any) {
       // Columnas permitidas (evita inyección por nombre de columna)
       const allowedColumns: Record<string, string> = {
         nombre: 'nombre',
+        nombre_en: 'nombre_en',
         precio: 'precio',
         precio_mini: 'precio_mini',
         precio_grande: 'precio_grande',
         categoria: 'categoria',
+        categoria_en: 'categoria_en',
         descripcion: 'descripcion',
+        descripcion_en: 'descripcion_en',
         imagen_url: 'imagen_url',
         agotado: 'agotado',
       };
@@ -142,6 +154,17 @@ export default async function handler(req: any, res: any) {
           return res.status(400).json({ error: 'El campo nombre debe ser un texto no vacío' });
         }
         updates.push({ key: 'nombre', value: nombre.trim() });
+      }
+
+      // ---- nombre_en (admite null) ----
+      if (nombre_en !== undefined) {
+        if (nombre_en === null || nombre_en === '') {
+          updates.push({ key: 'nombre_en', value: null });
+        } else if (typeof nombre_en !== 'string') {
+          return res.status(400).json({ error: 'nombre_en debe ser texto o null' });
+        } else {
+          updates.push({ key: 'nombre_en', value: nombre_en.trim() || null });
+        }
       }
 
       // ---- precio ----
@@ -198,6 +221,28 @@ export default async function handler(req: any, res: any) {
         }
       }
 
+      // ---- descripcion_en (admite null) ----
+      if (descripcion_en !== undefined) {
+        if (descripcion_en === null || descripcion_en === '') {
+          updates.push({ key: 'descripcion_en', value: null });
+        } else if (typeof descripcion_en !== 'string') {
+          return res.status(400).json({ error: 'descripcion_en debe ser texto o null' });
+        } else {
+          updates.push({ key: 'descripcion_en', value: descripcion_en.trim() || null });
+        }
+      }
+
+      // ---- categoria_en (admite null) ----
+      if (categoria_en !== undefined) {
+        if (categoria_en === null || categoria_en === '') {
+          updates.push({ key: 'categoria_en', value: null });
+        } else if (typeof categoria_en !== 'string') {
+          return res.status(400).json({ error: 'categoria_en debe ser texto o null' });
+        } else {
+          updates.push({ key: 'categoria_en', value: categoria_en.trim() || null });
+        }
+      }
+
       // ---- imagen_url (admite null) ----
       if (imagen_url !== undefined) {
         if (imagen_url === null || imagen_url === '') {
@@ -224,7 +269,7 @@ export default async function handler(req: any, res: any) {
         `;
         // Devolver producto actualizado
         const result = await sql`
-          SELECT id, nombre, precio, precio_mini, precio_grande, categoria, agotado, imagen_url, descripcion
+          SELECT id, nombre, nombre_en, descripcion, descripcion_en, categoria, categoria_en, agotado, imagen_url, precio, precio_mini, precio_grande
           FROM products
           WHERE id = ${id}
         `;
@@ -253,7 +298,7 @@ export default async function handler(req: any, res: any) {
 
       const result = await pool.query(
         `UPDATE products SET ${setClause} WHERE id = $${validUpdates.length + 1}
-         RETURNING id, nombre, precio, precio_mini, precio_grande, categoria, agotado, imagen_url, descripcion`,
+         RETURNING id, nombre, nombre_en, descripcion, descripcion_en, categoria, categoria_en, agotado, imagen_url, precio, precio_mini, precio_grande`,
         values,
       );
 
@@ -290,11 +335,14 @@ export default async function handler(req: any, res: any) {
 
       const {
         nombre,
+        nombre_en,
         precio,
         precio_mini,
         precio_grande,
         categoria,
+        categoria_en,
         descripcion,
+        descripcion_en,
         imagen_url,
         agotado,
       } = body;
@@ -356,10 +404,37 @@ export default async function handler(req: any, res: any) {
       // ---- agotado (opcional, booleano, default false) ----
       const agotadoFinal = typeof agotado === 'boolean' ? agotado : false;
 
+      // ---- nombre_en (opcional) ----
+      let nombreEnFinal: string | null = null;
+      if (nombre_en !== undefined && nombre_en !== null && nombre_en !== '') {
+        if (typeof nombre_en !== 'string') {
+          return res.status(400).json({ error: 'nombre_en debe ser texto o null' });
+        }
+        nombreEnFinal = nombre_en.trim() || null;
+      }
+
+      // ---- descripcion_en (opcional) ----
+      let descripcionEnFinal: string | null = null;
+      if (descripcion_en !== undefined && descripcion_en !== null && descripcion_en !== '') {
+        if (typeof descripcion_en !== 'string') {
+          return res.status(400).json({ error: 'descripcion_en debe ser texto o null' });
+        }
+        descripcionEnFinal = descripcion_en.trim() || null;
+      }
+
+      // ---- categoria_en (opcional) ----
+      let categoriaEnFinal: string | null = null;
+      if (categoria_en !== undefined && categoria_en !== null && categoria_en !== '') {
+        if (typeof categoria_en !== 'string') {
+          return res.status(400).json({ error: 'categoria_en debe ser texto o null' });
+        }
+        categoriaEnFinal = categoria_en.trim() || null;
+      }
+
       const result = await sql`
-        INSERT INTO products (nombre, precio, precio_mini, precio_grande, categoria, agotado, imagen_url, descripcion)
-        VALUES (${nombre.trim()}, ${precioNum}, ${precioMiniFinal}, ${precioGrandeFinal}, ${categoria.trim()}, ${agotadoFinal}, ${imagenUrlFinal}, ${descripcionFinal})
-        RETURNING id, nombre, precio, precio_mini, precio_grande, categoria, agotado, imagen_url, descripcion
+        INSERT INTO products (nombre, nombre_en, precio, precio_mini, precio_grande, categoria, categoria_en, agotado, imagen_url, descripcion, descripcion_en)
+        VALUES (${nombre.trim()}, ${nombreEnFinal}, ${precioNum}, ${precioMiniFinal}, ${precioGrandeFinal}, ${categoria.trim()}, ${categoriaEnFinal}, ${agotadoFinal}, ${imagenUrlFinal}, ${descripcionFinal}, ${descripcionEnFinal})
+        RETURNING id, nombre, nombre_en, descripcion, descripcion_en, categoria, categoria_en, agotado, imagen_url, precio, precio_mini, precio_grande
       `;
 
       if (result.length === 0) {

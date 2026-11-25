@@ -1,21 +1,25 @@
 import { ArrowLeft, ArrowRight, Coffee, MapPin } from 'lucide-react';
 import LegalLinks from '@/components/legal-links';
 import ThemeToggle from '@/components/theme-toggle';
+import LangToggle from '@/components/lang-toggle';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function NotFound() {
+  const { t } = useLanguage();
   return (
     <div className="site-shell grain notfound-shell">
       <header className="site-header">
         <div className="header-inner section-wrap">
           <a href="/" className="text-cta focus-ring" data-testid="button-back-home">
-            <ArrowLeft size={15} aria-hidden="true" /> Volver a la carta
+            <ArrowLeft size={15} aria-hidden="true" /> {t('Volver a la carta')}
           </a>
           <div style={{ flex: 1 }} />
           <span className="serif" style={{ fontSize: '20px', color: '#4a3322' }}>Cafés de Carla</span>
           <div style={{ flex: 1 }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <ThemeToggle />
-            <span className="eyebrow" style={{ color: '#83915f' }}>Ups…</span>
+            <LangToggle />
+            <span className="eyebrow" style={{ color: '#83915f' }}>{t('Ups…')}</span>
           </div>
         </div>
       </header>

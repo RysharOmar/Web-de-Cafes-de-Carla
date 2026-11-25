@@ -2,6 +2,8 @@ import type { ReactNode } from 'react';
 import { ArrowLeft, Cookie, FileText, ShieldCheck } from 'lucide-react';
 import LegalLinks from '@/components/legal-links';
 import ThemeToggle from '@/components/theme-toggle';
+import LangToggle from '@/components/lang-toggle';
+import { useLanguage } from '@/context/LanguageContext';
 import { resetCookieConsent } from '@/lib/cookie-consent';
 
 export type LegalPageKind = 'aviso-legal' | 'politica-privacidad' | 'politica-cookies';
@@ -109,20 +111,22 @@ const content: Record<LegalPageKind, { eyebrow: string; title: string; intro: st
 
 export default function LegalPage({ kind }: { kind: LegalPageKind }) {
   const page = content[kind];
+  const { t } = useLanguage();
 
   return (
     <div className="site-shell grain legal-shell">
       <header className="site-header">
         <div className="header-inner section-wrap">
           <a href="/" className="text-cta focus-ring" data-testid="button-back-home">
-            <ArrowLeft size={15} aria-hidden="true" /> Volver a la carta
+            <ArrowLeft size={15} aria-hidden="true" /> {t('Volver a la carta')}
           </a>
           <div style={{ flex: 1 }} />
           <span className="serif" style={{ fontSize: '20px', color: '#4a3322' }}>Cafés de Carla</span>
           <div style={{ flex: 1 }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <ThemeToggle />
-            <span className="eyebrow" style={{ color: '#83915f' }}>Información</span>
+            <LangToggle />
+            <span className="eyebrow" style={{ color: '#83915f' }}>{t('Información')}</span>
           </div>
         </div>
       </header>

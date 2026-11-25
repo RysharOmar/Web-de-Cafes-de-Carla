@@ -7,6 +7,7 @@ import { Toaster } from '@/components/ui/toaster';
 import NotificationModal, { type NotificationVariant } from '@/components/ui/notification-modal';
 import CookieBanner from '@/components/cookie-banner';
 import ThemeToggle from '@/components/theme-toggle';
+import LangToggle from '@/components/lang-toggle';
 import LegalLinks from '@/components/legal-links';
 import LegalPage from '@/pages/legal';
 import Login from '@/pages/Login';
@@ -19,7 +20,14 @@ import Success from '@/pages/success';
 import Cocina from '@/pages/cocina';
 import Admin from '@/pages/admin';
 import { Route, Switch, useLocation, Router as WouterRouter } from 'wouter';
-import { displaySizeLabel, groupProductos, priceForLine, type ApiProducto, type MenuItem } from '@/lib/products';
+import {
+  displaySizeLabel,
+  groupProductos,
+  priceForLine,
+  type ApiProducto,
+  type MenuItem,
+} from '@/lib/products';
+import { useLanguage } from '@/context/LanguageContext';
 
 const queryClient = new QueryClient();
 const logo = '/cafes-de-carla-logo.jpg';
@@ -50,6 +58,7 @@ function formatPrice(cents: number) {
 
 // Product card: image, description, sizes and availability all come from Neon.
 function ProductCard({ item, onAdd }: { item: MenuItem; onAdd: (size: string, variant: string | null) => void }) {
+  const { t } = useLanguage();
   const [selectedSize, setSelectedSize] = useState(item.defaultSize);
   const [imageFailed, setImageFailed] = useState(false);
 
@@ -80,7 +89,7 @@ function ProductCard({ item, onAdd }: { item: MenuItem; onAdd: (size: string, va
 
         {hasSizes && (
           <div className="variant-selector" data-testid={`size-selector-${item.id}`}>
-            <label>Tamaño:</label>
+            <label>{t('Tamaño:')}</label>
             <div className="variant-options">
               {item.sizes.map((size) => (
                 <button
@@ -111,7 +120,7 @@ function ProductCard({ item, onAdd }: { item: MenuItem; onAdd: (size: string, va
             disabled={item.agotado}
           >
             <Plus size={15} aria-hidden="true" />
-            <span>{item.agotado ? 'Agotado' : 'Añadir'}</span>
+            <span>{item.agotado ? t('Agotado') : t('Añadir')}</span>
           </button>
         </div>
       </div>
@@ -123,7 +132,7 @@ function Home() {
   const [activeCategory, setActiveCategory] = useState('');
   const [mobileOpen, setMobileOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
-  const [cart, setCart] = useState<Record<string, { itemId: string; quantity: number; sizeLabel: string; variant: string | null }>>({});
+  const [cart, setCart] = useState<Record<string, { itemId: string; quantity: number; sizeLabel: string; variant: string | null; nameEs?: string }>>({});
   const [productos, setProductos] = useState<ApiProducto[]>([]);
   const [menuLoading, setMenuLoading] = useState(true);
   const [menuError, setMenuError] = useState<string | null>(null);
@@ -131,8 +140,12 @@ function Home() {
   const [preloaderFading, setPreloaderFading] = useState(false);
   const lastMenuFetchRef = useRef(0);
   const hasLoadedMenuRef = useRef(false);
+  const { lang, t } = useLanguage();
 
-  const menuCategories = useMemo(() => groupProductos(productos), [productos]);
+  const menuCategories = useMemo(() => groupProductos(productos, lang), [
+    productos,
+    lang,
+  ]);
   const menuItemsById = useMemo(
     () => new Map(menuCategories.flatMap((category) => category.items).map((item) => [item.id, item] as const)),
     [menuCategories],
@@ -316,6 +329,7 @@ function Home() {
 
   const changeCartQuantity = (itemId: string, sizeLabel: string, adjustment: number, variant: string | null = null) => {
     const categoryId = menuItemCategoryById.get(itemId);
+    const item = menuItemsById.get(itemId);
     if (adjustment > 0 && categoryId) trackCartAdd(itemId, categoryId);
     setCartOpen(true);
 
@@ -327,7 +341,13 @@ function Home() {
       if (quantity <= 0) {
         delete next[key];
       } else {
-        next[key] = { itemId, quantity, sizeLabel, variant: existing?.variant ?? variant ?? null };
+        next[key] = {
+          itemId,
+          quantity,
+          sizeLabel,
+          variant: existing?.variant ?? variant ?? null,
+          nameEs: existing?.nameEs ?? item?.nameEs ?? undefined,
+        };
       }
       return next;
     });
@@ -378,8 +398,8 @@ function Home() {
       const cartSummary = cartLines.map((line) => {
         const item = menuItemsById.get(line.itemId);
         return {
-          name: item?.name ?? line.itemId,
-          category: item?.category ?? '',
+          name: line.nameEs ?? item?.nameEs ?? line.itemId,
+          category: item?.categoryEs ?? item?.category ?? '',
           qty: line.quantity,
           sizeLabel: line.sizeLabel,
           variant: line.variant ?? undefined,
@@ -411,7 +431,8 @@ function Home() {
         const price = priceForLine(item, line.sizeLabel);
         return {
           id: line.itemId,
-          name: item?.name ?? line.itemId,
+          // En cocina se muestra siempre el nombre base en español para evitar confusiones.
+          name: line.nameEs ?? item?.nameEs ?? line.itemId,
           quantity: line.quantity,
           sizeLabel: line.sizeLabel,
           variant: line.variant ?? undefined,
@@ -723,7 +744,7 @@ function Home() {
           title={!termsAccepted ? 'Acepta los términos y la política de privacidad para pagar' : undefined}
         >
           <CreditCard size={18} aria-hidden="true" />
-          <span>Pagar con tarjeta — {formatPrice(tableTotalCents)}</span>
+          <span>{t('Pagar con tarjeta')} — {formatPrice(tableTotalCents)}</span>
         </button>
         <button
           className="cart-checkout cart-checkout--cash focus-ring"
@@ -734,7 +755,7 @@ function Home() {
           title={!termsAccepted ? 'Acepta los términos y la política de privacidad para pagar' : undefined}
         >
           <Banknote size={18} aria-hidden="true" />
-          <span>Pagar en Efectivo — {formatPrice(tableTotalCents)}</span>
+          <span>{t('Pagar en Efectivo')} — {formatPrice(tableTotalCents)}</span>
         </button>
       </div>
     );
@@ -753,10 +774,10 @@ function Home() {
     return (
       <>
         <div className="min-h-[100dvh] flex flex-col items-center justify-center gap-4 p-6 text-center" style={{ background: '#f5f0e5', color: '#4a3322' }}>
-          <h1 className="serif" style={{ margin: 0, fontSize: 'clamp(24px,4vw,34px)', fontWeight: 400 }}>No pudimos cargar la carta</h1>
+          <h1 className="serif" style={{ margin: 0, fontSize: 'clamp(24px,4vw,34px)', fontWeight: 400 }}>{t('No pudimos cargar la carta')}</h1>
           <p style={{ margin: 0, maxWidth: 420, color: '#7c6f5e', fontSize: 13, lineHeight: 1.6 }}>{menuError}</p>
           <button type="button" className="text-cta focus-ring" onClick={() => loadMenu()}>
-            Reintentar
+            {t('Reintentar')}
           </button>
         </div>
         {preloaderOverlay}
@@ -783,6 +804,7 @@ function Home() {
           </nav>
           <div className="header-actions">
             <ThemeToggle />
+            <LangToggle />
             <button ref={cartTriggerRef} className="cart-trigger focus-ring" type="button" aria-label={`Abrir carrito, ${cartCount} artículos`} aria-haspopup="dialog" aria-expanded={cartOpen} onClick={() => setCartOpen(true)} data-testid="button-open-cart">
               <ShoppingBag size={17} aria-hidden="true" /><span>Carrito</span><span className="cart-count" data-testid="text-cart-count">{cartCount}</span>
             </button>
@@ -853,16 +875,16 @@ function Home() {
           {menuLoading ? (
             <div className="menu-status" role="status" data-testid="menu-loading">
               <Clock3 size={22} aria-hidden="true" />
-              <p>Cargando la carta...</p>
+              <p>{t('Cargando la carta...')}</p>
             </div>
           ) : menuError && menuCategories.length === 0 ? (
             <div className="menu-status" role="alert" data-testid="menu-error">
               <p>{menuError}</p>
-              <button type="button" className="text-cta focus-ring" onClick={() => loadMenu()}>Reintentar</button>
+              <button type="button" className="text-cta focus-ring" onClick={() => loadMenu()}>{t('Reintentar')}</button>
             </div>
           ) : menuCategories.length === 0 ? (
             <div className="menu-status" data-testid="menu-empty">
-              <p>La carta está vacía en este momento. Vuelve a intentarlo en unos minutos.</p>
+              <p>{t('La carta está vacía en este momento. Vuelve a intentarlo en unos minutos.')}</p>
             </div>
           ) : (
             <>
@@ -990,7 +1012,7 @@ function Home() {
           <button className="cart-backdrop" type="button" aria-label="Cerrar carrito" onClick={() => setCartOpen(false)} data-testid="button-close-cart-backdrop" />
           <aside ref={cartDrawerRef} className="cart-drawer" role="dialog" aria-modal="true" aria-labelledby="cart-title" tabIndex={-1} data-testid="panel-cart">
             <div className="cart-header">
-              <div><span className="eyebrow">TU SELECCIÓN</span><h2 className="serif" id="cart-title">Tu carrito</h2></div>
+              <div><span className="eyebrow">{t('TU SELECCIÓN')}</span><h2 className="serif" id="cart-title">{t('Tu carrito')}</h2></div>
               <button ref={cartCloseRef} className="cart-close focus-ring" type="button" aria-label="Cerrar carrito" onClick={() => setCartOpen(false)} data-testid="button-close-cart"><X size={20} /></button>
             </div>
             <div className="cart-body">
@@ -999,11 +1021,11 @@ function Home() {
                 <div className="cart-empty cart-empty--order" data-testid="empty-cart">
                   <ShoppingBag size={28} aria-hidden="true" />
                   {orderStatus === 'served' ? (
-                    <p>{cashPending ? 'Pago en efectivo pendiente.' : 'Tu pedido está listo para pagar.'}</p>
+                    <p>{cashPending ? t('Pago en efectivo pendiente.') : t('Tu pedido está listo para pagar.')}</p>
                   ) : orderStatus === 'paid' ? (
-                    <p>Tu pedido ya está pagado.</p>
+                    <p>{t('Tu pedido ya está pagado.')}</p>
                   ) : (
-                    <p>Tu pedido ya fue enviado a cocina.</p>
+                    <p>{t('Tu pedido ya fue enviado a cocina.')}</p>
                   )}
                   <p className="cart-empty-copy">
                     Puedes seguir agregando más productos o completar el pago.
@@ -1102,17 +1124,17 @@ function Home() {
                     <>
                       {orderStatus === 'served' && !cashPending && (
                         <p className="cart-preview-note" style={{ color: '#6b7d4c', fontWeight: 700, marginBottom: '12px' }}>
-                          Tu pedido anterior está servido · Puedes pagar o agregar más
+                          {t('Tu pedido anterior está servido · Puedes pagar o agregar más')}
                         </p>
                       )}
                       {orderStatus === 'paid' && (
                         <p className="cart-preview-note" style={{ color: '#6b7d4c', fontWeight: 700, marginBottom: '12px' }}>
-                          Pedido anterior pagado ✓ · Puedes seguir pidiendo
+                          {t('Pedido anterior pagado ✓ · Puedes seguir pidiendo')}
                         </p>
                       )}
                       {orderStatus !== 'served' && orderStatus !== 'paid' && (
                         <p className="cart-preview-note" style={{ color: '#7c6f5e', fontSize: '11px', marginBottom: '12px' }}>
-                          Tu pedido ya fue enviado a cocina. Puedes agregar más items.
+                          {t('Tu pedido ya fue enviado a cocina. Puedes agregar más items.')}
                         </p>
                       )}
                       <button
@@ -1120,10 +1142,10 @@ function Home() {
                         style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', background: '#6b7d4c', borderColor: '#6b7d4c' }}
                       >
                         <span style={{ fontSize: '18px', marginRight: '6px' }}>🍽️</span>
-                        <span>Agregar más a cocina — {formatPrice(tableTotalCents)}</span>
+                        <span>{t('Agregar más a cocina')} — {formatPrice(tableTotalCents)}</span>
                       </button>
                       {renderTablePaymentActions()}
-                      <button className="cart-clear focus-ring" type="button" onClick={() => setCart({})} data-testid="button-clear-cart">Vaciar carrito</button>
+                      <button className="cart-clear focus-ring" type="button" onClick={() => setCart({})} data-testid="button-clear-cart">{t('Vaciar carrito')}</button>
                     </>
                   ) : (
                     <>
@@ -1153,9 +1175,9 @@ function Home() {
                     style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
                   >
                     <CreditCard size={18} aria-hidden="true" />
-                    <span>Terminar pedido — {formatPrice(cartSubtotal)}</span>
+                    <span>{t('Terminar pedido')} — {formatPrice(cartSubtotal)}</span>
                   </button>
-                  <button className="cart-clear focus-ring" type="button" onClick={() => setCart({})} data-testid="button-clear-cart">Vaciar carrito</button>
+                  <button className="cart-clear focus-ring" type="button" onClick={() => setCart({})} data-testid="button-clear-cart">{t('Vaciar carrito')}</button>
                 </>
               )}
             </div>

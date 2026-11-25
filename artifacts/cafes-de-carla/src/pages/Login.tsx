@@ -4,6 +4,8 @@ import { ArrowLeft, LockKeyhole, Mail } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import LegalLinks from '@/components/legal-links';
 import ThemeToggle from '@/components/theme-toggle';
+import LangToggle from '@/components/lang-toggle';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function Login() {
   const [, navigate] = useLocation();
@@ -12,6 +14,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const { t } = useLanguage();
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -41,14 +44,15 @@ export default function Login() {
       <header className="site-header">
         <div className="header-inner section-wrap">
           <a href="/" className="text-cta focus-ring">
-            <ArrowLeft size={15} aria-hidden="true" /> Volver a la carta
+            <ArrowLeft size={15} aria-hidden="true" /> {t('Volver a la carta')}
           </a>
           <div style={{ flex: 1 }} />
           <span className="serif" style={{ fontSize: '20px', color: '#4a3322' }}>Cafés de Carla</span>
           <div style={{ flex: 1 }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <ThemeToggle />
-            <span className="eyebrow" style={{ color: '#83915f' }}>Acceso de personal</span>
+            <LangToggle />
+            <span className="eyebrow" style={{ color: '#83915f' }}>{t('Acceso de personal')}</span>
           </div>
         </div>
       </header>
