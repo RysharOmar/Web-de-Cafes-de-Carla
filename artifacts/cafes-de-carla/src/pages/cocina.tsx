@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, Banknote, Bike, Check, Clock, MapPin, Package, Phone, RotateCcw, User, Volume2, VolumeX, X } from 'lucide-react';
+import { ArrowLeft, Banknote, Bike, Check, Clock, LogOut, MapPin, Package, Phone, RotateCcw, User, Volume2, VolumeX, X } from 'lucide-react';
 import ConfirmModal from '@/components/ui/confirm-modal';
-import LegalLinks from '@/components/legal-links';
-import ThemeToggle from '@/components/theme-toggle';
-import LangToggle from '@/components/lang-toggle';
 import { useLanguage } from '@/context/LanguageContext';
+import { useAuth } from '@/context/AuthContext';
 import { authFetch } from '@/lib/auth-fetch';
 
 type OrderStatus = 'pending' | 'confirmed' | 'served' | 'paid';
@@ -164,6 +162,12 @@ export default function Cocina() {
   const [deliveryConfirm, setDeliveryConfirm] = useState<DeliveryConfirmation | null>(null);
   const [paidCardSessions, setPaidCardSessions] = useState<Set<string>>(new Set());
   const { t, lang } = useLanguage();
+  const { signOut } = useAuth();
+
+  async function logout() {
+    await signOut();
+    window.location.href = '/login';
+  }
 
   const soundEnabledRef = useRef(soundEnabled);
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -656,24 +660,31 @@ export default function Cocina() {
   return (
     <div className="site-shell grain cocina-shell">
       <header className="site-header">
-        <div className="header-inner section-wrap">
-          <button
-            className="text-cta focus-ring"
-            onClick={() => (window.location.href = '/')}
-            data-testid="button-back-home"
-          >
-            <ArrowLeft size={15} aria-hidden="true" /> {t('Volver a la carta')}
-          </button>
-          <div style={{ flex: 1 }} />
+        <div className="header-inner section-wrap" style={{ paddingBlock: '12px' }}>
           <span className="serif" style={{ fontSize: '20px', color: '#4a3322' }}>
-            🍽️ {t('Panel de personal')}
+            🍽️ Cafés de Carla · Cocina
           </span>
-          <div style={{ flex: 1 }} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <LangToggle />
-            <span className="eyebrow cocina-header-role" style={{ color: '#83915f' }}>
-              {t('Panel de personal')}
-            </span>
+          <div style={{ marginLeft: 'auto' }}>
+            <button
+              type="button"
+              onClick={logout}
+              className="focus-ring"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: 'none',
+                border: '1px solid #ddd1bd',
+                borderRadius: '99px',
+                padding: '8px 14px',
+                color: '#7c6f5e',
+                fontSize: '12px',
+                cursor: 'pointer',
+              }}
+            >
+              <LogOut size={13} aria-hidden="true" />
+              {t('Cerrar sesión')}
+            </button>
           </div>
         </div>
       </header>
@@ -1018,15 +1029,7 @@ export default function Cocina() {
         )}
       </main>
 
-      <footer className="site-footer">
-        <div className="footer-main section-wrap">
-          <span className="footer-tagline serif">Cafés de Carla — Cocina</span>
-          <span style={{ fontSize: '10px', color: '#9a8b75' }}>
-            Panel solo para personal del local · Datos en memoria local
-          </span>
-          <LegalLinks />
-        </div>
-      </footer>
+
 
       <ConfirmModal
         open={confirmTable !== null}

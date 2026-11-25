@@ -3,8 +3,6 @@ import { useLocation } from 'wouter';
 import { Check, X, Clock, Lock, RefreshCw, LogOut } from 'lucide-react';
 import type { ApiProducto } from '@/lib/products';
 import { useAuth } from '@/context/AuthContext';
-import ThemeToggle from '@/components/theme-toggle';
-import LangToggle from '@/components/lang-toggle';
 import { useLanguage } from '@/context/LanguageContext';
 import { authFetch } from '@/lib/auth-fetch';
 
@@ -17,13 +15,9 @@ function Header({ onLogout }: { onLogout?: () => void }) {
   const { t } = useLanguage();
   return (
     <header className="site-header">
-      <div className="header-inner section-wrap">
-        <a href="/" className="brand-link focus-ring">
-          <span className="serif">Cafés de Carla</span>
-        </a>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <LangToggle />
-          <a href="/" className="text-cta focus-ring">{t('Volver a la carta')}</a>
+      <div className="header-inner section-wrap" style={{ paddingBlock: '12px' }}>
+        <span className="serif" style={{ fontSize: '20px', color: '#4a3322' }}>Cafés de Carla · {t('Panel de Administración')}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginLeft: 'auto' }}>
           {onLogout && (
             <button
               type="button"
@@ -43,7 +37,7 @@ function Header({ onLogout }: { onLogout?: () => void }) {
               }}
             >
               <LogOut size={13} aria-hidden="true" />
-              Cerrar sesión
+              {t('Cerrar sesión')}
             </button>
           )}
         </div>
