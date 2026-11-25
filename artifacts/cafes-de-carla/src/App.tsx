@@ -58,7 +58,7 @@ function formatPrice(cents: number) {
 
 // Product card: image, description, sizes and availability all come from Neon.
 function ProductCard({ item, onAdd }: { item: MenuItem; onAdd: (size: string, variant: string | null) => void }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [selectedSize, setSelectedSize] = useState(item.defaultSize);
   const [imageFailed, setImageFailed] = useState(false);
 
@@ -100,7 +100,7 @@ function ProductCard({ item, onAdd }: { item: MenuItem; onAdd: (size: string, va
                   data-testid={`size-${item.id}-${size.label}`}
                   disabled={item.agotado}
                 >
-                  {displaySizeLabel(item.category, size.label)}
+                  {displaySizeLabel(item.category, size.label, lang)}
                 </button>
               ))}
             </div>
@@ -723,9 +723,9 @@ function Home() {
     <div className="cart-cash-notice" role="status" data-testid="text-cash-pending">
       <span className="cart-cash-notice-icon" aria-hidden="true">💶</span>
       <div>
-        <strong>Pago en efectivo pendiente</strong>
-        <span>Avisa al camarero de que vas a pagar en efectivo.</span>
-        <span className="cart-cash-notice-help">El camarero marcará la mesa como cobrada desde el panel de cocina.</span>
+        <strong>{t('Pago en efectivo pendiente')}</strong>
+        <span>{t('Avisa al camarero de que vas a pagar en efectivo.')}</span>
+        <span className="cart-cash-notice-help">{t('El camarero marcará la mesa como cobrada desde el panel de cocina.')}</span>
       </div>
     </div>
   ) : null;
@@ -805,7 +805,7 @@ function Home() {
           <div className="header-actions">
             <ThemeToggle />
             <LangToggle />
-            <button ref={cartTriggerRef} className="cart-trigger focus-ring" type="button" aria-label={`Abrir carrito, ${cartCount} artículos`} aria-haspopup="dialog" aria-expanded={cartOpen} onClick={() => setCartOpen(true)} data-testid="button-open-cart">
+            <button ref={cartTriggerRef} className="cart-trigger focus-ring" type="button" aria-label={lang === 'en' ? `Open cart, ${cartCount} items` : `Abrir carrito, ${cartCount} artículos`} aria-haspopup="dialog" aria-expanded={cartOpen} onClick={() => setCartOpen(true)} data-testid="button-open-cart">
               <ShoppingBag size={17} aria-hidden="true" /><span>Carrito</span><span className="cart-count" data-testid="text-cart-count">{cartCount}</span>
             </button>
             <button className="mobile-toggle focus-ring" type="button" aria-label={mobileOpen ? 'Cerrar navegación' : 'Abrir navegación'} aria-expanded={mobileOpen} onClick={() => setMobileOpen((open) => !open)} data-testid="button-mobile-navigation">
@@ -821,8 +821,8 @@ function Home() {
       {mesaActiva && (
         <section className="mesa-banner">
           <div className="mesa-banner-inner section-wrap">
-            <span className="mesa-badge">🍽️ Mesa {mesaActiva}</span>
-            <span className="mesa-note">Estás en el local · Pide lo que quieras y paga al final</span>
+            <span className="mesa-badge">🍽️ {t('MESA')} {mesaActiva}</span>
+            <span className="mesa-note">{t('Estás en el local · Pide lo que quieras y paga al final')}</span>
           </div>
         </section>
       )}
@@ -1011,11 +1011,11 @@ function Home() {
       {/* Cart Drawer - only rendered when open */}
       {cartOpen && (
         <>
-          <button className="cart-backdrop" type="button" aria-label="Cerrar carrito" onClick={() => setCartOpen(false)} data-testid="button-close-cart-backdrop" />
+          <button className="cart-backdrop" type="button" aria-label={lang === 'en' ? 'Close cart' : 'Cerrar carrito'} onClick={() => setCartOpen(false)} data-testid="button-close-cart-backdrop" />
           <aside ref={cartDrawerRef} className="cart-drawer" role="dialog" aria-modal="true" aria-labelledby="cart-title" tabIndex={-1} data-testid="panel-cart">
             <div className="cart-header">
               <div><span className="eyebrow">{t('TU SELECCIÓN')}</span><h2 className="serif" id="cart-title">{t('Tu carrito')}</h2></div>
-              <button ref={cartCloseRef} className="cart-close focus-ring" type="button" aria-label="Cerrar carrito" onClick={() => setCartOpen(false)} data-testid="button-close-cart"><X size={20} /></button>
+              <button ref={cartCloseRef} className="cart-close focus-ring" type="button" aria-label={lang === 'en' ? 'Close cart' : 'Cerrar carrito'} onClick={() => setCartOpen(false)} data-testid="button-close-cart"><X size={20} /></button>
             </div>
             <div className="cart-body">
             {cartLines.length === 0 && mesaActiva && orderItemsFromStorage.length > 0 ? (
@@ -1030,26 +1030,26 @@ function Home() {
                     <p>{t('Tu pedido ya fue enviado a cocina.')}</p>
                   )}
                   <p className="cart-empty-copy">
-                    Puedes seguir agregando más productos o completar el pago.
+                    {t('Puedes seguir agregando más productos o completar el pago.')}
                   </p>
-                  <a className="text-cta focus-ring" href="#carta" onClick={() => setCartOpen(false)} data-testid="link-cart-to-menu">Seguir pidiendo <ArrowDown size={15} /></a>
+                  <a className="text-cta focus-ring" href="#carta" onClick={() => setCartOpen(false)} data-testid="link-cart-to-menu">{t('Seguir pidiendo')} <ArrowDown size={15} /></a>
                 </div>
 
                 <div className="cart-table-info">
                   <div className="cart-table-status">
-                    <span>Estado</span>
+                    <span>{t('Estado')}</span>
                     <strong>
-                      {orderStatus === 'pending' ? 'Pendiente' : orderStatus === 'confirmed' ? 'Confirmado' : orderStatus === 'served' ? 'Servido' : orderStatus === 'paid' ? 'Pagado' : '—'}
+                      {orderStatus === 'pending' ? t('Pendiente') : orderStatus === 'confirmed' ? t('Confirmado') : orderStatus === 'served' ? t('Servido') : orderStatus === 'paid' ? t('Pagado') : '—'}
                     </strong>
                   </div>
                   <div className="cart-table-items">
-                    <strong className="cart-table-items-title">Items en cocina</strong>
+                    <strong className="cart-table-items-title">{t('Items en cocina')}</strong>
                     <div className="cart-table-list">
                       {orderItemsFromStorage.map((item) => (
                         <div className="cart-table-item" key={item.id + '-' + item.quantity}>
                           <span className="cart-table-item-name">
                             {item.quantity} × {item.name}
-                            {item.sizeLabel ? ` (${displaySizeLabel(menuItemsById.get(item.id)?.category ?? '', item.sizeLabel)})` : ''}
+                            {item.sizeLabel ? ` (${displaySizeLabel(menuItemsById.get(item.id)?.category ?? '', item.sizeLabel, lang)})` : ''}
                             {item.variant ? ` · ${item.variant}` : ''}
                           </span>
                           <strong>{formatPrice(item.priceCents * item.quantity)}</strong>
@@ -1057,7 +1057,7 @@ function Home() {
                       ))}
                     </div>
                     <div className="cart-table-total">
-                      <span>Total cocina</span>
+                      <span>{t('Total cocina')}</span>
                       <strong>{formatPrice(orderItemsFromStorage.reduce((s, i) => s + i.priceCents * i.quantity, 0))}</strong>
                     </div>
                   </div>
@@ -1066,8 +1066,8 @@ function Home() {
             ) : cartLines.length === 0 ? (
               <div className="cart-empty" data-testid="empty-cart">
                 <ShoppingBag size={28} aria-hidden="true" />
-                <p>Tu carrito todavía está vacío.</p>
-                <a className="text-cta focus-ring" href="#carta" onClick={() => setCartOpen(false)} data-testid="link-cart-to-menu">Volver a la carta <ArrowDown size={15} /></a>
+                <p>{t('Tu carrito todavía está vacío.')}</p>
+                <a className="text-cta focus-ring" href="#carta" onClick={() => setCartOpen(false)} data-testid="link-cart-to-menu">{t('Volver a la carta')} <ArrowDown size={15} /></a>
               </div>
             ) : (
               <>
@@ -1081,7 +1081,7 @@ function Home() {
                           <div>
                             <h3 data-testid={`cart-name-${line.itemId}`}>{item?.name ?? line.itemId}</h3>
                             <span className={price === 0 ? 'cart-price-pending' : 'cart-line-price'} data-testid={`cart-price-${line.itemId}`}>
-                              {price === 0 ? 'Precio por confirmar' : formatPrice(price * line.quantity)}
+                              {price === 0 ? t('Precio por confirmar') : formatPrice(price * line.quantity)}
                             </span>
                           </div>
                           <div className="cart-quantity-controls" role="group" aria-label={`Cantidad de ${item?.name ?? line.itemId}`}>
@@ -1091,8 +1091,8 @@ function Home() {
                           </div>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', gap: '8px' }}>
-                          <span style={{ fontSize: '11px', color: '#7c6f5e' }}>{displaySizeLabel(item?.category ?? '', line.sizeLabel)}{line.variant ? ` · ${line.variant}` : ''}</span>
-                          <button style={{ background: 'none', border: 'none', color: '#948675', fontSize: '10px', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => removeFromCart(line.itemId, line.sizeLabel)}>Eliminar</button>
+                          <span style={{ fontSize: '11px', color: '#7c6f5e' }}>{displaySizeLabel(item?.category ?? '', line.sizeLabel, lang)}{line.variant ? ` · ${line.variant}` : ''}</span>
+                          <button style={{ background: 'none', border: 'none', color: '#948675', fontSize: '10px', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => removeFromCart(line.itemId, line.sizeLabel)}>{t('Eliminar')}</button>
                         </div>
                       </li>
                     );
@@ -1113,10 +1113,10 @@ function Home() {
                   data-testid="checkbox-cart-terms"
                 />
                 <label htmlFor="cart-terms-checkbox">
-                  He leído y acepto los{' '}
-                  <a href="/aviso-legal" onClick={(event) => event.stopPropagation()}>Términos y Condiciones</a>
-                  {' '}y la{' '}
-                  <a href="/politica-privacidad" onClick={(event) => event.stopPropagation()}>Política de Privacidad</a>
+                  {t('He leído y acepto los')}{' '}
+                  <a href="/aviso-legal" onClick={(event) => event.stopPropagation()}>{t('Términos y Condiciones')}</a>
+                  {' '}{lang === 'en' ? 'and the' : 'y la'}{' '}
+                  <a href="/politica-privacidad" onClick={(event) => event.stopPropagation()}>{t('Política de Privacidad')}</a>
                 </label>
               </div>
               {mesaActiva ? (

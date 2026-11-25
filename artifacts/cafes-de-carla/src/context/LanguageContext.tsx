@@ -210,6 +210,67 @@ const DICTIONARY: Record<string, Record<Lang, string>> = {
   'Nombre (EN)': { es: 'Nombre (EN)', en: 'Name (EN)' },
   'Descripción (EN)': { es: 'Descripción (EN)', en: 'Description (EN)' },
   'Categoría (EN)': { es: 'Categoría (EN)', en: 'Category (EN)' },
+
+  // Cart / table / checkout extra
+  'Puedes seguir agregando más productos o completar el pago.': {
+    es: 'Puedes seguir agregando más productos o completar el pago.',
+    en: 'You can keep adding more products or complete the payment.',
+  },
+  'Estado': { es: 'Estado', en: 'Status' },
+  'Pendiente': { es: 'Pendiente', en: 'Pending' },
+  'Confirmado': { es: 'Confirmado', en: 'Confirmed' },
+  'Servido': { es: 'Servido', en: 'Served' },
+  'Pagado': { es: 'Pagado', en: 'Paid' },
+  'Items en cocina': { es: 'Items en cocina', en: 'Kitchen items' },
+  'Total cocina': { es: 'Total cocina', en: 'Kitchen total' },
+  'Pago en efectivo pendiente': { es: 'Pago en efectivo pendiente', en: 'Pending cash payment' },
+  'Avisa al camarero de que vas a pagar en efectivo.': {
+    es: 'Avisa al camarero de que vas a pagar en efectivo.',
+    en: 'Let the waiter know you are going to pay in cash.',
+  },
+  'El camarero marcará la mesa como cobrada desde el panel de cocina.': {
+    es: 'El camarero marcará la mesa como cobrada desde el panel de cocina.',
+    en: 'The waiter will mark the table as paid from the kitchen panel.',
+  },
+  'MESA': { es: 'MESA', en: 'TABLE' },
+  'Estás en el local · Pide lo que quieras y paga al final': {
+    es: 'Estás en el local · Pide lo que quieras y paga al final',
+    en: 'You are in the restaurant · Order what you want and pay at the end',
+  },
+  'No se ha detectado una mesa activa.': { es: 'No se ha detectado una mesa activa.', en: 'No active table detected.' },
+  '¡Pedido enviado a cocina!': { es: '¡Pedido enviado a cocina!', en: 'Order sent to kitchen!' },
+
+  // Cookies
+  'Usamos cookies para cuidar tu experiencia': { es: 'Usamos cookies para cuidar tu experiencia', en: 'We use cookies to improve your experience' },
+  'Las cookies necesarias guardan tu carrito y tus preferencias. Con tu permiso, podríamos usar cookies de análisis para mejorar la web. Tú decides.': {
+    es: 'Las cookies necesarias guardan tu carrito y tus preferencias. Con tu permiso, podríamos usar cookies de análisis para mejorar la web. Tú decides.',
+    en: 'Necessary cookies ensure your cart and preferences. With your permission, we may use analytics cookies to improve the website. You decide.',
+  },
+  'Rechazar no necesarias': { es: 'Rechazar no necesarias', en: 'Reject non-essential' },
+  'Aceptar todas': { es: 'Aceptar todas', en: 'Accept all' },
+
+  // Success
+  'Pago completado': { es: 'Pago completado', en: 'Payment completed' },
+  '¡Marchando': { es: '¡Marchando', en: 'Coming right up' },
+  'un americanito': { es: 'un americanito', en: 'an americano' },
+  'Tu compra de prueba se ha confirmado. Gracias por pasarte por': {
+    es: 'Tu compra de prueba se ha confirmado. Gracias por pasarte por',
+    en: 'Your test purchase has been confirmed. Thanks for stopping by',
+  },
+  'Volver a la cafetería': { es: 'Volver a la cafetería', en: 'Back to the cafe' },
+  'Este recibo corresponde a una compra en modo de prueba.': {
+    es: 'Este recibo corresponde a una compra en modo de prueba.',
+    en: 'This receipt corresponds to a test mode purchase.',
+  },
+  'unidad': { es: 'unidad', en: 'item' },
+  'unidades': { es: 'unidades', en: 'items' },
+  'Total': { es: 'Total', en: 'Total' },
+
+  // Modals / cocina
+  'Confirmar cobro': { es: 'Confirmar cobro', en: 'Confirm payment' },
+  'Esta acción eliminará la mesa del panel.': { es: 'Esta acción eliminará la mesa del panel.', en: 'This action will remove the table from the panel.' },
+  'Sí, marcar como cobrado': { es: 'Sí, marcar como cobrado', en: 'Yes, mark as paid' },
+  'Sí, cerrar mesa': { es: 'Sí, cerrar mesa', en: 'Yes, close table' },
 };
 
 export function LanguageProvider({ children }: { children: ReactNode }) {

@@ -163,7 +163,7 @@ export default function Cocina() {
   const [deliveryError, setDeliveryError] = useState('');
   const [deliveryConfirm, setDeliveryConfirm] = useState<DeliveryConfirmation | null>(null);
   const [paidCardSessions, setPaidCardSessions] = useState<Set<string>>(new Set());
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
 
   const soundEnabledRef = useRef(soundEnabled);
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -711,17 +711,17 @@ export default function Cocina() {
         {feedback && <p className="cocina-feedback" role="status">{feedback}</p>}
 
         <div className="cocina-summary" aria-label="Resumen del panel">
-          <span className="cocina-summary-pill"><strong>{tableGroups.length}</strong> {tableGroups.length === 1 ? 'mesa en el panel' : 'mesas en el panel'}</span>
-          <span className="cocina-summary-pill"><strong>{totalOrders}</strong> {totalOrders === 1 ? 'pedido' : 'pedidos'}</span>
-          <span className="cocina-summary-pill"><strong>{totalPending}</strong> {totalPending === 1 ? 'pendiente' : 'pendientes'}</span>
+          <span className="cocina-summary-pill"><strong>{tableGroups.length}</strong> {tableGroups.length === 1 ? (lang === 'en' ? 'table on panel' : 'mesa en el panel') : (lang === 'en' ? 'tables on panel' : 'mesas en el panel')}</span>
+          <span className="cocina-summary-pill"><strong>{totalOrders}</strong> {totalOrders === 1 ? (lang === 'en' ? 'order' : 'pedido') : (lang === 'en' ? 'orders' : 'pedidos')}</span>
+          <span className="cocina-summary-pill"><strong>{totalPending}</strong> {totalPending === 1 ? (lang === 'en' ? 'pending' : 'pendiente') : (lang === 'en' ? 'pending' : 'pendientes')}</span>
           <span className={`cocina-summary-pill cocina-summary-pill--paid${paidTables > 0 ? ' is-visible' : ''}`}>
-            <strong>{paidTables}</strong> {paidTables === 1 ? 'mesa pagada' : 'mesas pagadas'}
+            <strong>{paidTables}</strong> {paidTables === 1 ? (lang === 'en' ? 'paid table' : 'mesa pagada') : (lang === 'en' ? 'paid tables' : 'mesas pagadas')}
           </span>
           <span className={`cocina-summary-pill${cashTables > 0 ? ' cocina-summary-pill--alert' : ''}`}>
-            <strong>{cashTables}</strong> {cashTables === 1 ? 'cobro en efectivo' : 'cobros en efectivo'}
+            <strong>{cashTables}</strong> {cashTables === 1 ? (lang === 'en' ? 'cash payment' : 'cobro en efectivo') : (lang === 'en' ? 'cash payments' : 'cobros en efectivo')}
           </span>
           <span className={`cocina-summary-pill cocina-summary-pill--delivery${deliveryOrders.length > 0 ? ' is-visible' : ''}`}>
-            <strong>{deliveryOrders.length}</strong> {deliveryOrders.length === 1 ? 'pedido a domicilio' : 'pedidos a domicilio'}
+            <strong>{deliveryOrders.length}</strong> {deliveryOrders.length === 1 ? (lang === 'en' ? 'delivery order' : 'pedido a domicilio') : (lang === 'en' ? 'delivery orders' : 'pedidos a domicilio')}
           </span>
         </div>
 
@@ -899,7 +899,7 @@ export default function Cocina() {
                       <span className="cocina-status-chip cocina-status-chip--confirmed">Confirmado · {group.confirmedCount}</span>
                     )}
                     {group.servedCount > 0 && (
-                      <span className="cocina-status-chip cocina-status-chip--served">Servido · {group.servedCount}</span>
+                      <span className="cocina-status-chip cocina-status-chip--served">{t('Servido')} · {group.servedCount}</span>
                     )}
                     {group.cardPendingCount > 0 && (
                       <span className="cocina-status-chip cocina-status-chip--card-pending">Pago en curso · {group.cardPendingCount}</span>
@@ -960,7 +960,7 @@ export default function Cocina() {
                                   onClick={() => { void updateOrderStatus(order.id, 'served'); }}
                                   data-testid={`button-serve-${order.id}`}
                                 >
-                                  <Check size={13} aria-hidden="true" /> Servido
+                                  <Check size={13} aria-hidden="true" /> {t('Servido')}
                                 </button>
                                 <button
                                   type="button"
@@ -973,7 +973,7 @@ export default function Cocina() {
                               </>
                             )}
                             {order.status === 'served' && (
-                              <span className="cocina-served-note">Servido · pendiente de cobro</span>
+                              <span className="cocina-served-note">{t('Servido')} · {lang === 'en' ? 'pending payment' : 'pendiente de cobro'}</span>
                             )}
                           </div>
                         </div>
@@ -993,7 +993,7 @@ export default function Cocina() {
                         onClick={() => setCloseTableTarget(group.table)}
                         data-testid={`button-close-table-${group.table}`}
                       >
-                        <X size={15} aria-hidden="true" /> Cerrar Mesa
+                        <X size={15} aria-hidden="true" /> {lang === 'en' ? 'Close Table' : 'Cerrar Mesa'}
                       </button>
                     ) : (
                       <button
@@ -1008,7 +1008,7 @@ export default function Cocina() {
                           : undefined}
                         data-testid={`button-collect-table-${group.table}`}
                       >
-                        <Banknote size={15} aria-hidden="true" /> Marcar como Cobrado
+                        <Banknote size={15} aria-hidden="true" /> {lang === 'en' ? 'Mark as Paid' : 'Marcar como Cobrado'}
                       </button>
                     )}
                   </footer>
@@ -1036,11 +1036,11 @@ export default function Cocina() {
           if (confirmTable) markTableAsCollected(confirmTable);
           setConfirmTable(null);
         }}
-        title="Confirmar cobro"
-        message={confirmTable ? `¿Estás seguro de que la Mesa ${confirmTable} ha pagado?` : ''}
-        hint="Esta acción eliminará la mesa del panel."
-        confirmLabel="Sí, marcar como cobrado"
-        cancelLabel="Cancelar"
+        title={t('Confirmar cobro')}
+        message={confirmTable ? (lang === 'en' ? `Are you sure Table ${confirmTable} has paid?` : `¿Estás seguro de que la Mesa ${confirmTable} ha pagado?`) : ''}
+        hint={t('Esta acción eliminará la mesa del panel.')}
+        confirmLabel={t('Sí, marcar como cobrado')}
+        cancelLabel={t('Cancelar')}
       />
 
       <ConfirmModal
@@ -1050,12 +1050,14 @@ export default function Cocina() {
           if (closeTableTarget) closeTable(closeTableTarget);
           setCloseTableTarget(null);
         }}
-        title={closeTableTarget ? `¿Cerrar Mesa ${closeTableTarget}?` : ''}
+        title={closeTableTarget ? (lang === 'en' ? `Close Table ${closeTableTarget}?` : `¿Cerrar Mesa ${closeTableTarget}?`) : ''}
         message={closeTableTarget
-          ? `¿Estás seguro de que los clientes han terminado y quieres eliminar la Mesa ${closeTableTarget} del panel?`
+          ? (lang === 'en'
+            ? `Are you sure the customers are finished and you want to remove Table ${closeTableTarget} from the panel?`
+            : `¿Estás seguro de que los clientes han terminado y quieres eliminar la Mesa ${closeTableTarget} del panel?`)
           : ''}
-        confirmLabel="Sí, cerrar mesa"
-        cancelLabel="Cancelar"
+        confirmLabel={lang === 'en' ? 'Yes, close table' : 'Sí, cerrar mesa'}
+        cancelLabel={t('Cancelar')}
         icon={<X size={22} strokeWidth={1.8} aria-hidden="true" />}
       />
 
@@ -1067,18 +1069,24 @@ export default function Cocina() {
           setDeliveryConfirm(null);
         }}
         title={deliveryConfirm
-          ? `¿${deliveryConfirm.estado === 'entregado' ? 'Entregar' : 'Preparar'} pedido #${deliveryConfirm.id}?`
+          ? (lang === 'en'
+            ? `${deliveryConfirm.estado === 'entregado' ? 'Deliver' : 'Prepare'} order #${deliveryConfirm.id}?`
+            : `¿${deliveryConfirm.estado === 'entregado' ? 'Entregar' : 'Preparar'} pedido #${deliveryConfirm.id}?`)
           : ''}
         message={deliveryConfirm
-          ? deliveryConfirm.estado === 'entregado'
-            ? `¿Confirmas que el pedido #${deliveryConfirm.id} ya se ha entregado al cliente?`
-            : `¿Confirmas que has empezado a preparar el pedido #${deliveryConfirm.id}?`
+          ? (lang === 'en'
+            ? deliveryConfirm.estado === 'entregado'
+              ? `Do you confirm that order #${deliveryConfirm.id} has been delivered to the customer?`
+              : `Do you confirm that you have started preparing order #${deliveryConfirm.id}?`
+            : deliveryConfirm.estado === 'entregado'
+              ? `¿Confirmas que el pedido #${deliveryConfirm.id} ya se ha entregado al cliente?`
+              : `¿Confirmas que has empezado a preparar el pedido #${deliveryConfirm.id}?`)
           : ''}
         hint={deliveryConfirm?.estado === 'entregado'
-          ? 'El pedido se marcará como entregado y desaparecerá del panel.'
-          : 'El pedido seguirá visible con el estado «Preparando».'}
-        confirmLabel={deliveryConfirm?.estado === 'entregado' ? 'Sí, entregado' : 'Sí, preparando'}
-        cancelLabel="Cancelar"
+          ? (lang === 'en' ? 'The order will be marked as delivered and will disappear from the panel.' : 'El pedido se marcará como entregado y desaparecerá del panel.')
+          : (lang === 'en' ? 'The order will remain visible with the "Preparing" status.' : 'El pedido seguirá visible con el estado «Preparando».')}
+        confirmLabel={deliveryConfirm?.estado === 'entregado' ? (lang === 'en' ? 'Yes, delivered' : 'Sí, entregado') : (lang === 'en' ? 'Yes, preparing' : 'Sí, preparando')}
+        cancelLabel={t('Cancelar')}
         icon={deliveryConfirm?.estado === 'entregado'
           ? <Check size={22} strokeWidth={1.8} aria-hidden="true" />
           : <Package size={22} strokeWidth={1.8} aria-hidden="true" />}

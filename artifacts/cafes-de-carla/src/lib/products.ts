@@ -69,10 +69,21 @@ function normalizeCategory(value: string): string {
 /**
  * Etiqueta visible para una talla. En Cereales las columnas Mini/Normal/Grande
  * representan S/M/L; el resto de categorías conserva sus nombres.
+ * En EN, Normal/Grande se muestran como Regular/Large.
  */
-export function displaySizeLabel(categoria: string, sizeLabel: string): string {
-  if (normalizeCategory(categoria) !== CEREALES_CATEGORY) return sizeLabel;
-  return CEREAL_SIZE_LABELS[sizeLabel] ?? sizeLabel;
+export function displaySizeLabel(
+  categoria: string,
+  sizeLabel: string,
+  lang: Lang = 'es',
+): string {
+  if (normalizeCategory(categoria) === CEREALES_CATEGORY) {
+    return CEREAL_SIZE_LABELS[sizeLabel] ?? sizeLabel;
+  }
+  if (lang === 'en') {
+    if (sizeLabel === 'Normal') return 'Regular';
+    if (sizeLabel === 'Grande') return 'Large';
+  }
+  return sizeLabel;
 }
 
 function slugify(value: string): string {

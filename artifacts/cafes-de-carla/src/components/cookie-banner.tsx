@@ -7,9 +7,11 @@ import {
   setCookieConsent,
   type CookieConsent,
 } from '@/lib/cookie-consent';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function CookieBanner() {
   const [choice, setChoice] = useState<CookieConsent | null>(() => getCookieConsent());
+  const { t } = useLanguage();
 
   useEffect(() => {
     const handleChange = () => setChoice(getCookieConsent());
@@ -35,11 +37,8 @@ export default function CookieBanner() {
         <div className="cookie-banner-copy">
           <span className="cookie-banner-icon" aria-hidden="true"><Cookie size={22} /></span>
           <div>
-            <strong>Usamos cookies para cuidar tu experiencia</strong>
-            <p>
-              Las cookies necesarias guardan tu carrito y tus preferencias. Con tu permiso,
-              podríamos usar cookies de análisis para mejorar la web. Tú decides.
-            </p>
+            <strong>{t('Usamos cookies para cuidar tu experiencia')}</strong>
+            <p>{t('Las cookies necesarias guardan tu carrito y tus preferencias. Con tu permiso, podríamos usar cookies de análisis para mejorar la web. Tú decides.')}</p>
           </div>
         </div>
         <div className="cookie-banner-actions">
@@ -49,7 +48,7 @@ export default function CookieBanner() {
             onClick={() => choose('rejected')}
             data-testid="button-cookie-reject"
           >
-            Rechazar no necesarias
+            {t('Rechazar no necesarias')}
           </button>
           <button
             type="button"
@@ -57,7 +56,7 @@ export default function CookieBanner() {
             onClick={() => choose('accepted')}
             data-testid="button-cookie-accept"
           >
-            Aceptar todas
+            {t('Aceptar todas')}
           </button>
         </div>
       </div>
