@@ -797,10 +797,10 @@ function Home() {
             <img src={logo} alt="Logotipo de Cafés de Carla: Huele, Saborea, Disfruta" width="1024" height="1024" data-testid="img-brand-logo" />
           </a>
           <nav className={`main-nav ${mobileOpen ? 'is-open' : ''}`} aria-label="Navegación principal" data-testid="navigation-primary">
-            <a href="#historia" className="nav-link" onClick={closeNav} data-testid="link-nav-story">Nuestra esencia</a>
-            <a href="#carta" className="nav-link" onClick={closeNav} data-testid="link-nav-menu">La carta</a>
-            <a href="#visitanos" className="nav-link" onClick={closeNav} data-testid="link-nav-visit">Visítanos</a>
-            <a href="#contacto" className="nav-contact" onClick={closeNav} data-testid="link-nav-contact">Hablemos <ArrowUpRight size={14} aria-hidden="true" /></a>
+            <a href="#historia" className="nav-link" onClick={closeNav} data-testid="link-nav-story">{t('Nuestra esencia')}</a>
+            <a href="#carta" className="nav-link" onClick={closeNav} data-testid="link-nav-menu">{t('La carta')}</a>
+            <a href="#visitanos" className="nav-link" onClick={closeNav} data-testid="link-nav-visit">{t('Visítanos')}</a>
+            <a href="#contacto" className="nav-contact" onClick={closeNav} data-testid="link-nav-contact">{t('Hablemos')} <ArrowUpRight size={14} aria-hidden="true" /></a>
           </nav>
           <div className="header-actions">
             <ThemeToggle />
@@ -831,45 +831,47 @@ function Home() {
         {/* Sección 1: Héroe - BIENVENIDOS */}
         <section id="inicio" className="hero section-wrap" aria-labelledby="hero-title">
           <div className="hero-copy">
-            <div className="hero-overline reveal"><span className="tiny-rule" /> UN RINCÓN PARA BAJAR EL RITMO</div>
-            <h1 id="hero-title" className="serif reveal reveal-delay" data-testid="heading-home-tagline">Huele.<br /><em>Saborea.</em><br />Disfruta.</h1>
-            <p className="hero-description reveal reveal-delay" data-testid="text-home-introduction">Un café preparado con cariño. Un ratito para ti. En Cafés de Carla, cada pausa merece saborearse.</p>
-            <a href="#carta" className="text-cta focus-ring reveal reveal-delay" data-testid="link-hero-menu">Descubre la carta <span><ArrowDown size={15} /></span></a>
+            <div className="hero-overline reveal"><span className="tiny-rule" /> {t('UN RINCÓN PARA BAJAR EL RITMO')}</div>
+            <h1 id="hero-title" className="serif reveal reveal-delay" data-testid="heading-home-tagline">{t('Huele.')}<br /><em>{t('Saborea.')}</em><br />{t('Disfruta.')}</h1>
+            <p className="hero-description reveal reveal-delay" data-testid="text-home-introduction">{t('Un café preparado con cariño. Un ratito para ti. En Cafés de Carla, cada pausa merece saborearse.')}</p>
+            <a href="#carta" className="text-cta focus-ring reveal reveal-delay" data-testid="link-hero-menu">{t('Descubre la carta')} <span><ArrowDown size={15} /></span></a>
             <div className="hero-footnote"><span>CAFÉS DE CARLA</span><span>UNA PAUSA, A TU RITMO</span></div>
           </div>
           <div className="hero-visual reveal reveal-delay">
             <div className="hero-photo photo-frame">
-              <img src="/sample-coffee.jpg" alt="Imagen de muestra, no fotografía del local: café servido en cerámica bajo luz natural" width="1200" height="900" fetchPriority="high" data-testid="img-sample-hero" />
-              <div className="photo-stamp" aria-hidden="true"><span>un momento</span><strong>para ti</strong></div>
+              <img src="/sample-coffee.jpg" alt={t('Imagen de muestra, no fotografía del local: café servido en cerámica bajo luz natural')} width="1200" height="900" fetchPriority="high" data-testid="img-sample-hero" />
+              <div className="photo-stamp" aria-hidden="true"><span>un momento</span><strong>{t('un momento para ti')}</strong></div>
             </div>
-            <div className="image-caption"><span className="caption-mark" /> IMAGEN DE MUESTRA · SE SUSTITUIRÁ POR FOTOGRAFÍA REAL</div>
-            <div className="hero-side-note serif">Tomarse<br />el tiempo<br />también sabe.</div>
+            <div className="image-caption"><span className="caption-mark" /> {t('IMAGEN DE MUESTRA')} · {lang === 'en' ? 'WILL BE REPLACED BY REAL PHOTOGRAPHY' : 'SE SUSTITUIRÁ POR FOTOGRAFÍA REAL'}</div>
+            <div className="hero-side-note serif">{lang === 'en' ? <>Taking<br />your time<br />also tastes good.</> : <>Tomarse<br />el tiempo<br />también sabe.</>}</div>
           </div>
-          <div className="hero-seal" aria-hidden="true"><span>Huele · Saborea · Disfruta</span><b>CD</b></div>
+          <div className="hero-seal" aria-hidden="true"><span>{t('Huele · Saborea · Disfruta')}</span><b>CD</b></div>
         </section>
 
         {/* Seccion: Nuestra esencia - 01 / NUESTRA ESENCIA */}
         <section className="story-section" id="historia" aria-labelledby="story-title">
           <div className="section-wrap story-grid">
-            <div className="story-marker"><span className="eyebrow">01 / NUESTRA ESENCIA</span><span className="marker-line" /></div>
+            <div className="story-marker"><span className="eyebrow">{t('01 / NUESTRA ESENCIA')}</span><span className="marker-line" /></div>
             <div className="story-content">
-              <h2 className="serif" id="story-title" data-testid="heading-brand-story">Hay dias que piden<br /><em>una pausa bonita.</em></h2>
+              <h2 className="serif" id="story-title" data-testid="heading-brand-story">
+                {lang === 'en' ? <>Some days call for<br /><em>a beautiful pause.</em></> : <>Hay dias que piden<br /><em>una pausa bonita.</em></>}
+              </h2>
               <div className="story-bottom">
-                <p>En Cafes de Carla creemos en el placer sencillo de parar un momento. En el aroma que llega antes del primer sorbo, en algo rico sobre la mesa y en sentirte bien recibido.</p>
+                <p>{t('En Cafes de Carla creemos en el placer sencillo de parar un momento. En el aroma que llega antes del primer sorbo, en algo rico sobre la mesa y en sentirte bien recibido.')}</p>
               </div>
-              <div className="story-signature">Cafes de Carla <span>— Huele, Saborea, Disfruta</span></div>
+              <div className="story-signature">Cafes de Carla <span>— {t('Huele · Saborea · Disfruta')}</span></div>
             </div>
-            <div className="story-aside" aria-hidden="true"><span className="sun-shape" /><span className="aside-words serif">despacio<br />sabe mejor</span></div>
+            <div className="story-aside" aria-hidden="true"><span className="sun-shape" /><span className="aside-words serif">{lang === 'en' ? <>slowly<br />tastes better</> : <>despacio<br />sabe mejor</>}</span></div>
           </div>
         </section>
 
 
         {/* Sección 2: Carta */}
         <section id="carta" className="menu-section section-wrap" aria-labelledby="menu-title">
-          <div className="section-kicker"><span className="eyebrow">02 / PARA DISFRUTAR</span><span className="kicker-line" /></div>
+          <div className="section-kicker"><span className="eyebrow">{t('02 / PARA DISFRUTAR')}</span><span className="kicker-line" /></div>
           <div className="menu-heading">
-            <div><h2 id="menu-title" className="serif" data-testid="heading-menu">Algo rico,<br /><em>en buena compañía.</em></h2></div>
-            <p data-testid="text-menu-introduction">Nuestra carta se actualiza desde la base de datos: productos, precios, tamaños y disponibilidad en tiempo real.</p>
+            <div><h2 id="menu-title" className="serif" data-testid="heading-menu">{lang === 'en' ? <>Something delicious,<br /><em>in good company.</em></> : <>Algo rico,<br /><em>en buena compañía.</em></>}</h2></div>
+            <p data-testid="text-menu-introduction">{t('Nuestra carta se actualiza desde la base de datos: productos, precios, tamaños y disponibilidad en tiempo real.')}</p>
           </div>
 
           {menuLoading ? (
@@ -899,7 +901,7 @@ function Home() {
                 <section className="category-panel" role="tabpanel" id="category-panel" aria-labelledby={`tab-category-${selected.id}`} aria-label={selected.title} data-testid={`panel-category-${selected.id}`}>
                   <div className="category-copy">
                     <div>
-                      <span className="eyebrow">EN LA CARTA</span>
+                      <span className="eyebrow">{t('EN LA CARTA')}</span>
                       <h3 className="serif" data-testid={`heading-category-${selected.id}`}>{selected.title}</h3>
                     </div>
                     {selected.note && <p>{selected.note}</p>}
@@ -918,16 +920,16 @@ function Home() {
 
         {/* Pausa */}
         <section className="pause-band" aria-label="Eslogan de Cafés de Carla">
-          <div className="pause-inner section-wrap"><span className="pause-small">EL PLACER DE HACER UNA COSA A LA VEZ</span><p className="serif">"Cafés de Carla: Huele, Saborea, Disfruta"</p><span className="pause-ornament" aria-hidden="true" /></div>
+          <div className="pause-inner section-wrap"><span className="pause-small">{t('EL PLACER DE HACER UNA COSA A LA VEZ')}</span><p className="serif">"Cafés de Carla: {t('Huele · Saborea · Disfruta').replace(/ · /g, ', ')}"</p><span className="pause-ornament" aria-hidden="true" /></div>
         </section>
 
 
 {/* Sección 3: Visítanos - 03 / CUANDO QUIERAS */}
         <section className="visit-section section-wrap" id="visitanos" aria-labelledby="visit-title">
-          <div className="section-kicker"><span className="eyebrow">03 / CUANDO QUIERAS</span><span className="kicker-line" /></div>
+          <div className="section-kicker"><span className="eyebrow">{t('03 / CUANDO QUIERAS')}</span><span className="kicker-line" /></div>
           <div className="visit-heading">
-            <h2 id="visit-title" className="serif" data-testid="heading-visit">La mesa está<br /><em>servida.</em></h2>
-            <p data-testid="text-visit-introduction">Encuéntranos en el Centro Comercial Las Arenas, en Las Palmas de Gran Canaria. Te esperamos con el café recién hecho.</p>
+            <h2 id="visit-title" className="serif" data-testid="heading-visit">{lang === 'en' ? <>The table is<br /><em>set.</em></> : <>La mesa está<br /><em>servida.</em></>}</h2>
+            <p data-testid="text-visit-introduction">{t('Encuéntranos en el Centro Comercial Las Arenas, en Las Palmas de Gran Canaria. Te esperamos con el café recién hecho.')}</p>
           </div>
           <div className="visit-grid">
             <div className="map-placeholder" data-testid="map-embed">
@@ -963,20 +965,20 @@ function Home() {
                 }}
               >
                 <MapPin size={14} aria-hidden="true" />
-                Abrir en Google Maps
+                {t('Abrir en Google Maps')}
               </a>
             </div>
             <div className="visit-details">
-              <article className="detail-block"><span className="detail-icon"><MapPin size={17} /></span><div><span className="eyebrow">DÓNDE ENCONTRARNOS</span><h3>Dirección</h3><p data-testid="text-address" className="text-sm text-[#8a7a69]"><strong className="text-[#4a3322] font-serif">Centro Comercial Las Arenas</strong> · Ctra. del Rincón, 35010 · Las Palmas de Gran Canaria</p></div></article>
-              <article className="detail-block"><span className="detail-icon"><Clock3 size={17} /></span><div><span className="eyebrow">PARA TU PRÓXIMA PAUSA</span><h3>Horario</h3><p data-testid="text-hours" className="text-sm text-[#8a7a69]"><strong className="text-[#4a3322] font-serif">Lunes a viernes</strong> · 9:00 — 22:00<br /><strong className="text-[#4a3322] font-serif">Sábado y domingo</strong> · 10:00 — 22:00</p></div></article>
+              <article className="detail-block"><span className="detail-icon"><MapPin size={17} /></span><div><span className="eyebrow">{t('DÓNDE ENCONTRARNOS')}</span><h3>{t('Dirección')}</h3><p data-testid="text-address" className="text-sm text-[#8a7a69]"><strong className="text-[#4a3322] font-serif">Centro Comercial Las Arenas</strong> · Ctra. del Rincón, 35010 · Las Palmas de Gran Canaria</p></div></article>
+              <article className="detail-block"><span className="detail-icon"><Clock3 size={17} /></span><div><span className="eyebrow">{t('PARA TU PRÓXIMA PAUSA')}</span><h3>{t('Horario')}</h3><p data-testid="text-hours" className="text-sm text-[#8a7a69]"><strong className="text-[#4a3322] font-serif">{lang === 'en' ? 'Monday to Friday' : 'Lunes a viernes'}</strong> · 9:00 — 22:00<br /><strong className="text-[#4a3322] font-serif">{lang === 'en' ? 'Saturday and Sunday' : 'Sábado y domingo'}</strong> · 10:00 — 22:00</p></div></article>
               <div className="contact-box" id="contacto">
-                <span className="eyebrow">ESTAMOS AQUÍ PARA AYUDAR</span>
-                <p>Si tienes cualquier duda, llámanos o escríbenos y te atenderemos encantados.</p>
+                <span className="eyebrow">{t('ESTAMOS AQUÍ PARA AYUDAR')}</span>
+                <p>{t('Si tienes cualquier duda, llámanos o escríbenos y te atenderemos encantados.')}</p>
                 <div className="contact-placeholders">
                   <a className="contact-placeholder focus-ring" href="tel:+34928493380"><Phone size={15} /> 928 49 33 80</a>
                   <a className="contact-placeholder focus-ring" href="https://www.facebook.com/cafesdecarla/" target="_blank" rel="noreferrer">Facebook · Cafés de Carla</a>
                 </div>
-                <span className="contact-footnote">También puedes ver la ubicación exacta en el mapa.</span>
+                <span className="contact-footnote">{t('También puedes ver la ubicación exacta en el mapa.')}</span>
               </div>
             </div>
           </div>
@@ -985,12 +987,12 @@ function Home() {
         {/* Sección 4: Social */}
         <section className="social-section" aria-labelledby="social-title">
           <div className="section-wrap social-inner">
-            <div className="social-copy"><span className="eyebrow">04 / UN POQUITO MÁS CERCA</span><h2 id="social-title" className="serif">Lo que pasa<br /><em>al otro lado.</em></h2><p>Pronto podrás asomarte a nuestro día a día.</p><span className="social-handle"><Instagram size={17} /> Cuenta de Instagram — Confirmación próxima</span></div>
+            <div className="social-copy"><span className="eyebrow">{t('04 / UN POQUITO MÁS CERCA')}</span><h2 id="social-title" className="serif">{lang === 'en' ? <>What happens<br /><em>on the other side.</em></> : <>Lo que pasa<br /><em>al otro lado.</em></>}</h2><p>{t('Pronto podrás asomarte a nuestro día a día.')}</p><span className="social-handle"><Instagram size={17} /> {t('Cuenta de Instagram — Confirmación próxima')}</span></div>
             <div className="social-grid" data-testid="instagram-feed-placeholder" aria-label="Vista previa del feed de Instagram, aún sin publicaciones">
-              <div className="social-tile tile-one"><span className="tile-ring" /><span className="tile-text serif">un café<br />y un respiro</span><small>MUESTRA DE DISEÑO</small></div>
-              <div className="social-tile tile-two"><span className="tile-square" /><span className="tile-text serif">a tu<br />ritmo</span><small>MUESTRA DE DISEÑO</small></div>
-              <div className="social-tile tile-three"><img src="/sample-coffee.jpg" alt="Imagen ilustrativa de café, no corresponde a la cuenta real de Instagram" loading="lazy" width="640" height="640" data-testid="img-sample-hero" /><span className="tile-overlay">FOTOGRAFÍA DE MUESTRA</span></div>
-              <div className="feed-overlay"><Instagram size={20} /><span>El feed aparecerá aquí<br />cuando tengamos la cuenta</span></div>
+              <div className="social-tile tile-one"><span className="tile-ring" /><span className="tile-text serif">{lang === 'en' ? <>a coffee<br />and a breath</> : <>un café<br />y un respiro</>}</span><small>{lang === 'en' ? 'DESIGN SAMPLE' : 'MUESTRA DE DISEÑO'}</small></div>
+              <div className="social-tile tile-two"><span className="tile-square" /><span className="tile-text serif">{lang === 'en' ? <>at your<br />own pace</> : <>a tu<br />ritmo</>}</span><small>{lang === 'en' ? 'DESIGN SAMPLE' : 'MUESTRA DE DISEÑO'}</small></div>
+              <div className="social-tile tile-three"><img src="/sample-coffee.jpg" alt="Imagen ilustrativa de café, no corresponde a la cuenta real de Instagram" loading="lazy" width="640" height="640" data-testid="img-sample-hero" /><span className="tile-overlay">{lang === 'en' ? 'SAMPLE PHOTOGRAPHY' : 'FOTOGRAFÍA DE MUESTRA'}</span></div>
+              <div className="feed-overlay"><Instagram size={20} /><span>{t('El feed aparecerá aquí')}<br />{t('cuando tengamos la cuenta')}</span></div>
             </div>
           </div>
         </section>
@@ -999,11 +1001,11 @@ function Home() {
       <footer className="site-footer">
         <div className="footer-main section-wrap">
           <a href="#inicio" className="footer-brand focus-ring" aria-label="Volver al inicio" data-testid="link-footer-home"><img src={logo} alt="Logotipo de Cafés de Carla" width="1024" height="1024" loading="lazy" /><span className="serif">Cafés de Carla</span></a>
-          <p className="footer-tagline serif">Huele, Saborea, Disfruta.</p>
+          <p className="footer-tagline serif">{t('Huele, Saborea, Disfruta.')}</p>
           <LegalLinks />
-          <a className="back-top" href="#inicio" data-testid="link-back-to-top">Volver arriba <ArrowUpRight size={15} /></a>
+          <a className="back-top" href="#inicio" data-testid="link-back-to-top">{t('Volver arriba')} <ArrowUpRight size={15} /></a>
         </div>
-        <div className="footer-bottom section-wrap"><span>© Cafés de Carla</span><span>PREVISUALIZACIÓN DE PRUEBA · NO PUBLICAR</span><span>Hecho para disfrutar sin prisa.</span></div>
+        <div className="footer-bottom section-wrap"><span>© Cafés de Carla</span><span>PREVISUALIZACIÓN DE PRUEBA · NO PUBLICAR</span><span>{t('Hecho para disfrutar sin prisa.')}</span></div>
       </footer>
 
       {/* Cart Drawer - only rendered when open */}

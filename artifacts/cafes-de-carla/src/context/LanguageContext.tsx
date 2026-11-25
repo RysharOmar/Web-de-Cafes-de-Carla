@@ -12,10 +12,10 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 const DICTIONARY: Record<string, Record<Lang, string>> = {
   // Navegación / header
-  'Nuestra esencia': { es: 'Nuestra esencia', en: 'Our story' },
+  'Nuestra esencia': { es: 'Nuestra esencia', en: 'Our essence' },
   'La carta': { es: 'La carta', en: 'The menu' },
   'Visítanos': { es: 'Visítanos', en: 'Visit us' },
-  'Hablemos': { es: 'Hablemos', en: 'Contact us' },
+  'Hablemos': { es: 'Hablemos', en: "Let's talk" },
   'Volver a la carta': { es: 'Volver a la carta', en: 'Back to menu' },
   'Cerrar sesión': { es: 'Cerrar sesión', en: 'Sign out' },
   'Panel de personal': { es: 'Panel de personal', en: 'Staff panel' },
@@ -84,6 +84,79 @@ const DICTIONARY: Record<string, Record<Lang, string>> = {
   'Tu pedido está listo para pagar.': { es: 'Tu pedido está listo para pagar.', en: 'Your order is ready to pay.' },
   'Tu pedido ya está pagado.': { es: 'Tu pedido ya está pagado.', en: 'Your order is already paid.' },
   'Tu pedido ya fue enviado a cocina.': { es: 'Tu pedido ya fue enviado a cocina.', en: 'Your order has already been sent to the kitchen.' },
+
+  // Landing
+  'UN RINCÓN PARA BAJAR EL RITMO': { es: 'UN RINCÓN PARA BAJAR EL RITMO', en: 'A CORNER TO SLOW DOWN' },
+  'Huele.': { es: 'Huele.', en: 'Smell.' },
+  'Saborea.': { es: 'Saborea.', en: 'Taste.' },
+  'Disfruta.': { es: 'Disfruta.', en: 'Enjoy.' },
+  'Un café preparado con cariño. Un ratito para ti. En Cafés de Carla, cada pausa merece saborearse.': {
+    es: 'Un café preparado con cariño. Un ratito para ti. En Cafés de Carla, cada pausa merece saborearse.',
+    en: 'A coffee prepared with care. A little moment for you. At Cafés de Carla, every pause deserves to be savored.',
+  },
+  'Descubre la carta': { es: 'Descubre la carta', en: 'Discover the menu' },
+  'Imagen de muestra, no fotografía del local: café servido en cerámica bajo luz natural': {
+    es: 'Imagen de muestra, no fotografía del local: café servido en cerámica bajo luz natural',
+    en: 'Sample image, not a photo of the premises: coffee served in ceramic under natural light',
+  },
+  'un momento para ti': { es: 'un momento para ti', en: 'a moment for you' },
+  'Tomarse el tiempo también sabe.': { es: 'Tomarse el tiempo también sabe.', en: 'Taking your time also tastes good.' },
+  'Huele · Saborea · Disfruta': { es: 'Huele · Saborea · Disfruta', en: 'Smell · Taste · Enjoy' },
+  'Huele, Saborea, Disfruta.': { es: 'Huele, Saborea, Disfruta.', en: 'Smell, Taste, Enjoy.' },
+  '01 / NUESTRA ESENCIA': { es: '01 / NUESTRA ESENCIA', en: '01 / OUR ESSENCE' },
+  'Hay dias que piden una pausa bonita.': { es: 'Hay dias que piden una pausa bonita.', en: 'Some days call for a beautiful pause.' },
+  'En Cafes de Carla creemos en el placer sencillo de parar un momento. En el aroma que llega antes del primer sorbo, en algo rico sobre la mesa y en sentirte bien recibido.': {
+    es: 'En Cafes de Carla creemos en el placer sencillo de parar un momento. En el aroma que llega antes del primer sorbo, en algo rico sobre la mesa y en sentirte bien recibido.',
+    en: 'At Cafés de Carla, we believe in the simple pleasure of stopping for a moment. In the aroma that arrives before the first sip, in something delicious on the table, and in making you feel welcome.',
+  },
+  'despacio sabe mejor': { es: 'despacio sabe mejor', en: 'slowly tastes better' },
+  '02 / PARA DISFRUTAR': { es: '02 / PARA DISFRUTAR', en: '02 / TO ENJOY' },
+  'Algo rico, en buena compañía.': { es: 'Algo rico, en buena compañía.', en: 'Something delicious, in good company.' },
+  'Nuestra carta se actualiza desde la base de datos: productos, precios, tamaños y disponibilidad en tiempo real.': {
+    es: 'Nuestra carta se actualiza desde la base de datos: productos, precios, tamaños y disponibilidad en tiempo real.',
+    en: 'Our menu updates from the database: products, prices, sizes, and availability in real-time.',
+  },
+  'EN LA CARTA': { es: 'EN LA CARTA', en: 'ON THE MENU' },
+  'Precios y disponibilidad actualizados desde la base de datos. Las fotos son ilustrativas.': {
+    es: 'Precios y disponibilidad actualizados desde la base de datos. Las fotos son ilustrativas.',
+    en: 'Prices and availability updated from the database. Photos are illustrative.',
+  },
+  'EL PLACER DE HACER UNA COSA A LA VEZ': { es: 'EL PLACER DE HACER UNA COSA A LA VEZ', en: 'THE PLEASURE OF DOING ONE THING AT A TIME' },
+  '03 / CUANDO QUIERAS': { es: '03 / CUANDO QUIERAS', en: '03 / WHENEVER YOU WANT' },
+  'La mesa está servida.': { es: 'La mesa está servida.', en: 'The table is set.' },
+  'Encuéntranos en el Centro Comercial Las Arenas, en Las Palmas de Gran Canaria. Te esperamos con el café recién hecho.': {
+    es: 'Encuéntranos en el Centro Comercial Las Arenas, en Las Palmas de Gran Canaria. Te esperamos con el café recién hecho.',
+    en: 'Find us at the Las Arenas Shopping Center, in Las Palmas de Gran Canaria. We wait for you with freshly made coffee.',
+  },
+  'Abrir en Google Maps': { es: 'Abrir en Google Maps', en: 'Open in Google Maps' },
+  'DÓNDE ENCONTRARNOS': { es: 'DÓNDE ENCONTRARNOS', en: 'WHERE TO FIND US' },
+  'Dirección': { es: 'Dirección', en: 'Address' },
+  'PARA TU PRÓXIMA PAUSA': { es: 'PARA TU PRÓXIMA PAUSA', en: 'FOR YOUR NEXT BREAK' },
+  'Horario': { es: 'Horario', en: 'Opening hours' },
+  'ESTAMOS AQUÍ PARA AYUDAR': { es: 'ESTAMOS AQUÍ PARA AYUDAR', en: 'WE ARE HERE TO HELP' },
+  'Si tienes cualquier duda, llámanos o escríbenos y te atenderemos encantados.': {
+    es: 'Si tienes cualquier duda, llámanos o escríbenos y te atenderemos encantados.',
+    en: 'If you have any questions, call us or write to us and we will be happy to help.',
+  },
+  'También puedes ver la ubicación exacta en el mapa.': {
+    es: 'También puedes ver la ubicación exacta en el mapa.',
+    en: 'You can also see the exact location on the map.',
+  },
+  '04 / UN POQUITO MÁS CERCA': { es: '04 / UN POQUITO MÁS CERCA', en: '04 / A LITTLE CLOSER' },
+  'Lo que pasa': { es: 'Lo que pasa', en: 'What happens' },
+  'al otro lado.': { es: 'al otro lado.', en: 'on the other side.' },
+  'Pronto podrás asomarte a nuestro día a día.': {
+    es: 'Pronto podrás asomarte a nuestro día a día.',
+    en: 'Soon you will be able to look into our daily life.',
+  },
+  'Cuenta de Instagram — Confirmación próxima': { es: 'Cuenta de Instagram — Confirmación próxima', en: 'Instagram account — Confirmation pending' },
+  'El feed aparecerá aquí': { es: 'El feed aparecerá aquí', en: 'The feed will appear here' },
+  'cuando tengamos la cuenta': { es: 'cuando tengamos la cuenta', en: 'when we have the account' },
+  'Aviso legal': { es: 'Aviso legal', en: 'Legal notice' },
+  'Privacidad': { es: 'Privacidad', en: 'Privacy' },
+  'Cookies': { es: 'Cookies', en: 'Cookies' },
+  'Volver arriba': { es: 'Volver arriba', en: 'Back to top' },
+  'Hecho para disfrutar sin prisa.': { es: 'Hecho para disfrutar sin prisa.', en: 'Made to be enjoyed without haste.' },
 
   // Admin
   'Panel de Administración': { es: 'Panel de Administración', en: 'Administration Panel' },

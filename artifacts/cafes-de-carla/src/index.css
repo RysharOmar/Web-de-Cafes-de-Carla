@@ -860,7 +860,9 @@
 
 
 /* Language toggle */
-.lang-toggle{font:500 12px/1 "Manrope",system-ui,sans-serif;letter-spacing:.04em;padding:8px 10px;border-radius:999px;border:1px solid rgba(97,60,42,.28);background:rgba(97,60,42,.04);color:inherit;cursor:pointer;transition:background 180ms ease,border-color 180ms ease}
-.lang-toggle:hover{background:rgba(97,60,42,.08);border-color:rgba(97,60,42,.45)}
-.dark .lang-toggle{border-color:rgba(245,240,229,.22);background:rgba(245,240,229,.04)}
-.dark .lang-toggle:hover{background:rgba(245,240,229,.1);border-color:rgba(245,240,229,.4)}
+.lang-toggle{display:inline-flex;align-items:center;gap:6px;font:600 11px/1 "Manrope",system-ui,sans-serif;letter-spacing:.08em;padding:8px 12px;border-radius:999px;border:1px solid rgba(97,60,42,.22);background:rgba(97,60,42,.03);color:inherit;cursor:pointer;transition:background 180ms ease,border-color 180ms ease,transform 180ms ease}
+.lang-toggle:hover{background:rgba(97,60,42,.08);border-color:rgba(97,60,42,.4);transform:translateY(-1px)}
+.lang-toggle__globe{display:inline-flex;opacity:.8}
+.lang-toggle__label{min-width:1.6em;text-align:center}
+.dark .lang-toggle{border-color:rgba(245,240,229,.2);background:rgba(245,240,229,.04);color:#f5f0e5}
+.dark .lang-toggle:hover{background:rgba(245,240,229,.1);border-color:rgba(245,240,229,.38)}
