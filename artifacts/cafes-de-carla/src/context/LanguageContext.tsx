@@ -24,6 +24,11 @@ const DICTIONARY: Record<string, Record<Lang, string>> = {
   'Acceso de personal': { es: 'Acceso de personal', en: 'Staff access' },
   'PANEL INTERNO': { es: 'PANEL INTERNO', en: 'INTERNAL PANEL' },
   'Iniciar sesión': { es: 'Iniciar sesión', en: 'Sign in' },
+  'Correo electrónico': { es: 'Correo electrónico', en: 'Email address' },
+  'Contraseña': { es: 'Contraseña', en: 'Password' },
+  'Tu contraseña': { es: 'Tu contraseña', en: 'Your password' },
+  'Entrando…': { es: 'Entrando…', en: 'Signing in…' },
+  'Entrar': { es: 'Entrar', en: 'Sign in' },
   'Ups…': { es: 'Ups…', en: 'Oops…' },
   'Información': { es: 'Información', en: 'Information' },
 
@@ -240,7 +245,13 @@ const DICTIONARY: Record<string, Record<Lang, string>> = {
     en: 'You are in the restaurant · Order what you want and pay at the end',
   },
   'No se ha detectado una mesa activa.': { es: 'No se ha detectado una mesa activa.', en: 'No active table detected.' },
-  '¡Pedido enviado a cocina!': { es: '¡Pedido enviado a cocina!', en: 'Order sent to kitchen!' },
+  '¡Pedido enviado a cocina!': { es: '¡Pedido enviado a cocina!', en: 'Order sent to the kitchen!' },
+  'Aviso enviado al camarero': { es: 'Aviso enviado al camarero', en: 'Notice sent to the waiter' },
+  'Avisa al camarero de que vas a pagar en efectivo. Tu mesa queda pendiente de cobro.': {
+    es: 'Avisa al camarero de que vas a pagar en efectivo. Tu mesa queda pendiente de cobro.',
+    en: 'Let the waiter know you are going to pay in cash. Your table is pending payment.',
+  },
+  'Entendido': { es: 'Entendido', en: 'Got it' },
 
   // Cookies
   'Usamos cookies para cuidar tu experiencia': { es: 'Usamos cookies para cuidar tu experiencia', en: 'We use cookies to improve your experience' },

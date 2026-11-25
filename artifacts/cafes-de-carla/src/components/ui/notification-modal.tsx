@@ -1,5 +1,6 @@
 import { AlertCircle, BellRing, CheckCircle2 } from 'lucide-react';
 import Modal from '@/components/ui/modal';
+import { useLanguage } from '@/context/LanguageContext';
 
 export type NotificationVariant = 'success' | 'error' | 'info';
 
@@ -41,6 +42,7 @@ export default function NotificationModal({
 }: NotificationModalProps) {
   const style = variantStyles[variant];
   const Icon = style.icon;
+  const { t } = useLanguage();
 
   return (
     <Modal
@@ -62,6 +64,13 @@ export default function NotificationModal({
             {message}
           </p>
         )}
+        <button
+          type="button"
+          onClick={onClose}
+          className="mt-5 rounded-full border border-[#d8ccb7] px-5 py-2 text-[12px] font-semibold text-[#4a3322] transition-colors hover:bg-[#f5efe2] focus-ring"
+        >
+          {t('Entendido')}
+        </button>
       </div>
       <div className="mt-7 h-1 overflow-hidden rounded-full bg-[#efe7d9]">
         <span

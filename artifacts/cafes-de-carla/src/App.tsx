@@ -472,8 +472,10 @@ function Home() {
       setCartOpen(false);
 
       showNotice(
-        "¡Pedido enviado a cocina!",
-        `Mesa ${mesaActiva} · Ya lo tenemos en el panel de cocina.`,
+        t('¡Pedido enviado a cocina!'),
+        lang === 'en'
+          ? `Table ${mesaActiva} · We already have it on the kitchen panel.`
+          : `Mesa ${mesaActiva} · Ya lo tenemos en el panel de cocina.`,
         "success",
       );
     } catch (err) {
@@ -647,8 +649,8 @@ function Home() {
       setCashPending(true);
       fetchOrderStatus();
       showNotice(
-        "Aviso enviado al camarero",
-        "Avisa al camarero de que vas a pagar en efectivo. Tu mesa queda pendiente de cobro.",
+        t('Aviso enviado al camarero'),
+        t('Avisa al camarero de que vas a pagar en efectivo. Tu mesa queda pendiente de cobro.'),
         "success",
       );
     } catch (err) {
