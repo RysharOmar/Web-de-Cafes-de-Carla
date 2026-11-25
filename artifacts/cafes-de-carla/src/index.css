@@ -818,7 +818,9 @@
 .dark .contact-placeholder { border-color: #4a3c30; color: #c3b6a3; }
 .dark .detail-block { border-bottom-color: #332920; }
 .dark .feed-overlay { background: rgba(26,21,18,.88); color: #e6e2d3; }
-.dark .notfound-card, .dark .login-card, .dark .legal-card, .dark .legal-section { background: #241F1C; border-color: #3d3228; color: #e6e2d3; }
+.dark .notfound-card, .dark .login-card { background: #241F1C; border-color: #3d3228; color: #e6e2d3; }
+.dark .legal-card { background: #2a221e; border-color: #3d3228; color: #e6e2d3; }
+.dark .legal-section { border-color: #3d3228; color: #e6e2d3; }
 .dark .notfound-cup { background: #332920; color: #93a86a; border-color: #4a3c30; }
 .dark input, .dark textarea, .dark select { background: #241d18; color: #e6e2d3; border-color: #4a3c30; }
 .dark input::placeholder, .dark textarea::placeholder { color: #a89984; }
@@ -846,9 +848,12 @@
 .dark .login-card input { background: #241d18 !important; color: #e6e2d3 !important; border-color: #4a3c30 !important; }
 .dark .login-card button[type="submit"], .dark .login-submit { background: #6b7c51 !important; color: #1A1614 !important; border-color: #6b7c51 !important; }
 .dark .legal-main, .dark .legal-shell { color: #e6e2d3; }
-.dark .legal-heading h1, .dark .legal-heading .serif { color: #f0eadc; }
-.dark .legal-heading p, .dark .legal-section p, .dark .legal-section li { color: #c3b6a3; }
-.dark .legal-card, .dark .legal-section { background: #241F1C !important; border-color: #3d3228 !important; }
+.dark .legal-heading h1, .dark .legal-heading .serif, .dark .legal-title { color: #f0eadc; }
+.dark .legal-intro, .dark .legal-section p, .dark .legal-section li, .dark .legal-note { color: #c2bdb1; }
+.dark .legal-section h2 { color: #e6e2d3; }
+.dark .legal-card { background: #2a221e !important; border-color: #3d3228 !important; }
+.dark .legal-section { border-color: #3d3228 !important; }
+.dark .legal-icon { background: #3a332a; color: #d7ccb5; }
 .dark .admin-main { color: #e6e2d3; }
 .dark .admin-card, .dark .admin-panel, .dark .admin-stat, .dark [class*="admin"] .bg-white { background: #241F1C !important; border-color: #3d3228 !important; color: #e6e2d3; }
 .dark .admin-main h1, .dark .admin-main h2, .dark .admin-main h3, .dark .admin-main strong { color: #f0eadc; }

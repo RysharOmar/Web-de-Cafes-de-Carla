@@ -1,4 +1,5 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import CafesDeCarlaPreloader from '@/components/page-loader';
 
 export type Lang = 'es' | 'en';
 
@@ -6,6 +7,7 @@ interface LanguageContextType {
   lang: Lang;
   toggleLanguage: () => void;
   t: (key: string) => string;
+  isLangSwitching: boolean;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -275,6 +277,8 @@ const DICTIONARY: Record<string, Record<Lang, string>> = {
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [lang, setLang] = useState<Lang>('es');
+  const [isLangSwitching, setIsLangSwitching] = useState(false);
+  const switchTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     const stored = localStorage.getItem('cafes_de_carla_lang') as Lang | null;
@@ -283,12 +287,24 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (switchTimerRef.current) window.clearTimeout(switchTimerRef.current);
+    };
+  }, []);
+
   const toggleLanguage = useCallback(() => {
+    setIsLangSwitching(true);
     setLang((prev) => {
       const next: Lang = prev === 'es' ? 'en' : 'es';
       localStorage.setItem('cafes_de_carla_lang', next);
       return next;
     });
+    if (switchTimerRef.current) window.clearTimeout(switchTimerRef.current);
+    switchTimerRef.current = window.setTimeout(() => {
+      setIsLangSwitching(false);
+      switchTimerRef.current = null;
+    }, 1500);
   }, []);
 
   const t = useCallback(
@@ -299,8 +315,13 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <LanguageContext.Provider value={{ lang, toggleLanguage, t }}>
+    <LanguageContext.Provider value={{ lang, toggleLanguage, t, isLangSwitching }}>
       {children}
+      {isLangSwitching && (
+        <div className="fixed inset-0 z-[10000]" aria-hidden="true">
+          <CafesDeCarlaPreloader />
+        </div>
+      )}
     </LanguageContext.Provider>
   );
 }
