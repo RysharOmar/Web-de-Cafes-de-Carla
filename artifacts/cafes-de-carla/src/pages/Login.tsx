@@ -50,7 +50,6 @@ export default function Login() {
           <span className="serif" style={{ fontSize: '20px', color: '#4a3322' }}>Cafés de Carla</span>
           <div style={{ flex: 1 }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <ThemeToggle />
             <LangToggle />
             <span className="eyebrow" style={{ color: '#83915f' }}>{t('Acceso de personal')}</span>
           </div>

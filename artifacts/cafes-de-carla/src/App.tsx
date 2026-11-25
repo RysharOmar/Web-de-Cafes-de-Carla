@@ -806,7 +806,7 @@ function Home() {
             <ThemeToggle />
             <LangToggle />
             <button ref={cartTriggerRef} className="cart-trigger focus-ring" type="button" aria-label={lang === 'en' ? `Open cart, ${cartCount} items` : `Abrir carrito, ${cartCount} artículos`} aria-haspopup="dialog" aria-expanded={cartOpen} onClick={() => setCartOpen(true)} data-testid="button-open-cart">
-              <ShoppingBag size={17} aria-hidden="true" /><span>Carrito</span><span className="cart-count" data-testid="text-cart-count">{cartCount}</span>
+              <ShoppingBag size={17} aria-hidden="true" /><span>{lang === 'en' ? 'Cart' : 'Carrito'}</span><span className="cart-count" data-testid="text-cart-count">{cartCount}</span>
             </button>
             <button className="mobile-toggle focus-ring" type="button" aria-label={mobileOpen ? 'Cerrar navegación' : 'Abrir navegación'} aria-expanded={mobileOpen} onClick={() => setMobileOpen((open) => !open)} data-testid="button-mobile-navigation">
               {mobileOpen ? <X size={21} /> : <MenuIcon size={21} />}

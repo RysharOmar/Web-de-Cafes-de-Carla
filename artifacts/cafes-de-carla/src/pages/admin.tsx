@@ -22,7 +22,6 @@ function Header({ onLogout }: { onLogout?: () => void }) {
           <span className="serif">Cafés de Carla</span>
         </a>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <ThemeToggle />
           <LangToggle />
           <a href="/" className="text-cta focus-ring">{t('Volver a la carta')}</a>
           {onLogout && (

@@ -670,7 +670,6 @@ export default function Cocina() {
           </span>
           <div style={{ flex: 1 }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <ThemeToggle />
             <LangToggle />
             <span className="eyebrow cocina-header-role" style={{ color: '#83915f' }}>
               {t('Panel de personal')}
