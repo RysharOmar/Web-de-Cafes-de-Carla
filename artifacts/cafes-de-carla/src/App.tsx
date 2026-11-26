@@ -8,6 +8,7 @@ import NotificationModal, { type NotificationVariant } from '@/components/ui/not
 import CookieBanner from '@/components/cookie-banner';
 import ThemeToggle from '@/components/theme-toggle';
 import LangToggle from '@/components/lang-toggle';
+import FloatingCartButton from '@/components/floating-cart-button';
 import LegalLinks from '@/components/legal-links';
 import LegalPage from '@/pages/legal';
 import Login from '@/pages/Login';
@@ -1189,6 +1190,11 @@ function Home() {
         </>
       )}
 
+      <FloatingCartButton
+        count={cartCount}
+        isOpen={cartOpen}
+        onOpen={() => setCartOpen(true)}
+      />
       <NotificationModal
         open={notice !== null}
         onClose={() => setNotice(null)}
