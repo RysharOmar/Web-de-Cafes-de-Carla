@@ -30,6 +30,14 @@ const DICTIONARY: Record<string, Record<Lang, string>> = {
   'Entrando…': { es: 'Entrando…', en: 'Signing in…' },
   'Entrar': { es: 'Entrar', en: 'Sign in' },
   'Ups…': { es: 'Ups…', en: 'Oops…' },
+  'ESTA RUTA NO EXISTE': { es: 'ESTA RUTA NO EXISTE', en: 'THIS ROUTE DOES NOT EXIST' },
+  'Se nos ha derramado el camino.': { es: 'Se nos ha derramado el camino.', en: 'We have spilled the path.' },
+  'La página que buscas no está aquí, se ha movido o quizá nunca existió. Vuelve a la carta y sigue disfrutando sin prisa.': {
+    es: 'La página que buscas no está aquí, se ha movido o quizá nunca existió. Vuelve a la carta y sigue disfrutando sin prisa.',
+    en: 'The page you are looking for is not here, it has moved or perhaps never existed. Go back to the menu and keep enjoying without haste.',
+  },
+  'Volver al inicio': { es: 'Volver al inicio', en: 'Back to home' },
+  'Ver la carta': { es: 'Ver la carta', en: 'View menu' },
   'Información': { es: 'Información', en: 'Information' },
 
   // Producto / carta

@@ -1,25 +1,20 @@
-import { ArrowLeft, ArrowRight, Coffee, MapPin } from 'lucide-react';
+import { ArrowRight, Coffee } from 'lucide-react';
 import LegalLinks from '@/components/legal-links';
 import ThemeToggle from '@/components/theme-toggle';
 import LangToggle from '@/components/lang-toggle';
 import { useLanguage } from '@/context/LanguageContext';
 
 export default function NotFound() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   return (
     <div className="site-shell grain notfound-shell">
       <header className="site-header">
         <div className="header-inner section-wrap">
-          <a href="/" className="text-cta focus-ring" data-testid="button-back-home">
-            <ArrowLeft size={15} aria-hidden="true" /> {t('Volver a la carta')}
-          </a>
-          <div style={{ flex: 1 }} />
           <span className="serif" style={{ fontSize: '20px', color: '#4a3322' }}>Cafés de Carla</span>
           <div style={{ flex: 1 }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <ThemeToggle />
             <LangToggle />
-            <span className="eyebrow" style={{ color: '#83915f' }}>{t('Ups…')}</span>
           </div>
         </div>
       </header>
@@ -33,19 +28,21 @@ export default function NotFound() {
             <span className="notfound-steam notfound-steam--two" />
           </div>
 
-          <span className="eyebrow">ESTA RUTA NO EXISTE</span>
-          <h1 className="serif notfound-title">Se nos ha derramado<br /><em>el camino.</em></h1>
+          <span className="eyebrow">{t('ESTA RUTA NO EXISTE')}</span>
+          <h1 className="serif notfound-title">
+            {lang === 'en' ? (
+              <>We have spilled<br /><em>the path.</em></>
+            ) : (
+              <>Se nos ha derramado<br /><em>el camino.</em></>
+            )}
+          </h1>
           <p className="notfound-copy">
-            La página que buscas no está aquí, se ha movido o quizá nunca existió.
-            Vuelve a la carta y sigue disfrutando sin prisa.
+            {t('La página que buscas no está aquí, se ha movido o quizá nunca existió. Vuelve a la carta y sigue disfrutando sin prisa.')}
           </p>
 
           <div className="notfound-actions">
             <a href="/" className="notfound-btn notfound-btn--primary focus-ring" data-testid="link-notfound-home">
-              Volver al inicio <ArrowRight size={16} aria-hidden="true" />
-            </a>
-            <a href="/#carta" className="notfound-btn notfound-btn--ghost focus-ring" data-testid="link-notfound-menu">
-              <MapPin size={15} aria-hidden="true" /> Ver la carta
+              {t('Volver al inicio')} <ArrowRight size={16} aria-hidden="true" />
             </a>
           </div>
         </div>
@@ -53,7 +50,7 @@ export default function NotFound() {
 
       <footer className="site-footer">
         <div className="footer-main section-wrap">
-          <span className="footer-tagline serif">Cafés de Carla — Huele, Saborea, Disfruta.</span>
+          <span className="footer-tagline serif">Cafés de Carla — {t('Huele, Saborea, Disfruta.')}</span>
           <LegalLinks />
         </div>
       </footer>
