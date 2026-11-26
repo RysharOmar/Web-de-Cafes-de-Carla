@@ -893,12 +893,26 @@ function Home() {
             </div>
           ) : (
             <>
-              <div className="category-list" role="tablist" aria-label="Categorías de la carta" data-testid="menu-category-tabs">
-                {menuCategories.map((category, index) => (
-                  <button key={category.id} type="button" role="tab" aria-selected={selected?.id === category.id} aria-controls="category-panel" className={`category-tab ${selected?.id === category.id ? 'active' : ''}`} onClick={() => setActiveCategory(category.id)} data-testid={`tab-category-${category.id}`}>
-                    <span className="category-number">{String(index + 1).padStart(2, '0')}</span><span className="category-name">{category.title}</span><ArrowRight size={17} aria-hidden="true" />
-                  </button>
-                ))}
+              <div className="category-list-wrap">
+                <div className="category-list" role="tablist" aria-label="Categorías de la carta" data-testid="menu-category-tabs">
+                  {menuCategories.map((category, index) => (
+                    <button
+                      key={category.id}
+                      type="button"
+                      role="tab"
+                      aria-selected={selected?.id === category.id}
+                      aria-controls="category-panel"
+                      className={`category-tab ${selected?.id === category.id ? 'active' : ''}`}
+                      onClick={(e) => {
+                        setActiveCategory(category.id);
+                        e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                      }}
+                      data-testid={`tab-category-${category.id}`}
+                    >
+                      <span className="category-number">{String(index + 1).padStart(2, '0')}</span><span className="category-name">{category.title}</span><ArrowRight size={17} aria-hidden="true" />
+                    </button>
+                  ))}
+                </div>
               </div>
               {selected && (
                 <section className="category-panel" role="tabpanel" id="category-panel" aria-labelledby={`tab-category-${selected.id}`} aria-label={selected.title} data-testid={`panel-category-${selected.id}`}>
