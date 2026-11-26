@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react';
 import CafesDeCarlaPreloader from '@/components/page-loader';
-import { ArrowDown, ArrowRight, ArrowUpRight, Banknote, Clock3, CreditCard, Instagram, MapPin, Menu as MenuIcon, Minus, Phone, Plus, ShoppingBag, X } from 'lucide-react';
+import { ArrowDown, ArrowRight, ArrowUpRight, Banknote, ChevronLeft, ChevronRight, Clock3, CreditCard, Instagram, MapPin, Menu as MenuIcon, Minus, Phone, Plus, ShoppingBag, X } from 'lucide-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
@@ -159,6 +159,78 @@ function Home() {
   const selected = menuCategories.find((category) => category.id === activeCategory) ?? menuCategories[0];
   const cartTriggerRef = useRef<HTMLButtonElement>(null);
   const cartCloseRef = useRef<HTMLButtonElement>(null);
+  const categoryListRef = useRef<HTMLDivElement>(null);
+  const categoryDrag = useRef({ down: false, startX: 0, scrollLeft: 0, moved: false, pid: 0 });
+  const [catCanLeft, setCatCanLeft] = useState(false);
+  const [catCanRight, setCatCanRight] = useState(false);
+
+  const updateCategoryScroll = () => {
+    const el = categoryListRef.current;
+    if (!el) return;
+    setCatCanLeft(el.scrollLeft > 4);
+    setCatCanRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  };
+
+  useEffect(() => {
+    const el = categoryListRef.current;
+    if (!el) return;
+    updateCategoryScroll();
+    const onWheel = (e: WheelEvent) => {
+      if (e.deltaY === 0) return;
+      if (el.scrollWidth <= el.clientWidth) return;
+      e.preventDefault();
+      el.scrollLeft += e.deltaY;
+    };
+    const onScroll = () => updateCategoryScroll();
+    el.addEventListener('wheel', onWheel, { passive: false });
+    el.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      el.removeEventListener('wheel', onWheel);
+      el.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+    };
+  }, [menuCategories.length]);
+
+  const onCategoryMouseDown = (e: ReactMouseEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return;
+    const el = categoryListRef.current;
+    if (!el) return;
+    categoryDrag.current = { down: true, startX: e.pageX - el.offsetLeft, scrollLeft: el.scrollLeft, moved: false, pid: 0 };
+    el.classList.add('is-dragging');
+  };
+  const onCategoryMouseLeave = () => {
+    categoryDrag.current.down = false;
+    categoryDrag.current.moved = false;
+    categoryListRef.current?.classList.remove('is-dragging');
+  };
+  const onCategoryMouseUp = () => {
+    categoryDrag.current.down = false;
+    categoryListRef.current?.classList.remove('is-dragging');
+    setTimeout(() => { categoryDrag.current.moved = false; }, 0);
+  };
+  const onCategoryMouseMove = (e: ReactMouseEvent<HTMLDivElement>) => {
+    const d = categoryDrag.current;
+    const el = categoryListRef.current;
+    if (!d.down || !el) return;
+    const x = e.pageX - el.offsetLeft;
+    const walk = x - d.startX;
+    if (Math.abs(walk) > 5) d.moved = true;
+    if (d.moved) {
+      e.preventDefault();
+      el.scrollLeft = d.scrollLeft - walk;
+    }
+  };
+  const onCategoryClickCapture = (e: ReactMouseEvent<HTMLDivElement>) => {
+    if (categoryDrag.current.moved) {
+      e.preventDefault();
+      e.stopPropagation();
+      categoryDrag.current.moved = false;
+    }
+  };
+  const scrollCategoriesBy = (dir: number) => {
+    categoryListRef.current?.scrollBy({ left: dir * 280, behavior: 'smooth' });
+  };
   const cartDrawerRef = useRef<HTMLElement>(null);
 
   const searchParams = new URLSearchParams(window.location.search);
@@ -893,8 +965,24 @@ function Home() {
             </div>
           ) : (
             <>
-              <div className="category-list-wrap">
-                <div className="category-list" role="tablist" aria-label="Categorías de la carta" data-testid="menu-category-tabs">
+                            <div className="category-list-wrap">
+                {catCanLeft && (
+                  <button type="button" className="category-scroll-btn category-scroll-btn-left" aria-label="Desplazar categorías a la izquierda" onClick={() => scrollCategoriesBy(-1)}>
+                    <ChevronLeft size={18} aria-hidden="true" />
+                  </button>
+                )}
+                <div
+                  className="category-list"
+                  role="tablist"
+                  aria-label="Categorías de la carta"
+                  data-testid="menu-category-tabs"
+                  ref={categoryListRef}
+                  onMouseDown={onCategoryMouseDown}
+                  onMouseLeave={onCategoryMouseLeave}
+                  onMouseUp={onCategoryMouseUp}
+                  onMouseMove={onCategoryMouseMove}
+                  onClickCapture={onCategoryClickCapture}
+                >
                   {menuCategories.map((category, index) => (
                     <button
                       key={category.id}
@@ -913,6 +1001,11 @@ function Home() {
                     </button>
                   ))}
                 </div>
+                {catCanRight && (
+                  <button type="button" className="category-scroll-btn category-scroll-btn-right" aria-label="Desplazar categorías a la derecha" onClick={() => scrollCategoriesBy(1)}>
+                    <ChevronRight size={18} aria-hidden="true" />
+                  </button>
+                )}
               </div>
               {selected && (
                 <section className="category-panel" role="tabpanel" id="category-panel" aria-labelledby={`tab-category-${selected.id}`} aria-label={selected.title} data-testid={`panel-category-${selected.id}`}>
