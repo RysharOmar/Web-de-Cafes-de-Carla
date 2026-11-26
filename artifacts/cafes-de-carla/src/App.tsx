@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import CafesDeCarlaPreloader from '@/components/page-loader';
 import { ArrowDown, ArrowRight, ArrowUpRight, Banknote, ChevronLeft, ChevronRight, Clock3, CreditCard, Instagram, MapPin, Menu as MenuIcon, Minus, Phone, Plus, ShoppingBag, X } from 'lucide-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -160,7 +160,7 @@ function Home() {
   const cartTriggerRef = useRef<HTMLButtonElement>(null);
   const cartCloseRef = useRef<HTMLButtonElement>(null);
   const categoryListRef = useRef<HTMLDivElement>(null);
-  const categoryDrag = useRef({ down: false, startX: 0, scrollLeft: 0, moved: false, pid: 0 });
+  const categoryDrag = useRef({ down: false, startX: 0, startY: 0, scrollLeft: 0, moved: false, pid: 0 });
   const [catCanLeft, setCatCanLeft] = useState(false);
   const [catCanRight, setCatCanRight] = useState(false);
 
@@ -192,34 +192,35 @@ function Home() {
     };
   }, [menuCategories.length]);
 
-  const onCategoryMouseDown = (e: ReactMouseEvent<HTMLDivElement>) => {
+  const onCategoryPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (e.button !== 0) return;
     const el = categoryListRef.current;
     if (!el) return;
-    categoryDrag.current = { down: true, startX: e.pageX - el.offsetLeft, scrollLeft: el.scrollLeft, moved: false, pid: 0 };
+    categoryDrag.current = { down: true, startX: e.clientX, startY: e.clientY, scrollLeft: el.scrollLeft, moved: false, pid: e.pointerId };
     el.classList.add('is-dragging');
-  };
-  const onCategoryMouseLeave = () => {
-    categoryDrag.current.down = false;
-    categoryDrag.current.moved = false;
-    categoryListRef.current?.classList.remove('is-dragging');
-  };
-  const onCategoryMouseUp = () => {
-    categoryDrag.current.down = false;
-    categoryListRef.current?.classList.remove('is-dragging');
-    setTimeout(() => { categoryDrag.current.moved = false; }, 0);
-  };
-  const onCategoryMouseMove = (e: ReactMouseEvent<HTMLDivElement>) => {
-    const d = categoryDrag.current;
-    const el = categoryListRef.current;
-    if (!d.down || !el) return;
-    const x = e.pageX - el.offsetLeft;
-    const walk = x - d.startX;
-    if (Math.abs(walk) > 5) d.moved = true;
-    if (d.moved) {
-      e.preventDefault();
-      el.scrollLeft = d.scrollLeft - walk;
-    }
+
+    const onMove = (ev: PointerEvent) => {
+      const d = categoryDrag.current;
+      const list = categoryListRef.current;
+      if (!d.down || !list || d.pid !== ev.pointerId) return;
+      const dx = ev.clientX - d.startX;
+      const dy = ev.clientY - d.startY;
+      if (!d.moved && Math.abs(dx) > 5 && Math.abs(dx) >= Math.abs(dy)) d.moved = true;
+      if (d.moved) list.scrollLeft = d.scrollLeft - dx;
+    };
+    const onUp = (ev: PointerEvent) => {
+      const d = categoryDrag.current;
+      if (d.pid !== ev.pointerId) return;
+      d.down = false;
+      categoryListRef.current?.classList.remove('is-dragging');
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
+      if (d.moved) setTimeout(() => { d.moved = false; }, 0);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onUp);
   };
   const onCategoryClickCapture = (e: ReactMouseEvent<HTMLDivElement>) => {
     if (categoryDrag.current.moved) {
@@ -977,10 +978,7 @@ function Home() {
                   aria-label="Categorías de la carta"
                   data-testid="menu-category-tabs"
                   ref={categoryListRef}
-                  onMouseDown={onCategoryMouseDown}
-                  onMouseLeave={onCategoryMouseLeave}
-                  onMouseUp={onCategoryMouseUp}
-                  onMouseMove={onCategoryMouseMove}
+                  onPointerDown={onCategoryPointerDown}
                   onClickCapture={onCategoryClickCapture}
                 >
                   {menuCategories.map((category, index) => (
