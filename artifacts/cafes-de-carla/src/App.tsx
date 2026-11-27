@@ -180,7 +180,7 @@ function Home() {
         const target = panel.getBoundingClientRect().top + window.scrollY - 84;
         const start = window.scrollY;
         const distance = target - start;
-        const duration = 700;
+        const duration = Math.min(550, Math.max(320, Math.abs(distance) * 0.3));
         let startTime: number | null = null;
         const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
         const step = (ts: number) => {
