@@ -327,7 +327,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       document.body.style.width = '100%';
       document.body.style.overscrollBehavior = 'none';
       wasLangSwitchingRef.current = true;
-    } else {
+    } else if (document.documentElement.dataset.appPreloader !== '1') {
       document.documentElement.style.overflow = '';
       document.body.style.overflow = '';
       document.body.style.position = '';
@@ -336,13 +336,17 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       if (wasLangSwitchingRef.current) {
         wasLangSwitchingRef.current = false;
       }
+    } else if (wasLangSwitchingRef.current) {
+      wasLangSwitchingRef.current = false;
     }
     return () => {
-      document.documentElement.style.overflow = '';
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
-      document.body.style.overscrollBehavior = '';
+      if (document.documentElement.dataset.appPreloader !== '1') {
+        document.documentElement.style.overflow = '';
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.width = '';
+        document.body.style.overscrollBehavior = '';
+      }
     };
   }, [isLangSwitching]);
 

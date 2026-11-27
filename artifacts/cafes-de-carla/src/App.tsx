@@ -157,13 +157,15 @@ function Home() {
 
   useLayoutEffect(() => {
     if (preloaderVisible) {
+      document.documentElement.dataset.appPreloader = '1';
       document.documentElement.style.overflow = 'hidden';
       document.body.style.overflow = 'hidden';
       document.body.style.position = 'fixed';
       document.body.style.width = '100%';
       document.body.style.overscrollBehavior = 'none';
       wasPreloaderVisibleRef.current = true;
-    } else {
+    } else if (!isLangSwitching) {
+      delete document.documentElement.dataset.appPreloader;
       document.documentElement.style.overflow = '';
       document.body.style.overflow = '';
       document.body.style.position = '';
@@ -172,18 +174,23 @@ function Home() {
       if (wasPreloaderVisibleRef.current) {
         wasPreloaderVisibleRef.current = false;
       }
+    } else {
+      delete document.documentElement.dataset.appPreloader;
     }
     return () => {
-      document.documentElement.style.overflow = '';
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
-      document.body.style.overscrollBehavior = '';
+      delete document.documentElement.dataset.appPreloader;
+      if (!isLangSwitching) {
+        document.documentElement.style.overflow = '';
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.width = '';
+        document.body.style.overscrollBehavior = '';
+      }
     };
-  }, [preloaderVisible]);
+  }, [preloaderVisible, isLangSwitching]);
   const lastMenuFetchRef = useRef(0);
   const hasLoadedMenuRef = useRef(false);
-  const { lang, t } = useLanguage();
+  const { lang, t, isLangSwitching } = useLanguage();
 
   const menuCategories = useMemo(() => groupProductos(productos, lang), [
     productos,
