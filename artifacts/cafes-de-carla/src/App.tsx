@@ -942,8 +942,9 @@ function Home() {
       </div>
       <header className="site-header">
         <div className="header-inner section-wrap">
-          <a href="#inicio" className="brand-link focus-ring" aria-label="Cafés de Carla, inicio" data-testid="link-brand-home">
-            <img src={logo} alt="Logotipo de Cafés de Carla: Huele, Saborea, Disfruta" width="1024" height="1024" data-testid="img-brand-logo" />
+          <a href="#inicio" className="brand-link focus-ring mr-2 md:mr-0" aria-label="Cafés de Carla, inicio" data-testid="link-brand-home">
+            <img src="/logo-mobile.png" alt="Logotipo de Cafés de Carla" className="block h-12 w-12 rounded-full object-cover md:hidden" width="512" height="512" data-testid="img-brand-logo-mobile" />
+            <img src={logo} alt="Logotipo de Cafés de Carla: Huele, Saborea, Disfruta" className="hidden h-[66px] w-[66px] rounded-full object-cover md:block" width="1024" height="1024" data-testid="img-brand-logo" />
           </a>
           <nav className={`main-nav ${mobileOpen ? 'is-open' : ''}`} aria-label="Navegación principal" data-testid="navigation-primary">
             <a href="#historia" className="nav-link" onClick={closeNav} data-testid="link-nav-story">{t('Nuestra esencia')}</a>
