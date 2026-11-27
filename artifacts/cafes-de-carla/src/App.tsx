@@ -943,15 +943,11 @@ function Home() {
       <header className="site-header">
         <div className="header-inner section-wrap">
           <a href="#inicio" className="brand-link focus-ring mr-2 md:mr-0 flex items-center" aria-label="Cafés de Carla, inicio" data-testid="link-brand-home">
-            <span className="flex md:hidden items-center">
-              <div className="rounded-full p-[2px] bg-gradient-to-tr from-[#5A3C28] to-[#6b7c51] shadow-md">
-                <img src="/logo-mobile.png" alt="Logotipo de Cafés de Carla" className="w-10 h-10 rounded-full object-cover bg-white" width="512" height="512" data-testid="img-brand-logo-mobile" />
-              </div>
+            <span className="flex md:hidden">
+              <img src="/logo-mobile.png" alt="Logotipo de Cafés de Carla" className="w-10 h-10 object-contain rounded-full" width="512" height="512" data-testid="img-brand-logo-mobile" />
             </span>
             <span className="hidden md:flex items-center">
-              <div className="rounded-full p-[2px] bg-gradient-to-tr from-[#5A3C28] to-[#6b7c51] shadow-md">
-                <img src="/logo-desktop.png" alt="Logotipo de Cafés de Carla: Huele, Saborea, Disfruta" className="w-16 h-16 lg:w-20 lg:h-20 rounded-full object-cover bg-white" width="1024" height="1024" data-testid="img-brand-logo" />
-              </div>
+              <img src="/logo-desktop.png" alt="Logotipo de Cafés de Carla: Huele, Saborea, Disfruta" className="h-16 lg:h-20 w-auto object-contain" width="1024" height="1024" data-testid="img-brand-logo" />
             </span>
           </a>
           <nav className={`main-nav ${mobileOpen ? 'is-open' : ''}`} aria-label="Navegación principal" data-testid="navigation-primary">
