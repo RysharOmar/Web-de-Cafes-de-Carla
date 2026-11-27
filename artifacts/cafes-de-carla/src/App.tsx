@@ -947,7 +947,7 @@ function Home() {
               <img src="/logo-mobile.png" alt="Logotipo de Cafés de Carla" className="w-10 h-10 object-contain rounded-full" width="512" height="512" data-testid="img-brand-logo-mobile" />
             </span>
             <span className="hidden md:flex items-center">
-              <img src="/logo-desktop.png" alt="Logotipo de Cafés de Carla: Huele, Saborea, Disfruta" className="h-16 lg:h-20 w-auto object-contain dark:drop-shadow-[0_0_15px_rgba(255,255,255,0.15)]" width="1024" height="1024" data-testid="img-brand-logo" />
+              <img src="/logo-desktop.png" alt="Logotipo de Cafés de Carla: Huele, Saborea, Disfruta" className="h-16 lg:h-20 w-auto object-contain dark:invert dark:hue-rotate-180" width="1024" height="1024" data-testid="img-brand-logo" />
             </span>
           </a>
           <nav className={`main-nav ${mobileOpen ? 'is-open' : ''}`} aria-label="Navegación principal" data-testid="navigation-primary">

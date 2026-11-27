@@ -751,7 +751,7 @@
 .dark .site-shell { background: #1A1614; color: #e6e2d3; }
 .dark .launch-ribbon { background: #120e0b; color: #d8ccb9; border-bottom: 1px solid #332920; }
 .dark .site-header { background: #201a17; border-bottom-color: #332920; }
-.dark .brand-link img { filter: brightness(.92) contrast(1.02); }
+
 .dark .main-nav { color: #d8ccb9; }
 .dark .nav-contact { border-color: #8fa065; color: #d8ccb9; }
 .dark .nav-contact:hover { background: #6b7c51; border-color: #6b7c51; color: #1A1614; }
