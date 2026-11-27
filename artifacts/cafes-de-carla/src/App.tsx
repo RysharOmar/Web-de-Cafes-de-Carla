@@ -154,6 +154,7 @@ function Home() {
   const [preloaderVisible, setPreloaderVisible] = useState(!initialPreloaderDone);
   const [preloaderFading, setPreloaderFading] = useState(false);
   const wasPreloaderVisibleRef = useRef(!initialPreloaderDone);
+  const { lang, t, isLangSwitching } = useLanguage();
 
   useLayoutEffect(() => {
     if (preloaderVisible) {
@@ -190,7 +191,6 @@ function Home() {
   }, [preloaderVisible, isLangSwitching]);
   const lastMenuFetchRef = useRef(0);
   const hasLoadedMenuRef = useRef(false);
-  const { lang, t, isLangSwitching } = useLanguage();
 
   const menuCategories = useMemo(() => groupProductos(productos, lang), [
     productos,
