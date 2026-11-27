@@ -65,20 +65,25 @@ function ProductCard({ item, onAdd }: { item: MenuItem; onAdd: (size: string, va
 
   const hasSizes = item.sizes.length > 1;
   const usingFallback = !item.imageUrl || imageFailed;
-  const imageSrc = usingFallback ? '/sample-brunch.jpg' : item.imageUrl!;
+  const rawImageSrc = usingFallback ? '/sample-brunch.jpg' : item.imageUrl!;
+  const cloudinaryTransform = 'c_pad,w_600,h_600,b_white,q_auto,f_auto';
+  const imageSrc =
+    rawImageSrc.includes('res.cloudinary.com') && rawImageSrc.includes('/upload/') && !rawImageSrc.includes(cloudinaryTransform)
+      ? rawImageSrc.replace('/upload/', `/upload/${cloudinaryTransform}/`)
+      : rawImageSrc;
   const selectedSizeOption = item.sizes.find((size) => size.label === selectedSize) ?? item.sizes[0];
 
   return (
     <li className={`product-card${item.agotado ? ' is-sold-out' : ''}`} data-testid={`item-menu-${item.id}`}>
-      <div className="product-photo relative w-full aspect-[4/3] overflow-hidden rounded-t-[10px] bg-[#f3f0ec] dark:bg-stone-800">
+      <div className="product-photo relative w-full aspect-square overflow-hidden rounded-t-[10px] bg-white">
         <img
           src={imageSrc}
           alt={usingFallback ? `Imagen de muestra de ${item.name}` : item.name}
           loading="lazy"
           decoding="async"
-          width="960"
-          height="720"
-          className="w-full h-full object-cover"
+          width="600"
+          height="600"
+          className="w-full h-full object-contain"
           onError={() => setImageFailed(true)}
           data-testid={`img-product-${item.id}`}
         />

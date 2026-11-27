@@ -186,8 +186,8 @@
 .product-card.is-sold-out .product-photo img { opacity: .55; filter: grayscale(.25); }
 .product-card.is-sold-out .product-card-content { opacity: .82; }
 .product-card-unavailable { display: inline-block; color: #b9aa95; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; margin: 4px 0 0; }
-.product-photo { position: relative; aspect-ratio: 4 / 3; overflow: hidden; background: #e4e0d2; }
-.product-photo img { width: 100%; height: 100%; display: block; object-fit: cover; transition: transform .55s cubic-bezier(.2,.7,.2,1); }
+.product-photo { position: relative; aspect-ratio: 1 / 1; overflow: hidden; background: #ffffff; }
+.product-photo img { width: 100%; height: 100%; display: block; object-fit: contain; transition: transform .55s cubic-bezier(.2,.7,.2,1); }
 .product-card:hover .product-photo img { transform: scale(1.04); }
 .product-photo-label { position: absolute; left: 10px; bottom: 10px; background: rgba(248,244,232,.94); color: #604b36; font-size: 7px; letter-spacing: .1em; padding: 6px 8px; }
 .product-card-content { flex: 1; display: flex; flex-direction: column; padding: 14px; }
@@ -377,7 +377,7 @@
   .category-copy { display: block; margin-bottom: 15px; }
   .category-copy p { margin-top: 7px; text-align: left; }
   .product-grid { gap: 11px; }
-  .product-photo { aspect-ratio: 4 / 3; }
+  .product-photo { aspect-ratio: 1 / 1; }
   .product-card-content { padding: 10px; }
   .product-card-content h4 { font-size: 15px; }
   .product-card-footer { flex-wrap: wrap; }
@@ -797,7 +797,7 @@
 .dark .category-scroll-btn { color: #c3b6a3; }
 .dark .category-scroll-btn:hover { color: #f5f0e5; }
 .dark .product-card { background: #241F1C; border-color: #3d3228; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
-.dark .product-photo { background: #292524; }
+.dark .product-photo { background: #ffffff; }
 .dark .product-photo-label { background: rgba(42,34,30,.94); color: #d8ccb9; }
 .dark .product-card-price { color: #93a86a; }
 .dark .product-card-content p { color: #a8a29e; }
