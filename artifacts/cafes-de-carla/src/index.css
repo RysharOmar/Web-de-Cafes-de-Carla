@@ -105,7 +105,7 @@
 .launch-ribbon { min-height: 30px; background: #3e2819; color: #f5eddd; display: flex; align-items: center; justify-content: center; gap: 9px; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; }
 .ribbon-dot { width: 6px; height: 6px; border-radius: 50%; background: #b1ca7b; }
 .site-header { position: relative; z-index: 55; background: #f5f0e5; border-bottom: 1px solid #e4dac8; }
-.header-inner { min-height: 88px; display: flex; justify-content: space-between; align-items: center; }
+.header-inner { min-height: 88px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
 .brand-link { width: 66px; height: 66px; display: block; border-radius: 50%; overflow: hidden; }
 .brand-link img { width: 100%; height: 100%; display: block; object-fit: cover; }
 .main-nav { display: flex; align-items: center; gap: clamp(24px, 4vw, 54px); font-size: 12px; color: #553b2a; }
@@ -213,8 +213,8 @@
 @keyframes page-loader-spin { to { transform: rotate(360deg); } }
 .preview-note { display: block; color: #8a7a65; font-size: 9px; line-height: 1.5; margin-top: 22px; }
 .menu-disclaimer { text-align: right; margin: 15px 0 0; color: #9a8b77; font-size: 9px; line-height: 1.6; }
-.cart-backdrop { position: fixed; inset: 0; z-index: 30; border: 0; padding: 0; background: rgba(38, 25, 16, .5); cursor: pointer; animation: cart-fade-in .18s ease-out both; }
-.cart-drawer { position: fixed; z-index: 31; top: 0; right: 0; bottom: 0; display: flex; flex-direction: column; width: min(380px, 95vw); max-width: 400px; height: 100vh; height: 100dvh; max-height: 100dvh; overflow: hidden; background: #f7f3e9; color: #4a3322; box-shadow: -18px 0 55px rgba(38, 25, 16, .2); animation: cart-slide-in .24s cubic-bezier(.2,.7,.2,1) both; outline: none; }
+.cart-backdrop { position: fixed; inset: 0; z-index: 90; border: 0; padding: 0; background: rgba(38, 25, 16, .5); cursor: pointer; animation: cart-fade-in .18s ease-out both; }
+.cart-drawer { position: fixed; z-index: 100; top: 0; right: 0; bottom: 0; display: flex; flex-direction: column; width: min(380px, 95vw); max-width: 400px; height: 100vh; height: 100dvh; max-height: 100dvh; overflow: hidden; background: #f7f3e9; color: #4a3322; box-shadow: -18px 0 55px rgba(38, 25, 16, .2); animation: cart-slide-in .24s cubic-bezier(.2,.7,.2,1) both; outline: none; }
 .cart-header { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 24px 26px 19px; border-bottom: 1px solid #ddd1be; }
 .cart-header .eyebrow { color: #83915f; font-size: .78rem; }
 .cart-header h2 { margin: 7px 0 0; font-size: 35px; font-weight: 400; }
@@ -894,14 +894,18 @@
 .dark .lang-toggle{border-color:rgba(245,240,229,.2);background:rgba(245,240,229,.04);color:#f5f0e5}
 .dark .lang-toggle:hover{background:rgba(245,240,229,.1);border-color:rgba(245,240,229,.38)}
 
-.floating-cart-btn img { opacity: 0.6; transition: opacity .3s ease; }
-.floating-cart-btn:hover img,
-.floating-cart-btn:focus-visible img,
-.floating-cart-btn:active img { opacity: 1; }
-
 /* Estilos base para el Scrollbar */
+:root {
+  scrollbar-color: #6b7c51 #f3f0ec; /* Para Firefox */
+  scrollbar-width: auto;
+}
+.dark {
+  scrollbar-color: #6b7c51 #1a1512;
+}
 ::-webkit-scrollbar {
-  width: 10px;
+  width: 8px !important;
+  height: 8px !important;
+  display: block !important; /* Fuerza a que se vea en algunos Androids */
 }
 
 /* MODO CLARO (Fondo crema, barra verde oliva) */

@@ -43,6 +43,7 @@ export default function FloatingCartButton({
   onOpen: () => void;
 }) {
   const [pos, setPos] = useState<Pos>(() => loadPos());
+  const [isInteracting, setIsInteracting] = useState(false);
   const dragRef = useRef<{
     pointerId: number;
     startX: number;
@@ -62,6 +63,7 @@ export default function FloatingCartButton({
 
   const onPointerDown = useCallback((e: ReactPointerEvent<HTMLButtonElement>) => {
     if (e.button !== 0) return;
+    setIsInteracting(true);
     e.currentTarget.setPointerCapture(e.pointerId);
     dragRef.current = {
       pointerId: e.pointerId,
@@ -89,6 +91,7 @@ export default function FloatingCartButton({
     const drag = dragRef.current;
     if (!drag || drag.pointerId !== e.pointerId) return;
     dragRef.current = null;
+    setIsInteracting(false);
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(posRef.current));
     } catch {}
@@ -131,7 +134,7 @@ export default function FloatingCartButton({
         src={imgSrc}
         alt=""
         draggable={false}
-        style={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }}
+        style={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none', opacity: isInteracting ? 1 : 0.6, transition: 'opacity .3s ease' }}
       />
       {count > 0 && (
         <span
