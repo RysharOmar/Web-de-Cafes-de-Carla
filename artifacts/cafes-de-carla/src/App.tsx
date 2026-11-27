@@ -1127,7 +1127,7 @@ function Home() {
                 referrerPolicy="no-referrer-when-downgrade"
               />
               <a
-                className="map-open-link focus-ring"
+                className="map-open-link focus-ring text-sm md:text-base"
                 href="https://www.google.com/maps/place/Caf%C3%A9s+de+Carla/@28.1282921,-15.4487836,17z"
                 target="_blank"
                 rel="noreferrer"
@@ -1143,7 +1143,6 @@ function Home() {
                   color: '#fff',
                   padding: '9px 14px',
                   borderRadius: 8,
-                  fontSize: '12px',
                   fontWeight: 600,
                   textDecoration: 'none',
                   boxShadow: '0 6px 16px rgba(74, 51, 34, 0.28)',
