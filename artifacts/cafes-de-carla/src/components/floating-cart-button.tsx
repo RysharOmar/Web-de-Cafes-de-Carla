@@ -106,6 +106,7 @@ export default function FloatingCartButton({
       onPointerMove={onPointerMove}
       onPointerUp={finishDrag}
       onPointerCancel={finishDrag}
+      className="floating-cart-btn"
       style={{
         position: 'fixed',
         left: pos.x,
