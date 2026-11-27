@@ -58,7 +58,7 @@ function formatPrice(cents: number) {
 }
 
 // Product card: image, description, sizes and availability all come from Neon.
-function ProductCard({ item, onAdd }: { item: MenuItem; onAdd: (size: string, variant: string | null) => void }) {
+function ProductCard({ item, onAdd, count }: { item: MenuItem; onAdd: (size: string, variant: string | null) => void; count: number }) {
   const { t, lang } = useLanguage();
   const [selectedSize, setSelectedSize] = useState(item.defaultSize);
   const [imageFailed, setImageFailed] = useState(false);
@@ -72,9 +72,15 @@ function ProductCard({ item, onAdd }: { item: MenuItem; onAdd: (size: string, va
       ? rawImageSrc.replace('/upload/', `/upload/${cloudinaryTransform}/`)
       : rawImageSrc;
   const selectedSizeOption = item.sizes.find((size) => size.label === selectedSize) ?? item.sizes[0];
+  const cardSizeStyle =
+    count === 1
+      ? { flex: '0 1 460px', maxWidth: '480px' }
+      : count === 2
+        ? { flex: '0 1 380px', maxWidth: '420px' }
+        : undefined;
 
   return (
-    <li className={`product-card group${item.agotado ? ' is-sold-out' : ''}`} data-testid={`item-menu-${item.id}`}>
+    <li className={`product-card group${item.agotado ? ' is-sold-out' : ''}`} style={cardSizeStyle} data-testid={`item-menu-${item.id}`}>
       <div className="product-photo p-3">
         <div className="relative w-full aspect-square overflow-hidden rounded-xl bg-white dark:bg-stone-800 shadow-sm transition-shadow duration-500 group-hover:shadow-md">
           <img
@@ -1022,9 +1028,9 @@ function Home() {
                     </div>
                     {selected.note && <p>{selected.note}</p>}
                   </div>
-                  <ul className="product-grid" data-testid={`list-menu-${selected.id}`}>
+                  <ul className="product-grid max-w-7xl mx-auto w-full" data-testid={`list-menu-${selected.id}`}>
                     {selected.items.map((item) => (
-                      <ProductCard key={item.id} item={item} onAdd={(size, variant) => changeCartQuantity(item.id, size, 1, variant)} />
+                      <ProductCard key={item.id} item={item} count={selected.items.length} onAdd={(size, variant) => changeCartQuantity(item.id, size, 1, variant)} />
                     ))}
                   </ul>
                 </section>
