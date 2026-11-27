@@ -106,8 +106,8 @@
 .ribbon-dot { width: 6px; height: 6px; border-radius: 50%; background: #b1ca7b; }
 .site-header { position: relative; z-index: 55; background: #f5f0e5; border-bottom: 1px solid #e4dac8; }
 .header-inner { min-height: 88px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
-.brand-link { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; border-radius: 50%; overflow: hidden; }
-.brand-link img { display: block; object-fit: cover; }
+.brand-link { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.brand-link img { display: block; }
 .main-nav { display: flex; align-items: center; gap: clamp(24px, 4vw, 54px); font-size: 12px; color: #553b2a; }
 .main-nav a { text-decoration: none; }
 .nav-contact { display: flex; align-items: center; gap: 7px; border: 1px solid #6f5035; border-radius: 99px; padding: 11px 17px; transition: background .2s, color .2s; }
