@@ -153,6 +153,23 @@ function Home() {
   const [menuError, setMenuError] = useState<string | null>(null);
   const [preloaderVisible, setPreloaderVisible] = useState(!initialPreloaderDone);
   const [preloaderFading, setPreloaderFading] = useState(false);
+  const wasPreloaderVisibleRef = useRef(!initialPreloaderDone);
+
+  useEffect(() => {
+    if (preloaderVisible) {
+      document.body.style.overflow = 'hidden';
+      wasPreloaderVisibleRef.current = true;
+    } else {
+      document.body.style.overflow = '';
+      if (wasPreloaderVisibleRef.current) {
+        window.scrollTo(0, 0);
+        wasPreloaderVisibleRef.current = false;
+      }
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [preloaderVisible]);
   const lastMenuFetchRef = useRef(0);
   const hasLoadedMenuRef = useRef(false);
   const { lang, t } = useLanguage();

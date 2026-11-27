@@ -318,6 +318,23 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  const wasLangSwitchingRef = useRef(false);
+  useEffect(() => {
+    if (isLangSwitching) {
+      document.body.style.overflow = 'hidden';
+      wasLangSwitchingRef.current = true;
+    } else {
+      document.body.style.overflow = '';
+      if (wasLangSwitchingRef.current) {
+        window.scrollTo(0, 0);
+        wasLangSwitchingRef.current = false;
+      }
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isLangSwitching]);
+
   const toggleLanguage = useCallback(() => {
     if (switchTimerRef.current) window.clearTimeout(switchTimerRef.current);
     if (fadeTimerRef.current) window.clearTimeout(fadeTimerRef.current);
