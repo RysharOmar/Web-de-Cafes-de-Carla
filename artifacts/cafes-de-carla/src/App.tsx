@@ -157,17 +157,25 @@ function Home() {
 
   useEffect(() => {
     if (preloaderVisible) {
+      document.documentElement.style.overflow = 'hidden';
       document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
       wasPreloaderVisibleRef.current = true;
     } else {
+      document.documentElement.style.overflow = '';
       document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
       if (wasPreloaderVisibleRef.current) {
-        window.scrollTo(0, 0);
         wasPreloaderVisibleRef.current = false;
       }
     }
     return () => {
+      document.documentElement.style.overflow = '';
       document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
     };
   }, [preloaderVisible]);
   const lastMenuFetchRef = useRef(0);

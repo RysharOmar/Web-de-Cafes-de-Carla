@@ -321,17 +321,25 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const wasLangSwitchingRef = useRef(false);
   useEffect(() => {
     if (isLangSwitching) {
+      document.documentElement.style.overflow = 'hidden';
       document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
       wasLangSwitchingRef.current = true;
     } else {
+      document.documentElement.style.overflow = '';
       document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
       if (wasLangSwitchingRef.current) {
-        window.scrollTo(0, 0);
         wasLangSwitchingRef.current = false;
       }
     }
     return () => {
+      document.documentElement.style.overflow = '';
       document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
     };
   }, [isLangSwitching]);
 

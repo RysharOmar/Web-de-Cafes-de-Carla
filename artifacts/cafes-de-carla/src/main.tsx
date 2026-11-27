@@ -3,6 +3,10 @@ import { ThemeProvider } from 'next-themes';
 import { LanguageProvider } from '@/context/LanguageContext';
 
 import App from './App';
+
+if ('scrollRestoration' in history) {
+  history.scrollRestoration = 'manual';
+}
 import { ErrorBoundary } from '@/components/error-boundary';
 
 import './index.css';
