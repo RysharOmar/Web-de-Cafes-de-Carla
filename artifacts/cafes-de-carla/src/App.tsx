@@ -175,7 +175,23 @@ function Home() {
   useEffect(() => {
     if (!selected?.id) return;
     if (prevCategoryRef.current && prevCategoryRef.current !== selected.id) {
-      document.getElementById('category-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const panel = document.getElementById('category-panel');
+      if (panel) {
+        const target = panel.getBoundingClientRect().top + window.scrollY - 84;
+        const start = window.scrollY;
+        const distance = target - start;
+        const duration = 700;
+        let startTime: number | null = null;
+        const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+        const step = (ts: number) => {
+          if (startTime === null) startTime = ts;
+          const elapsed = ts - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          window.scrollTo(0, start + distance * easeInOutCubic(progress));
+          if (elapsed < duration) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+      }
     }
     prevCategoryRef.current = selected.id;
   }, [selected?.id]);
