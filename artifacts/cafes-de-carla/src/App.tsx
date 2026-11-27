@@ -74,20 +74,22 @@ function ProductCard({ item, onAdd }: { item: MenuItem; onAdd: (size: string, va
   const selectedSizeOption = item.sizes.find((size) => size.label === selectedSize) ?? item.sizes[0];
 
   return (
-    <li className={`product-card${item.agotado ? ' is-sold-out' : ''}`} data-testid={`item-menu-${item.id}`}>
-      <div className="product-photo relative w-full aspect-square overflow-hidden rounded-t-[10px] bg-white">
-        <img
-          src={imageSrc}
-          alt={usingFallback ? `Imagen de muestra de ${item.name}` : item.name}
-          loading="lazy"
-          decoding="async"
-          width="600"
-          height="600"
-          className="w-full h-full object-contain"
-          onError={() => setImageFailed(true)}
-          data-testid={`img-product-${item.id}`}
-        />
-        {usingFallback && <span className="product-photo-label">IMAGEN DE MUESTRA</span>}
+    <li className={`product-card group${item.agotado ? ' is-sold-out' : ''}`} data-testid={`item-menu-${item.id}`}>
+      <div className="product-photo p-3">
+        <div className="relative w-full aspect-square overflow-hidden rounded-xl bg-white dark:bg-stone-800 shadow-sm transition-shadow duration-500 group-hover:shadow-md">
+          <img
+            src={imageSrc}
+            alt={usingFallback ? `Imagen de muestra de ${item.name}` : item.name}
+            loading="lazy"
+            decoding="async"
+            width="600"
+            height="600"
+            className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
+            onError={() => setImageFailed(true)}
+            data-testid={`img-product-${item.id}`}
+          />
+          {usingFallback && <span className="product-photo-label">IMAGEN DE MUESTRA</span>}
+        </div>
       </div>
       <div className="product-card-content">
         <h4 data-testid={`name-menu-${item.id}`}>{item.name}</h4>
