@@ -283,7 +283,8 @@
 .pause-ornament::after { content: ''; position: absolute; width: 5px; height: 5px; border-radius: 50%; background: #a0b277; inset: 7.5px; }
 .visit-section { padding-top: 112px; padding-bottom: 118px; }
 .visit-heading { display: flex; align-items: end; justify-content: space-between; margin: 30px 0 50px; }
-.visit-heading p { max-width: 340px; color: #7d7162; font-size: 13px; line-height: 1.8; margin: 0 5% 8px 20px; }
+.visit-heading h2 { font-size: clamp(48px, 7vw, 88px) !important; line-height: 1.0; letter-spacing: -.05em; }
+.visit-heading p { max-width: 360px; color: #7d7162; font-size: 16px; line-height: 1.8; margin: 0 5% 8px 20px; }
 .visit-grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: clamp(35px, 7vw, 92px); }
 .map-placeholder { min-height: 430px; position: relative; overflow: hidden; background: #e1e3d3; border: 1px solid #d3d6c1; }
 .map-pattern { position: absolute; inset: 0; opacity: .75; background-color: #e4e5d8; background-image: linear-gradient(34deg, transparent 47%, #f4f0e4 47.5%, #f4f0e4 51%, transparent 51.5%), linear-gradient(144deg, transparent 39%, #d4d9c5 39.5%, #d4d9c5 43%, transparent 43.5%), linear-gradient(88deg, transparent 67%, #f1eddf 67.5%, #f1eddf 71%, transparent 71.5%); background-size: 120px 112px, 178px 145px, 160px 174px; }
@@ -301,12 +302,12 @@
 .clock-mark { font-size: 19px; line-height: 1; }
 .detail-block .eyebrow { font-size: 8px; color: #93806b; }
 .detail-block h3 { font-family: var(--app-font-serif); font-size: 23px; font-weight: 400; color: #4a3322; margin: 7px 0 4px; }
-.detail-block p { color: #8a7a69; font-size: 11px; margin: 0; }
+.detail-block p { color: #8a7a69; font-size: 15px; line-height: 1.75; margin: 0; }
 .contact-box { margin-top: 2px; background: #e8ead9; padding: 23px; }
 .contact-box > .eyebrow { color: #758354; font-size: 8px; }
-.contact-box > p { color: #726a59; line-height: 1.65; font-size: 11px; }
+.contact-box > p { color: #726a59; line-height: 1.7; font-size: 15px; }
 .contact-placeholders { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 17px; }
-.contact-placeholder { display: inline-flex; align-items: center; gap: 7px; border: 1px solid #c9cfb5; border-radius: 99px; padding: 9px 11px; color: #758056; font-size: 9px; }
+.contact-placeholder { display: inline-flex; align-items: center; gap: 7px; border: 1px solid #c9cfb5; border-radius: 99px; padding: 10px 14px; color: #758056; font-size: 13px; }
 .whatsapp-mark { width: 14px; height: 14px; border: 1px solid currentColor; border-radius: 50%; display: grid; place-items: center; font-size: 8px; font-weight: 700; }
 .contact-footnote { display: block; margin-top: 15px; color: #9a8d77; font-size: 8px; }
 .social-section { background: #e8ead9; padding: 100px 0 106px; }
@@ -830,6 +831,11 @@
 .dark .map-card p, .dark .map-label { color: #c3b6a3; }
 .dark .contact-placeholder { border-color: #4a3c30; color: #c3b6a3; }
 .dark .detail-block { border-bottom-color: #332920; }
+.dark .visit-heading p { color: #e6e2d3; }
+.dark .detail-block p { color: #e6e2d3; }
+.dark .detail-block p strong { color: #f0eadc; }
+.dark .contact-box > p { color: #e6e2d3; }
+.dark .contact-placeholder { color: #e6e2d3; border-color: #5a4a3a; }
 .dark .feed-overlay { background: rgba(26,21,18,.88); color: #e6e2d3; }
 .dark .notfound-card, .dark .login-card { background: #241F1C; border-color: #3d3228; color: #e6e2d3; }
 .dark .legal-card { background: #2a221e; border-color: #3d3228; color: #e6e2d3; }
@@ -884,3 +890,34 @@
 .lang-toggle__label{min-width:1.6em;text-align:center}
 .dark .lang-toggle{border-color:rgba(245,240,229,.2);background:rgba(245,240,229,.04);color:#f5f0e5}
 .dark .lang-toggle:hover{background:rgba(245,240,229,.1);border-color:rgba(245,240,229,.38)}
+
+/* Estilos base para el Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+/* MODO CLARO (Fondo crema, barra verde oliva) */
+::-webkit-scrollbar-track {
+  background: #f3f0ec; /* Fondo crema de la web */
+}
+::-webkit-scrollbar-thumb {
+  background: #6b7c51; /* Verde oliva de la marca */
+  border-radius: 5px;
+  border: 2px solid #f3f0ec; /* Un pequeño borde para que no quede pegado */
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #5A3C28; /* Marrón café al pasar el ratón */
+}
+
+/* MODO OSCURO (Fondo marrón oscuro, barra verde oliva) */
+.dark ::-webkit-scrollbar-track {
+  background: #1a1512; /* Fondo oscuro principal */
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #6b7c51;
+  border-radius: 5px;
+  border: 2px solid #1a1512;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #e6e2d3; /* Un tono crema claro al pasar el ratón en modo oscuro */
+}
