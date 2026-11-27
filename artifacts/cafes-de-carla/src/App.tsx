@@ -70,7 +70,7 @@ function ProductCard({ item, onAdd }: { item: MenuItem; onAdd: (size: string, va
 
   return (
     <li className={`product-card${item.agotado ? ' is-sold-out' : ''}`} data-testid={`item-menu-${item.id}`}>
-      <div className="product-photo">
+      <div className="product-photo relative w-full aspect-[4/3] overflow-hidden rounded-t-[10px] bg-[#f3f0ec] dark:bg-stone-800">
         <img
           src={imageSrc}
           alt={usingFallback ? `Imagen de muestra de ${item.name}` : item.name}
@@ -78,6 +78,7 @@ function ProductCard({ item, onAdd }: { item: MenuItem; onAdd: (size: string, va
           decoding="async"
           width="960"
           height="720"
+          className="w-full h-full object-cover"
           onError={() => setImageFailed(true)}
           data-testid={`img-product-${item.id}`}
         />
