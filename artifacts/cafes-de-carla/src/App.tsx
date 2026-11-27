@@ -1029,7 +1029,11 @@ function Home() {
                       className={`category-tab ${selected?.id === category.id ? 'active' : ''}`}
                       onClick={(e) => {
                         setActiveCategory(category.id);
-                        e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                        const list = categoryListRef.current;
+                        if (list) {
+                          const left = e.currentTarget.offsetLeft - list.clientWidth / 2 + e.currentTarget.clientWidth / 2;
+                          list.scrollTo({ left, behavior: 'smooth' });
+                        }
                       }}
                       data-testid={`tab-category-${category.id}`}
                     >
