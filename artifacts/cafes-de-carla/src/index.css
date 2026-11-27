@@ -176,7 +176,7 @@
 .category-name { font-family: var(--app-font-serif); font-size: 15px; }
 .category-tab svg { width: 14px; opacity: 0; transition: opacity .3s ease, transform .3s ease; }
 .category-tab.active svg, .category-tab:hover svg { opacity: 1; transform: translateX(2px); }
-.category-panel { min-width: 0; }
+.category-panel { min-width: 0; scroll-margin-top: 84px; }
 .category-copy { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 20px; }
 .category-copy .eyebrow { font-size: 8px; color: #87925f; }
 .category-copy h3 { font-size: clamp(25px, 3vw, 36px); line-height: 1.1; margin: 8px 0 0; color: #4a3322; }

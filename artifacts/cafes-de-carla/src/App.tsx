@@ -171,6 +171,14 @@ function Home() {
   );
 
   const selected = menuCategories.find((category) => category.id === activeCategory) ?? menuCategories[0];
+  const prevCategoryRef = useRef('');
+  useEffect(() => {
+    if (!selected?.id) return;
+    if (prevCategoryRef.current && prevCategoryRef.current !== selected.id) {
+      document.getElementById('category-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    prevCategoryRef.current = selected.id;
+  }, [selected?.id]);
   const cartTriggerRef = useRef<HTMLButtonElement>(null);
   const cartCloseRef = useRef<HTMLButtonElement>(null);
   const categoryListRef = useRef<HTMLDivElement>(null);
