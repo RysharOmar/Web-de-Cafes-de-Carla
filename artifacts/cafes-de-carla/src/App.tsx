@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import CafesDeCarlaPreloader from '@/components/page-loader';
 import { ArrowDown, ArrowRight, ArrowUpRight, Banknote, ChevronLeft, ChevronRight, Clock3, CreditCard, Instagram, MapPin, Menu as MenuIcon, Minus, Phone, Plus, ShoppingBag, X } from 'lucide-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -155,18 +155,20 @@ function Home() {
   const [preloaderFading, setPreloaderFading] = useState(false);
   const wasPreloaderVisibleRef = useRef(!initialPreloaderDone);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (preloaderVisible) {
       document.documentElement.style.overflow = 'hidden';
       document.body.style.overflow = 'hidden';
       document.body.style.position = 'fixed';
       document.body.style.width = '100%';
+      document.body.style.overscrollBehavior = 'none';
       wasPreloaderVisibleRef.current = true;
     } else {
       document.documentElement.style.overflow = '';
       document.body.style.overflow = '';
       document.body.style.position = '';
       document.body.style.width = '';
+      document.body.style.overscrollBehavior = '';
       if (wasPreloaderVisibleRef.current) {
         wasPreloaderVisibleRef.current = false;
       }
@@ -176,6 +178,7 @@ function Home() {
       document.body.style.overflow = '';
       document.body.style.position = '';
       document.body.style.width = '';
+      document.body.style.overscrollBehavior = '';
     };
   }, [preloaderVisible]);
   const lastMenuFetchRef = useRef(0);

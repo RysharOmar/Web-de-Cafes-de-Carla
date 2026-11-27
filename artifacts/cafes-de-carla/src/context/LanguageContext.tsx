@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import CafesDeCarlaPreloader from '@/components/page-loader';
 
 export type Lang = 'es' | 'en';
@@ -319,18 +319,20 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const wasLangSwitchingRef = useRef(false);
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (isLangSwitching) {
       document.documentElement.style.overflow = 'hidden';
       document.body.style.overflow = 'hidden';
       document.body.style.position = 'fixed';
       document.body.style.width = '100%';
+      document.body.style.overscrollBehavior = 'none';
       wasLangSwitchingRef.current = true;
     } else {
       document.documentElement.style.overflow = '';
       document.body.style.overflow = '';
       document.body.style.position = '';
       document.body.style.width = '';
+      document.body.style.overscrollBehavior = '';
       if (wasLangSwitchingRef.current) {
         wasLangSwitchingRef.current = false;
       }
@@ -340,6 +342,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       document.body.style.overflow = '';
       document.body.style.position = '';
       document.body.style.width = '';
+      document.body.style.overscrollBehavior = '';
     };
   }, [isLangSwitching]);
 
