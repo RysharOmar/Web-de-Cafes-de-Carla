@@ -72,8 +72,10 @@ function ProductCard({ item, onAdd, count }: { item: MenuItem; onAdd: (size: str
       ? rawImageSrc.replace('/upload/', `/upload/${cloudinaryTransform}/`)
       : rawImageSrc;
   const selectedSizeOption = item.sizes.find((size) => size.label === selectedSize) ?? item.sizes[0];
+  const desktopWidthClass = count === 1 ? 'md:max-w-md md:w-full' : count === 2 ? 'md:max-w-sm md:w-full' : 'md:w-[300px]';
+
   return (
-    <li className={`product-card group snap-center shrink-0 w-[80vw] sm:w-[45vw] md:w-[300px] md:shrink${item.agotado ? ' is-sold-out' : ''}`} data-testid={`item-menu-${item.id}`}>
+    <li className={`product-card group snap-center shrink-0 w-[80vw] sm:w-[45vw] ${desktopWidthClass} md:shrink${item.agotado ? ' is-sold-out' : ''}`} data-testid={`item-menu-${item.id}`}>
       <div className="product-photo p-3">
         <div className="relative w-full aspect-square overflow-hidden rounded-xl bg-white dark:bg-stone-800 shadow-sm transition-shadow duration-500 group-hover:shadow-md">
           <img
