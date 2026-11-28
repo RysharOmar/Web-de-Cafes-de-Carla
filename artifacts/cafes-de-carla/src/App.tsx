@@ -1140,12 +1140,9 @@ function Home() {
 {/* Sección 3: Visítanos - 03 / CUANDO QUIERAS */}
         <section className="visit-section section-wrap" id="visitanos" aria-labelledby="visit-title">
           <div className="section-kicker"><span className="eyebrow">{t('03 / CUANDO QUIERAS')}</span><span className="kicker-line" /></div>
-          <div className="visit-heading">
-            <h2 id="visit-title" className="serif" data-testid="heading-visit">{lang === 'en' ? <>The table is<br /><em>set.</em></> : <>La mesa está<br /><em>servida.</em></>}</h2>
-            <p data-testid="text-visit-introduction">{t('Encuéntranos en el Centro Comercial Las Arenas, en Las Palmas de Gran Canaria. Te esperamos con el café recién hecho.')}</p>
-          </div>
-          <div className="visit-grid">
-            <div className="map-placeholder" data-testid="map-embed">
+          <h2 id="visit-title" className="serif mb-8 md:mb-12 text-center md:text-left text-[#45301f] dark:text-[#f0eadc]" data-testid="heading-visit" style={{ fontSize: 'clamp(48px, 7vw, 88px)', lineHeight: 1.0, letterSpacing: '-.05em', fontWeight: 400 }}>{lang === 'en' ? <>The table is<br /><em>set.</em></> : <>La mesa está<br /><em>servida.</em></>}</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center">
+            <div className="map-placeholder relative w-full h-[300px] md:h-[400px] rounded-xl overflow-hidden" data-testid="map-embed">
               <iframe
                 title="Mapa de Cafés de Carla — Centro Comercial Las Arenas"
                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1000!2d-15.4487836!3d28.1282921!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xc40951c500e904b%3A0xf76cda3da985224b!2sCaf%C3%A9s%20de%20Carla!5e0!3m2!1ses!2ses!4v1763000000000"
@@ -1180,10 +1177,13 @@ function Home() {
                 {t('Abrir en Google Maps')}
               </a>
             </div>
-            <div className="visit-details">
-              <article className="detail-block"><span className="detail-icon"><MapPin size={17} /></span><div><span className="eyebrow">{t('DÓNDE ENCONTRARNOS')}</span><h3>{t('Dirección')}</h3><p data-testid="text-address" className="text-sm text-[#8a7a69]"><strong className="text-[#4a3322] font-serif">Centro Comercial Las Arenas</strong> · Ctra. del Rincón, 35010 · Las Palmas de Gran Canaria</p></div></article>
-              <article className="detail-block"><span className="detail-icon"><Clock3 size={17} /></span><div><span className="eyebrow">{t('PARA TU PRÓXIMA PAUSA')}</span><h3>{t('Horario')}</h3><p data-testid="text-hours" className="text-sm text-[#8a7a69]"><strong className="text-[#4a3322] font-serif">{lang === 'en' ? 'Monday to Friday' : 'Lunes a viernes'}</strong> · 9:00 — 22:00<br /><strong className="text-[#4a3322] font-serif">{lang === 'en' ? 'Saturday and Sunday' : 'Sábado y domingo'}</strong> · 10:00 — 22:00</p></div></article>
-              <div className="contact-box" id="contacto">
+            <div className="visit-details text-center md:text-left">
+              <div className="flex flex-col gap-8">
+                <p data-testid="text-visit-introduction" className="text-[#7d7162] text-base leading-[1.8] m-0">{t('Encuéntranos en el Centro Comercial Las Arenas, en Las Palmas de Gran Canaria. Te esperamos con el café recién hecho.')}</p>
+                <article className="detail-block !mb-0"><span className="detail-icon"><MapPin size={17} /></span><div><span className="eyebrow">{t('DÓNDE ENCONTRARNOS')}</span><h3>{t('Dirección')}</h3><p data-testid="text-address" className="text-sm text-[#8a7a69]"><strong className="text-[#4a3322] font-serif">Centro Comercial Las Arenas</strong> · Ctra. del Rincón, 35010 · Las Palmas de Gran Canaria</p></div></article>
+                <article className="detail-block !mb-0"><span className="detail-icon"><Clock3 size={17} /></span><div><span className="eyebrow">{t('PARA TU PRÓXIMA PAUSA')}</span><h3>{t('Horario')}</h3><p data-testid="text-hours" className="text-sm text-[#8a7a69]"><strong className="text-[#4a3322] font-serif">{lang === 'en' ? 'Monday to Friday' : 'Lunes a viernes'}</strong> · 9:00 — 22:00<br /><strong className="text-[#4a3322] font-serif">{lang === 'en' ? 'Saturday and Sunday' : 'Sábado y domingo'}</strong> · 10:00 — 22:00</p></div></article>
+              </div>
+              <div className="contact-box mt-8" id="contacto">
                 <span className="eyebrow">{t('ESTAMOS AQUÍ PARA AYUDAR')}</span>
                 <p>{t('Si tienes cualquier duda, llámanos o escríbenos y te atenderemos encantados.')}</p>
                 <div className="contact-placeholders">

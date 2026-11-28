@@ -289,7 +289,7 @@
 .visit-heading h2 { font-size: clamp(48px, 7vw, 88px) !important; line-height: 1.0; letter-spacing: -.05em; }
 .visit-heading p { max-width: 360px; color: #7d7162; font-size: 16px; line-height: 1.8; margin: 0 5% 8px 20px; }
 .visit-grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: clamp(35px, 7vw, 92px); }
-.map-placeholder { min-height: 430px; position: relative; overflow: hidden; background: #e1e3d3; border: 1px solid #d3d6c1; }
+.map-placeholder { min-height: 0; position: relative; overflow: hidden; background: #e1e3d3; border: 1px solid #d3d6c1; }
 .map-pattern { position: absolute; inset: 0; opacity: .75; background-color: #e4e5d8; background-image: linear-gradient(34deg, transparent 47%, #f4f0e4 47.5%, #f4f0e4 51%, transparent 51.5%), linear-gradient(144deg, transparent 39%, #d4d9c5 39.5%, #d4d9c5 43%, transparent 43.5%), linear-gradient(88deg, transparent 67%, #f1eddf 67.5%, #f1eddf 71%, transparent 71.5%); background-size: 120px 112px, 178px 145px, 160px 174px; }
 .map-placeholder::before, .map-placeholder::after { content: ''; position: absolute; width: 170px; height: 100px; background: #d3dbc2; border-radius: 48% 35% 45% 28%; opacity: .75; }
 .map-placeholder::before { top: 12%; left: 13%; transform: rotate(-20deg); }
@@ -396,7 +396,7 @@
   .visit-heading { display: block; margin: 24px 0 28px; }
   .visit-heading p { margin: 18px 0 0; }
   .visit-grid { grid-template-columns: 1fr; gap: 27px; }
-  .map-placeholder { min-height: 300px; }
+  .map-placeholder { min-height: 0; }
   .contact-box { padding: 19px; }
   .social-section { padding: 80px 0; }
   .social-inner { grid-template-columns: 1fr; gap: 31px; }
