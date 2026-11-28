@@ -1026,10 +1026,10 @@ function Home() {
         </section>
 
         {/* Seccion: Nuestra esencia - 01 / NUESTRA ESENCIA */}
-        <section className="story-section" id="historia" aria-labelledby="story-title">
-          <div className="section-wrap story-grid">
+        <section className="story-section px-6 py-16 md:py-24" id="historia" aria-labelledby="story-title">
+          <div className="max-w-6xl mx-auto w-full story-grid">
             <div className="story-marker"><span className="eyebrow">{t('01 / NUESTRA ESENCIA')}</span><span className="marker-line" /></div>
-            <div className="story-content">
+            <div className="story-content text-center md:text-left">
               <h2 className="serif" id="story-title" data-testid="heading-brand-story">
                 {lang === 'en' ? <>Some days call for<br /><em>a beautiful pause.</em></> : <>Hay dias que piden<br /><em>una pausa bonita.</em></>}
               </h2>
@@ -1044,11 +1044,11 @@ function Home() {
 
 
         {/* Sección 2: Carta */}
-        <section id="carta" className="menu-section section-wrap" aria-labelledby="menu-title">
+        <section id="carta" className="menu-section max-w-6xl mx-auto w-full px-6 py-16 md:py-24" aria-labelledby="menu-title">
           <div className="section-kicker"><span className="eyebrow">{t('02 / PARA DISFRUTAR')}</span><span className="kicker-line" /></div>
-          <div className="menu-heading">
+          <div className="menu-heading text-center md:text-left">
             <div><h2 id="menu-title" className="serif" data-testid="heading-menu">{lang === 'en' ? <>Something delicious,<br /><em>in good company.</em></> : <>Algo rico,<br /><em>en buena compañía.</em></>}</h2></div>
-            <p data-testid="text-menu-introduction">{t('Nuestra carta se actualiza desde la base de datos: productos, precios, tamaños y disponibilidad en tiempo real.')}</p>
+            <p data-testid="text-menu-introduction" className="leading-relaxed">{t('Nuestra carta se actualiza desde la base de datos: productos, precios, tamaños y disponibilidad en tiempo real.')}</p>
           </div>
 
           {menuLoading ? (
@@ -1138,7 +1138,7 @@ function Home() {
 
 
 {/* Sección 3: Visítanos - 03 / CUANDO QUIERAS */}
-        <section className="visit-section section-wrap max-w-6xl mx-auto w-full px-4 md:px-8" id="visitanos" aria-labelledby="visit-title">
+        <section className="visit-section max-w-6xl mx-auto w-full px-6 py-16 md:py-24" id="visitanos" aria-labelledby="visit-title">
           <div className="section-kicker"><span className="eyebrow">{t('03 / CUANDO QUIERAS')}</span><span className="kicker-line" /></div>
           <h2 id="visit-title" className="serif mb-10 lg:mb-16 text-center md:text-left text-[#45301f] dark:text-[#f0eadc] w-full" data-testid="heading-visit" style={{ fontSize: 'clamp(48px, 7vw, 88px)', lineHeight: 1.0, letterSpacing: '-.05em', fontWeight: 400 }}>{lang === 'en' ? <>The table is<br /><em>set.</em></> : <>La mesa está<br /><em>servida.</em></>}</h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-stretch">
@@ -1197,9 +1197,9 @@ function Home() {
         </section>
 
         {/* Sección 4: Social */}
-        <section className="social-section" aria-labelledby="social-title">
-          <div className="section-wrap social-inner">
-            <div className="social-copy"><span className="eyebrow">{t('04 / UN POQUITO MÁS CERCA')}</span><h2 id="social-title" className="serif">{lang === 'en' ? <>What happens<br /><em>on the other side.</em></> : <>Lo que pasa<br /><em>al otro lado.</em></>}</h2><p>{t('Pronto podrás asomarte a nuestro día a día.')}</p><span className="social-handle"><Instagram size={17} /> {t('Cuenta de Instagram — Confirmación próxima')}</span></div>
+        <section className="social-section px-6 py-16 md:py-24" aria-labelledby="social-title">
+          <div className="max-w-6xl mx-auto w-full social-inner">
+            <div className="social-copy text-center md:text-left"><span className="eyebrow">{t('04 / UN POQUITO MÁS CERCA')}</span><h2 id="social-title" className="serif">{lang === 'en' ? <>What happens<br /><em>on the other side.</em></> : <>Lo que pasa<br /><em>al otro lado.</em></>}</h2><p className="leading-relaxed">{t('Pronto podrás asomarte a nuestro día a día.')}</p><span className="social-handle"><Instagram size={17} /> {t('Cuenta de Instagram — Confirmación próxima')}</span></div>
             <div className="social-grid" data-testid="instagram-feed-placeholder" aria-label="Vista previa del feed de Instagram, aún sin publicaciones">
               <div className="social-tile tile-one"><span className="tile-ring" /><span className="tile-text serif">{lang === 'en' ? <>a coffee<br />and a breath</> : <>un café<br />y un respiro</>}</span><small>{lang === 'en' ? 'DESIGN SAMPLE' : 'MUESTRA DE DISEÑO'}</small></div>
               <div className="social-tile tile-two"><span className="tile-square" /><span className="tile-text serif">{lang === 'en' ? <>at your<br />own pace</> : <>a tu<br />ritmo</>}</span><small>{lang === 'en' ? 'DESIGN SAMPLE' : 'MUESTRA DE DISEÑO'}</small></div>
