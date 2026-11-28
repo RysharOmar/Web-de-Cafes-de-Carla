@@ -72,15 +72,8 @@ function ProductCard({ item, onAdd, count }: { item: MenuItem; onAdd: (size: str
       ? rawImageSrc.replace('/upload/', `/upload/${cloudinaryTransform}/`)
       : rawImageSrc;
   const selectedSizeOption = item.sizes.find((size) => size.label === selectedSize) ?? item.sizes[0];
-  const cardSizeStyle =
-    count === 1
-      ? { flex: '0 1 460px', maxWidth: '480px' }
-      : count === 2
-        ? { flex: '0 1 380px', maxWidth: '420px' }
-        : undefined;
-
   return (
-    <li className={`product-card group${item.agotado ? ' is-sold-out' : ''}`} style={cardSizeStyle} data-testid={`item-menu-${item.id}`}>
+    <li className={`product-card group snap-center shrink-0 w-[80vw] sm:w-[45vw] md:w-auto md:shrink${item.agotado ? ' is-sold-out' : ''}`} data-testid={`item-menu-${item.id}`}>
       <div className="product-photo p-3">
         <div className="relative w-full aspect-square overflow-hidden rounded-xl bg-white dark:bg-stone-800 shadow-sm transition-shadow duration-500 group-hover:shadow-md">
           <img
@@ -1124,7 +1117,7 @@ function Home() {
                     </div>
                     {selected.note && <p>{selected.note}</p>}
                   </div>
-                  <ul className="product-grid max-w-7xl mx-auto w-full" data-testid={`list-menu-${selected.id}`}>
+                  <ul className="product-grid max-w-7xl mx-auto w-full flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 pr-4 md:pr-0 md:grid md:grid-cols-3 lg:grid-cols-4 md:gap-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']" data-testid={`list-menu-${selected.id}`}>
                     {selected.items.map((item) => (
                       <ProductCard key={item.id} item={item} count={selected.items.length} onAdd={(size, variant) => changeCartQuantity(item.id, size, 1, variant)} />
                     ))}
