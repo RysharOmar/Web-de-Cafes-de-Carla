@@ -1119,7 +1119,7 @@ function Home() {
                     </div>
                     {selected.note && <p>{selected.note}</p>}
                   </div>
-                  <ul className="product-grid max-w-7xl mx-auto w-full flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 pr-4 md:pr-0 md:overflow-visible md:flex-wrap md:justify-center md:gap-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']" data-testid={`list-menu-${selected.id}`}>
+                  <ul className={`product-grid hide-scrollbar max-w-7xl mx-auto w-full flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 px-4 md:px-0 md:overflow-visible md:flex-wrap md:justify-center md:gap-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] ${selected.items.length === 1 ? 'justify-center' : 'justify-start md:justify-center'}`} data-testid={`list-menu-${selected.id}`}>
                     {selected.items.map((item) => (
                       <ProductCard key={item.id} item={item} count={selected.items.length} onAdd={(size, variant) => changeCartQuantity(item.id, size, 1, variant)} />
                     ))}
