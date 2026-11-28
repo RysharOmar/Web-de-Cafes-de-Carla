@@ -37,10 +37,12 @@ export default function FloatingCartButton({
   count,
   isOpen,
   onOpen,
+  hidden: hiddenProp = false,
 }: {
   count: number;
   isOpen: boolean;
   onOpen: () => void;
+  hidden?: boolean;
 }) {
   const [pos, setPos] = useState<Pos>(() => loadPos());
   const [isInteracting, setIsInteracting] = useState(false);
@@ -98,7 +100,7 @@ export default function FloatingCartButton({
     if (!drag.moved) onOpen();
   }, [onOpen]);
 
-  const hidden = isOpen;
+  const hidden = isOpen || hiddenProp;
   const imgSrc = count > 0 ? '/cart-full.png' : '/cart-empty.png';
 
   return (
